@@ -7,9 +7,15 @@ import {
   rowToQuote,
 } from "@/infrastructure/quote/quote.mapper";
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Adapter: Postgres implementation of the QuoteRepository port. */
 export class PrismaQuoteRepository implements QuoteRepository {
   async findById(id: string): Promise<Quote | null> {
+    // The id column is a Postgres UUID: a malformed input would make the
+    // query itself fail (P2023). Treat invalid ids as "not found".
+    if (!UUID_PATTERN.test(id)) return null;
     const row = await prisma.quote.findUnique({ where: { id } });
     return row ? rowToQuote(row as unknown as QuoteRow) : null;
   }
