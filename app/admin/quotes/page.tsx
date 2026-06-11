@@ -30,9 +30,18 @@ export default async function QuotesPage() {
 
   return (
     <Container className="max-w-[1100px] py-12">
-      <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] mb-8 text-foreground">
-        Preventivi
-      </h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground">
+          Preventivi
+        </h1>
+        <Link
+          href="/admin/quotes/new"
+          className="font-mono text-sm font-semibold rounded-full bg-accent text-[#0a0b0d] transition-all duration-150 hover:brightness-105 hover:-translate-y-px flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-[9px]"
+        >
+          <span className="sm:hidden text-lg">+</span>
+          <span className="hidden sm:inline">+ Nuovo preventivo</span>
+        </Link>
+      </div>
 
       {quotes.length === 0 ? (
         <div className="p-10 rounded-2xl bg-surface border border-border text-center">
