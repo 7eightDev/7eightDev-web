@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../infrastructure/db/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum QuoteStatus {
+  draft
+  sent
+  accepted
+  rejected
+  expired
+}
+
+model Quote {
+  id         String      @id @db.Uuid
+  number     String      @unique
+  status     QuoteStatus @default(draft)
+  client     Json
+  project    String
+  intro      String
+  issuedAt   DateTime
+  validUntil DateTime
+  vatRate    Float
+  lineItems  Json
+  metadata   Json
+  acceptance Json?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("quotes")
+}
