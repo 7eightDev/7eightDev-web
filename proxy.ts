@@ -1,6 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isPublicRoute = createRouteMatcher(["/"]);
+/**
+ * Routes reachable without authentication:
+ * - "/"            landing page
+ * - "/p/:uuid"     client-facing public quote (view + accept). The UUID is the
+ *                  capability token — knowing the link is the authorization.
+ * - "/sign-in/*"   Clerk sign-in screen (must be public to avoid a redirect loop)
+ */
+const isPublicRoute = createRouteMatcher(["/", "/p/(.*)", "/sign-in(.*)"]);
 
 /**
  * Next.js 16 proxy (formerly middleware): protects the private area.
