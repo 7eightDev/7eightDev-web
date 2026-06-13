@@ -119,7 +119,7 @@ export default async function QuotesPage({
             return (
               <div
                 key={quote.id}
-                className="grid grid-cols-[110px_1fr_auto_auto_auto] max-[820px]:grid-cols-1 gap-5 items-center px-5 py-4 rounded-xl bg-surface border border-border"
+                className="grid grid-cols-[110px_1fr_auto_150px_auto_auto] max-[820px]:grid-cols-1 gap-5 items-center overflow-hidden rounded-xl border border-border bg-surface px-5 py-4"
               >
                 <span className="font-mono text-[13px] text-muted">
                   {quote.number}
@@ -129,11 +129,32 @@ export default async function QuotesPage({
                     {quote.client.name}
                   </div>
                   <div className="font-hanken text-[13.5px] text-soft">
-                    {quote.project} · scade {formatDateIt(quote.validUntil)}
+                    {quote.project}
                   </div>
                 </div>
                 <span className="font-mono text-[14px] text-foreground whitespace-nowrap">
                   {formatMoney(total)}
+                </span>
+                <span
+                  className="inline-flex items-center justify-end gap-1.5 font-mono text-[12px] text-muted whitespace-nowrap"
+                  title={`Scade il ${formatDateIt(quote.validUntil)}`}
+                >
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                    className="opacity-70 shrink-0"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4M8 2v4M3 10h18" />
+                  </svg>
+                  {formatDateIt(quote.validUntil)}
                 </span>
                 <span
                   className={`inline-flex items-center justify-center w-[104px] font-mono text-[11px] tracking-[0.08em] uppercase py-[5px] rounded-full border ${STATUS_STYLE[quote.status]}`}
