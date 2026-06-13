@@ -92,14 +92,14 @@ export function Hero() {
         </Reveal>
 
         <Reveal delay={60}>
-          <p className="font-sans text-[15.5px] text-soft my-[22px_0_18px] max-w-[560px] leading-[1.5]">
+          <p className="font-sans text-[15.5px] text-soft mt-[26px] mb-[28px] max-w-[560px] leading-[1.5]">
             Due livelli, un solo standard di cura — dal sito della tua impresa
             alla piattaforma SaaS ad alta complessità.
           </p>
         </Reveal>
 
         <Reveal delay={120}>
-          <div className="inline-flex p-[4px] rounded-[11px] bg-surface border border-border gap-[4px] mb-[30px]">
+          <div className="inline-flex p-[4px] rounded-[11px] bg-surface border border-border gap-[4px] mb-[48px]">
             {Object.keys(HERO).map((k) => (
               <button key={k} onClick={() => setMode(k as 'pmi' | 'ent')} className={cn(
                 "font-mono text-[13px] font-semibold cursor-pointer p-[9px_16px] rounded-[8px] border-none transition-all duration-200",
