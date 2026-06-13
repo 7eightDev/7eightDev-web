@@ -1,10 +1,14 @@
+"use client";
+
 import { Container } from '@/presentation/components/shared/container';
 import { Reveal } from '@/presentation/components/shared/reveal';
 import { Btn } from '@/presentation/components/shared/btn';
 import { Eyebrow } from '@/presentation/components/shared/eyebrow';
 import { cn } from '@/presentation/lib/utils';
+import { useQuoteModal } from './quote-context';
 
-export function CtaBand({ onQuote }: { onQuote: () => void }) {
+export function CtaBand() {
+  const { open } = useQuoteModal();
   return (
     <section className="py-25 border-t border-border relative overflow-hidden">
       <div className="absolute -bottom-50 left-[50%] translate-x-[-50%] w-190 h-130 bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_14%,_transparent),_transparent_60%)] pointer-events-none" />
@@ -32,13 +36,13 @@ export function CtaBand({ onQuote }: { onQuote: () => void }) {
               variant="primary"
               onClick={(e) => {
                 e.preventDefault();
-                onQuote();
+                open();
               }}
             >
               Richiedi un preventivo <span className="opacity-70">→</span>
             </Btn>
-            <Btn variant="ghost" href="mailto:ciao@7eight.dev">
-              ciao@7eight.dev
+            <Btn variant="ghost" href="mailto:info@7eightdev.com">
+              info@7eightdev.com
             </Btn>
           </div>
         </Reveal>

@@ -37,7 +37,10 @@ export function PairListEditor({
       </div>
       <div className="flex flex-col gap-2">
         {value.map((pair, i) => (
-          <div key={i} className="grid grid-cols-[180px_1fr_auto] gap-2 items-start">
+          <div
+            key={i}
+            className="flex flex-col sm:grid sm:grid-cols-[180px_1fr_auto] gap-2 items-start pb-4 sm:pb-0 border-b border-border/40 sm:border-0 last:border-0"
+          >
             <input
               type="text"
               value={pair.a}
@@ -45,31 +48,35 @@ export function PairListEditor({
               onChange={(e) => update(i, "a", e.target.value)}
               className={inputClass}
             />
-            {bMultiline ? (
-              <textarea
-                value={pair.b}
-                placeholder={bPlaceholder}
-                rows={2}
-                onChange={(e) => update(i, "b", e.target.value)}
-                className={`${inputClass} resize-y`}
-              />
-            ) : (
-              <input
-                type="text"
-                value={pair.b}
-                placeholder={bPlaceholder}
-                onChange={(e) => update(i, "b", e.target.value)}
-                className={inputClass}
-              />
-            )}
-            <button
-              type="button"
-              aria-label="Rimuovi riga"
-              onClick={() => onChange(value.filter((_, j) => j !== i))}
-              className="font-mono text-sm text-muted px-3 py-[10px] rounded-lg border border-transparent cursor-pointer hover:text-[var(--coral)] hover:border-border"
-            >
-              ×
-            </button>
+            <div className="flex gap-2 w-full items-start">
+              <div className="flex-1">
+                {bMultiline ? (
+                  <textarea
+                    value={pair.b}
+                    placeholder={bPlaceholder}
+                    rows={2}
+                    onChange={(e) => update(i, "b", e.target.value)}
+                    className={`${inputClass} resize-y`}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={pair.b}
+                    placeholder={bPlaceholder}
+                    onChange={(e) => update(i, "b", e.target.value)}
+                    className={inputClass}
+                  />
+                )}
+              </div>
+              <button
+                type="button"
+                aria-label="Rimuovi riga"
+                onClick={() => onChange(value.filter((_, j) => j !== i))}
+                className="font-mono text-sm text-muted px-3 py-[10px] rounded-lg border border-transparent cursor-pointer hover:text-[var(--coral)] hover:border-border shrink-0"
+              >
+                ×
+              </button>
+            </div>
           </div>
         ))}
         <button

@@ -105,6 +105,7 @@ export const AVIS_QUOTE: Quote = {
       { title: "Sviluppo", weeks: "Sett. 4–7" },
       { title: "Lancio", weeks: "Sett. 8" },
     ],
+    discount: { kind: "percent", value: 0.05 },
     timelineNote:
       "Stima complessiva: ~8 settimane dall’avvio. Demo navigabile a ogni fine settimana.",
     techStack: [

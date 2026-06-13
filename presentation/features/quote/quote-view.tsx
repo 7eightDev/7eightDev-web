@@ -182,6 +182,14 @@ export function QuoteView({ quote }: QuoteViewProps) {
                 {formatMoney(calc.oneTimeSubtotal)}
               </span>
             </div>
+            {calc.discount.amountCents > 0 && (
+              <div className="flex items-baseline justify-between gap-4 mb-3">
+                <span className="font-hanken text-[14.5px] text-soft">Sconto</span>
+                <span className="font-mono text-[14.5px] text-[var(--coral)] whitespace-nowrap">
+                  −{formatMoney(calc.discount)}
+                </span>
+              </div>
+            )}
             <div className="flex items-baseline justify-between gap-4 mb-4 pb-4 border-b border-border">
               <span className="font-hanken text-[14.5px] text-soft">{vatLabel}</span>
               <span className="font-mono text-[14.5px] text-soft whitespace-nowrap">
@@ -311,7 +319,7 @@ export function QuoteView({ quote }: QuoteViewProps) {
           <div className="flex justify-between items-center mt-[30px] flex-wrap gap-3">
             <LogoLockup size={14} />
             <span className="font-mono text-xs text-muted">
-              {quote.number} · ciao@7eight.dev · domande? rispondi alla mail
+              {quote.number} · info@7eightdev.com · domande? rispondi alla mail
             </span>
           </div>
         </div>

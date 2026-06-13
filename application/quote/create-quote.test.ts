@@ -93,4 +93,55 @@ describe("createQuote use case", () => {
     );
     expect(result.ok).toBe(false);
   });
+
+  it("defaults quantity to 1 when omitted", async () => {
+    const repo = makeRepo();
+    await createQuote({ repository: repo, now: NOW }, validInput);
+    expect(repo.saved?.lineItems[0].quantity).toBe(1);
+  });
+
+  it("preserves an explicit quantity", async () => {
+    const repo = makeRepo();
+    await createQuote(
+      { repository: repo, now: NOW },
+      {
+        ...validInput,
+        lineItems: [{ ...validInput.lineItems[0], quantity: 4 }],
+      }
+    );
+    expect(repo.saved?.lineItems[0].quantity).toBe(4);
+  });
+
+  it("converts a percentage discount input to a fraction in metadata", async () => {
+    const repo = makeRepo();
+    await createQuote(
+      { repository: repo, now: NOW },
+      { ...validInput, discount: { kind: "percent", value: 15 } }
+    );
+    expect(repo.saved?.metadata.discount).toEqual({
+      kind: "percent",
+      value: 0.15,
+    });
+  });
+
+  it("converts a fixed discount input to Money in metadata", async () => {
+    const repo = makeRepo();
+    await createQuote(
+      { repository: repo, now: NOW },
+      { ...validInput, discount: { kind: "fixed", amountUnits: 300 } }
+    );
+    expect(repo.saved?.metadata.discount).toEqual({
+      kind: "fixed",
+      amount: { amountCents: 30_000, currency: "EUR" },
+    });
+  });
+
+  it("drops a zero discount", async () => {
+    const repo = makeRepo();
+    await createQuote(
+      { repository: repo, now: NOW },
+      { ...validInput, discount: { kind: "percent", value: 0 } }
+    );
+    expect(repo.saved?.metadata.discount).toBeUndefined();
+  });
 });

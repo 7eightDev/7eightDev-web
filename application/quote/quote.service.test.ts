@@ -78,4 +78,75 @@ describe("calculateQuote", () => {
     const calc = calculateQuote(quote, ["ghost-item"]);
     expect(calc.oneTimeSubtotal.amountCents).toBe(300_000);
   });
+
+  it("reports zero discount and net equal to subtotal when no discount is set", () => {
+    const calc = calculateQuote(quote);
+    expect(calc.discount.amountCents).toBe(0);
+    expect(calc.oneTimeNet.amountCents).toBe(calc.oneTimeSubtotal.amountCents);
+  });
+});
+
+describe("calculateQuote with quantity", () => {
+  const withQty: Quote = {
+    ...quote,
+    lineItems: [
+      {
+        id: "pages",
+        type: "one_time",
+        title: "Pagine",
+        description: "Pagine informative",
+        unitPrice: moneyFromUnits(400),
+        quantity: 5,
+        unit: "pagina",
+        optional: false,
+      },
+    ],
+  };
+
+  it("multiplies unit price by quantity", () => {
+    const calc = calculateQuote(withQty);
+    expect(calc.oneTimeSubtotal.amountCents).toBe(200_000); // 5 × 400 €
+    expect(calc.oneTimeTotal.amountCents).toBe(244_000); // +22% VAT
+  });
+
+  it("treats a missing quantity as 1", () => {
+    const calc = calculateQuote({
+      ...quote,
+      lineItems: [{ ...withQty.lineItems[0], quantity: undefined }],
+    });
+    expect(calc.oneTimeSubtotal.amountCents).toBe(40_000);
+  });
+});
+
+describe("calculateQuote with discount", () => {
+  it("applies a percentage discount before VAT", () => {
+    const calc = calculateQuote({
+      ...quote,
+      metadata: { discount: { kind: "percent", value: 0.1 } },
+    });
+    expect(calc.oneTimeSubtotal.amountCents).toBe(300_000);
+    expect(calc.discount.amountCents).toBe(30_000); // 10%
+    expect(calc.oneTimeNet.amountCents).toBe(270_000);
+    expect(calc.vat.amountCents).toBe(59_400); // 22% of net
+    expect(calc.oneTimeTotal.amountCents).toBe(329_400);
+  });
+
+  it("applies a fixed discount", () => {
+    const calc = calculateQuote({
+      ...quote,
+      metadata: { discount: { kind: "fixed", amount: moneyFromUnits(500) } },
+    });
+    expect(calc.discount.amountCents).toBe(50_000);
+    expect(calc.oneTimeNet.amountCents).toBe(250_000);
+  });
+
+  it("caps a fixed discount at the subtotal so the total never goes negative", () => {
+    const calc = calculateQuote({
+      ...quote,
+      metadata: { discount: { kind: "fixed", amount: moneyFromUnits(99_999) } },
+    });
+    expect(calc.discount.amountCents).toBe(300_000);
+    expect(calc.oneTimeNet.amountCents).toBe(0);
+    expect(calc.oneTimeTotal.amountCents).toBe(0);
+  });
 });

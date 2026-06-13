@@ -1,25 +1,26 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isPublicRoute = createRouteMatcher(["/"]);
 
 /**
  * Next.js 16 proxy (formerly middleware): protects the private area.
- * Uses redirectToSignIn explicitly instead of auth.protect() to work
- * around clerk/javascript#8302 (protect() redirect loop on Next 16).
+ * We use auth.protect() to ensure all non-public routes, including 404s,
+ * are redirected to sign-in.
  */
-export default clerkMiddleware(async (auth, req) => {
-  if (isAdminRoute(req)) {
-    const { userId, redirectToSignIn } = await auth();
-    if (!userId) {
-      return redirectToSignIn({ returnBackUrl: req.url });
-    }
+const proxyHandler = clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    await auth.protect();
   }
 });
 
+export const proxy = proxyHandler;
+export default proxyHandler;
+
 export const config = {
   matcher: [
-    // Run only where auth matters: admin area + Clerk internals.
-    "/admin(.*)",
+    // Skip Next.js internals and all static files
+    "/((?!_next|.*\\..*).*)",
+    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };

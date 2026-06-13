@@ -1,0 +1,13 @@
+import Link from 'next/link';
+
+export default function NotFound() {
+  return (
+    <div className="w-full h-screen flex justify-center items-center">
+      <div>
+        <h2>ADMIN ROUTE | Not Found</h2>
+        <p>Could not find requested resource</p>
+        <Link href="/">Return Home</Link>
+      </div>
+    </div>
+  );
+}

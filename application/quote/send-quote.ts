@@ -1,3 +1,4 @@
+import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { canTransition } from "@/domain/quote/quote.status";
 import type { Quote } from "@/domain/quote/quote.types";
@@ -6,9 +7,16 @@ export type SendQuoteResult =
   | { readonly ok: true; readonly quote: Quote }
   | { readonly ok: false; readonly error: string };
 
-/** Use case: mark a draft quote as sent (the public link becomes "live"). */
+/**
+ * Use case: send a draft quote to its client.
+ *
+ * The email goes out *first*: the quote is flipped to `sent` only after the
+ * notifier confirms delivery, so the "sent" status always means the client was
+ * actually notified, and a failed send leaves the quote a re-sendable draft.
+ */
 export async function sendQuote(
   repository: QuoteRepository,
+  notifier: QuoteNotificationPort,
   quoteId: string
 ): Promise<SendQuoteResult> {
   const quote = await repository.findById(quoteId);
@@ -18,6 +26,21 @@ export async function sendQuote(
     return {
       ok: false,
       error: `Il preventivo non è inviabile (stato: ${quote.status}).`,
+    };
+  }
+
+  if (!quote.client.email?.trim()) {
+    return {
+      ok: false,
+      error: "Aggiungi un'email cliente al preventivo per poterlo inviare.",
+    };
+  }
+
+  const notification = await notifier.notifyQuoteSent(quote);
+  if (!notification.ok) {
+    return {
+      ok: false,
+      error: `Invio email non riuscito: ${notification.error}`,
     };
   }
 

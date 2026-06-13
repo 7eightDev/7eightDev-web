@@ -45,8 +45,19 @@ export function add(a: Money, b: Money): Money {
   return money(a.amountCents + b.amountCents, a.currency);
 }
 
+export function subtract(a: Money, b: Money): Money {
+  assertSameCurrency(a, b);
+  return money(a.amountCents - b.amountCents, a.currency);
+}
+
 export function sum(items: readonly Money[], currency: Currency = "EUR"): Money {
   return items.reduce(add, zero(currency));
+}
+
+/** Returns the smaller of two amounts (same currency). */
+export function min(a: Money, b: Money): Money {
+  assertSameCurrency(a, b);
+  return a.amountCents <= b.amountCents ? a : b;
 }
 
 export function multiply(m: Money, factor: number): Money {

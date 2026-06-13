@@ -6,12 +6,24 @@ export const lineItemInputSchema = z.object({
   catalogRef: z.string().optional(),
   title: z.string().min(2, "Titolo troppo corto"),
   description: z.string(),
-  /** Net price in whole euros as typed in the form. */
+  /** Net unit price in whole euros as typed in the form. */
   priceUnits: z.number().nonnegative("Il prezzo non può essere negativo"),
+  /** Number of units; defaults to 1 when omitted. */
+  quantity: z.number().int().positive("La quantità deve essere ≥ 1").default(1),
+  unit: z.string().optional(),
   optional: z.boolean(),
   type: z.literal(["one_time", "recurring"]),
   interval: z.literal(["monthly", "yearly"]).optional(),
 });
+
+/**
+ * Discount as entered in the composer: a percentage in [0, 100] or a fixed
+ * amount in whole euros. Converted to the domain `Discount` in the use case.
+ */
+export const discountInputSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("percent"), value: z.number().min(0).max(100) }),
+  z.object({ kind: z.literal("fixed"), amountUnits: z.number().nonnegative() }),
+]);
 
 export const pairSchema = z.object({
   a: z.string().min(1),
@@ -34,7 +46,9 @@ export const createQuoteInputSchema = z.object({
   /** techStack: a = label, b = technology */
   techStack: z.array(pairSchema),
   timelineNote: z.string().optional(),
+  discount: discountInputSchema.optional(),
 });
 
 export type CreateQuoteInput = z.infer<typeof createQuoteInputSchema>;
 export type LineItemInput = z.infer<typeof lineItemInputSchema>;
+export type DiscountInput = z.infer<typeof discountInputSchema>;

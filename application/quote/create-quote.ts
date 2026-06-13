@@ -1,10 +1,14 @@
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
-import type { LineItem, Quote } from "@/domain/quote/quote.types";
-import { moneyFromUnits } from "@/domain/shared/money";
+import type { Quote } from "@/domain/quote/quote.types";
 import {
   type CreateQuoteInput,
   createQuoteInputSchema,
 } from "@/application/quote/quote.schemas";
+import {
+  buildClient,
+  buildLineItem,
+  buildMetadata,
+} from "@/application/quote/quote-builders";
 
 export type CreateQuoteResult =
   | { readonly ok: true; readonly quote: Quote }
@@ -16,21 +20,16 @@ interface CreateQuoteDeps {
   readonly generateId?: () => string;
 }
 
-function buildLineItem(
-  input: CreateQuoteInput["lineItems"][number],
-  index: number
-): LineItem {
-  const base = {
-    id: input.catalogRef ?? `item-${index + 1}`,
-    catalogRef: input.catalogRef,
-    title: input.title,
-    description: input.description,
-    unitPrice: moneyFromUnits(input.priceUnits),
-    optional: input.optional,
-  };
-  return input.type === "recurring"
-    ? { ...base, type: "recurring", interval: input.interval ?? "monthly" }
-    : { ...base, type: "one_time" };
+/** Parses and validates raw composer input; returns null-ish via result type. */
+function parse(rawInput: unknown):
+  | { ok: true; input: CreateQuoteInput }
+  | { ok: false; error: string } {
+  const parsed = createQuoteInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    return { ok: false, error: `${first.path.join(".")}: ${first.message}` };
+  }
+  return { ok: true, input: parsed.data };
 }
 
 /** Use case: compose a new quote (status: draft) from the admin dashboard. */
@@ -38,12 +37,9 @@ export async function createQuote(
   deps: CreateQuoteDeps,
   rawInput: unknown
 ): Promise<CreateQuoteResult> {
-  const parsed = createQuoteInputSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { ok: false, error: `${first.path.join(".")}: ${first.message}` };
-  }
-  const input = parsed.data;
+  const result = parse(rawInput);
+  if (!result.ok) return result;
+  const input = result.input;
 
   const now = deps.now ?? (() => new Date());
   const generateId = deps.generateId ?? (() => crypto.randomUUID());
@@ -62,26 +58,14 @@ export async function createQuote(
     id: generateId(),
     number,
     status: "draft",
-    client: {
-      name: input.clientName,
-      company: input.clientCompany || undefined,
-      email: input.clientEmail || undefined,
-    },
+    client: buildClient(input),
     project: input.project,
     intro: input.intro,
     issuedAt: issuedAt.toISOString(),
     validUntil: validUntil.toISOString(),
     vatRate: input.vatRate,
     lineItems: input.lineItems.map(buildLineItem),
-    metadata: {
-      phases: input.phases.map((p) => ({ title: p.a, weeks: p.b })),
-      terms: input.terms.map((t) => ({ label: t.a, body: t.b })),
-      techStack: input.techStack.map((t) => ({
-        label: t.a,
-        technology: t.b,
-      })),
-      timelineNote: input.timelineNote || undefined,
-    },
+    metadata: buildMetadata(input),
   };
 
   await deps.repository.save(quote);

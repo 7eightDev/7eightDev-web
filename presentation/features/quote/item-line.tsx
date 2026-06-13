@@ -1,3 +1,4 @@
+import { lineTotal } from "@/application/quote/quote.service";
 import type { LineItem } from "@/domain/quote/quote.types";
 import { formatMoney } from "@/domain/shared/money";
 import { cn } from "@/presentation/lib/utils";
@@ -12,6 +13,14 @@ interface ItemLineProps {
 export function ItemLine({ item, selected, onToggle, disabled }: ItemLineProps) {
   const optional = item.optional;
   const on = !optional || selected;
+  const qty = item.quantity ?? 1;
+  const total = lineTotal(item);
+  const recurringSuffix =
+    item.type === "recurring"
+      ? item.interval === "monthly"
+        ? " /mese"
+        : " /anno"
+      : "";
 
   const content = (
     <>
@@ -50,11 +59,15 @@ export function ItemLine({ item, selected, onToggle, disabled }: ItemLineProps) 
           on ? "text-foreground" : "text-muted"
         )}
       >
-        {formatMoney(item.unitPrice)}
-        {item.type === "recurring" && (
-          <span className="text-muted text-[12px]">
-            {item.interval === "monthly" ? " /mese" : " /anno"}
-          </span>
+        {qty > 1 && (
+          <div className="text-muted text-[12px]">
+            {qty}
+            {item.unit ? ` ${item.unit}` : "×"} · {formatMoney(item.unitPrice)}
+          </div>
+        )}
+        {formatMoney(total)}
+        {recurringSuffix && (
+          <span className="text-muted text-[12px]">{recurringSuffix}</span>
         )}
       </div>
     </>

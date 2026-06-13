@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { cn } from "@/presentation/lib/utils";
 import { Container } from "@/presentation/components/shared/container";
@@ -5,6 +7,7 @@ import { Eyebrow } from "@/presentation/components/shared/eyebrow";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { Btn } from "@/presentation/components/shared/btn";
 import { Chip } from "@/presentation/components/shared/chip";
+import { useQuoteModal } from "./quote-context";
 
 const C = { mut: 'var(--muted)', soft: 'var(--text-soft)', txt: 'var(--text)', acc: 'var(--accent)', dim: 'var(--dim)' };
 const MODES = {
@@ -76,7 +79,8 @@ const HERO = {
   },
 };
 
-export function Hero({ onQuote }: { onQuote: () => void }) {
+export function Hero() {
+  const { open } = useQuoteModal();
   const [mode, setMode] = useState<'pmi' | 'ent'>('ent');
   const d = HERO[mode];
   return (
@@ -115,7 +119,7 @@ export function Hero({ onQuote }: { onQuote: () => void }) {
             <p key={mode + 's'} className="font-sans text-[18px] leading-[1.58] text-soft max-w-[520px] mt-[22px] animate-slide-up" style={{ animationDelay: '100ms' }}>{d.sub}</p>
 
             <div className="flex gap-[12px] mt-[32px] flex-wrap">
-              <Btn variant="primary" onClick={(e) => { e.preventDefault(); onQuote(); }}>
+              <Btn variant="primary" onClick={(e) => { e.preventDefault(); open(); }}>
                 Richiedi un preventivo <span className="opacity-70">→</span>
               </Btn>
               <Btn variant="ghost" href="#metodo">Vedi come lavoro</Btn>

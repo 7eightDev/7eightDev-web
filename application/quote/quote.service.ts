@@ -1,14 +1,19 @@
 import type {
+  Discount,
   LineItem,
   Quote,
   QuoteCalculation,
 } from "@/domain/quote/quote.types";
 import {
   type Money,
+  add,
   formatMoney,
+  min,
+  multiply,
+  subtract,
   sum,
   vatOf,
-  add,
+  zero,
 } from "@/domain/shared/money";
 
 /**
@@ -19,6 +24,21 @@ function isIncluded(item: LineItem, selectedOptionalIds: ReadonlySet<string>): b
   return !item.optional || selectedOptionalIds.has(item.id);
 }
 
+/** Total billed for a line: unit price × quantity (quantity defaults to 1). */
+export function lineTotal(item: LineItem): Money {
+  return multiply(item.unitPrice, item.quantity ?? 1);
+}
+
+/** Discount amount applied to a one-time subtotal. Capped so it never exceeds it. */
+function discountAmount(subtotal: Money, discount?: Discount): Money {
+  if (!discount) return zero(subtotal.currency);
+  if (discount.kind === "percent") {
+    const fraction = Math.min(Math.max(discount.value, 0), 1);
+    return min(multiply(subtotal, fraction), subtotal);
+  }
+  return min(discount.amount, subtotal);
+}
+
 export function calculateQuote(
   quote: Quote,
   selectedOptionalIds: readonly string[] = []
@@ -26,26 +46,29 @@ export function calculateQuote(
   const selected = new Set(selectedOptionalIds);
   const included = quote.lineItems.filter((item) => isIncluded(item, selected));
 
-  const prices = (items: LineItem[]): Money[] =>
-    items.map((item) => item.unitPrice);
+  const totals = (items: LineItem[]): Money[] => items.map(lineTotal);
 
   const oneTimeSubtotal = sum(
-    prices(included.filter((item) => item.type === "one_time"))
+    totals(included.filter((item) => item.type === "one_time"))
   );
-  const vat = vatOf(oneTimeSubtotal, quote.vatRate);
+  const discount = discountAmount(oneTimeSubtotal, quote.metadata.discount);
+  const oneTimeNet = subtract(oneTimeSubtotal, discount);
+  const vat = vatOf(oneTimeNet, quote.vatRate);
 
   const recurring = included.filter((item) => item.type === "recurring");
   const monthlyRecurring = sum(
-    prices(recurring.filter((item) => item.interval === "monthly"))
+    totals(recurring.filter((item) => item.interval === "monthly"))
   );
   const yearlyRecurring = sum(
-    prices(recurring.filter((item) => item.interval === "yearly"))
+    totals(recurring.filter((item) => item.interval === "yearly"))
   );
 
   return {
     oneTimeSubtotal,
+    discount,
+    oneTimeNet,
     vat,
-    oneTimeTotal: add(oneTimeSubtotal, vat),
+    oneTimeTotal: add(oneTimeNet, vat),
     monthlyRecurring,
     yearlyRecurring,
   };

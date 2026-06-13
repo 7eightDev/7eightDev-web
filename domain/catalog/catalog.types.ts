@@ -9,6 +9,15 @@ export type PricingModel =
   | { readonly kind: "on_request" };
 
 /**
+ * How a service is billed. Drives whether the composer adds the item as a
+ * one-off line or as a recurring fee — recurring revenue (e.g. maintenance)
+ * must never silently collapse into a one-time charge.
+ */
+export type BillingModel =
+  | { readonly kind: "one_time" }
+  | { readonly kind: "recurring"; readonly interval: "monthly" | "yearly" };
+
+/**
  * A composable service from the 7eightDev catalog.
  * Quotes snapshot these values into line items at composition time —
  * catalog changes never affect already-issued quotes.
@@ -19,6 +28,8 @@ export interface ServiceCatalogItem {
   readonly title: string;
   readonly description: string;
   readonly pricing: PricingModel;
+  /** One-time by default; recurring items carry their billing interval. */
+  readonly billing: BillingModel;
   /** Suggested default when added to a quote. */
   readonly defaultOptional: boolean;
 }
