@@ -1,3 +1,4 @@
+import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { assertTransition } from "@/domain/quote/quote.status";
 import type { AcceptanceRecord, Quote } from "@/domain/quote/quote.types";
@@ -15,11 +16,18 @@ export type AcceptQuoteResult =
 
 /**
  * Use case: the client accepts a quote from the public page.
- * Pure application logic — transport (server action) and persistence
- * (repository) are injected.
+ * Pure application logic — transport (server action), persistence
+ * (repository) and notification (notifier) are injected.
+ *
+ * The owner alert is a *best-effort* side effect fired after the quote is
+ * persisted: acceptance is a client action and must succeed regardless of
+ * email delivery, so a failed/slow notification never fails the use case — it
+ * is only logged. This is the opposite stance to {@link sendQuote}, where
+ * delivery is the gate for the `draft → sent` transition.
  */
 export async function acceptQuote(
   repository: QuoteRepository,
+  notifier: QuoteNotificationPort,
   input: AcceptQuoteInput,
   now: () => Date = () => new Date()
 ): Promise<AcceptQuoteResult> {
@@ -63,6 +71,21 @@ export async function acceptQuote(
 
   const accepted: Quote = { ...quote, status: "accepted", acceptance };
   await repository.save(accepted);
+
+  // Best-effort owner alert: never let a notification failure fail acceptance.
+  try {
+    const notification = await notifier.notifyQuoteAccepted(accepted);
+    if (!notification.ok) {
+      console.error(
+        `[acceptQuote] Notifica "accettato" non riuscita per ${accepted.number}: ${notification.error}`
+      );
+    }
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    console.error(
+      `[acceptQuote] Errore inatteso nella notifica "accettato" per ${accepted.number}: ${message}`
+    );
+  }
 
   return { ok: true, quote: accepted };
 }

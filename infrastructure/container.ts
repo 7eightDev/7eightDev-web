@@ -23,7 +23,16 @@ function buildQuoteNotifier(): QuoteNotificationPort {
   const appBaseUrl = process.env.APP_BASE_URL;
 
   if (apiKey && from && replyTo && appBaseUrl) {
-    return new ResendQuoteNotificationAdapter({ apiKey, from, replyTo, appBaseUrl });
+    // Owner inbox for the "quote accepted" alert; falls back to the
+    // client-facing reply-to address when not set explicitly.
+    const ownerInbox = process.env.QUOTE_ACCEPT_NOTIFY_TO?.trim() || replyTo;
+    return new ResendQuoteNotificationAdapter({
+      apiKey,
+      from,
+      replyTo,
+      appBaseUrl,
+      ownerInbox,
+    });
   }
 
   console.warn(
