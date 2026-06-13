@@ -9,12 +9,16 @@ import { formatDateIt } from "@/presentation/lib/format-date";
 
 export const dynamic = "force-dynamic";
 
+// All badges share the soft border weight of the original "sent" style
+// (status color mixed 45% into the base border); the text color carries
+// the status meaning. Color follows the lifecycle: neutral (draft/expired),
+// in-flight cyan (sent), brand lime = the win (accepted), coral (rejected).
 const STATUS_STYLE: Record<Quote["status"], string> = {
-  draft: "text-muted border-border",
-  sent: "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
-  accepted: "text-accent border-accent",
-  rejected: "text-[var(--coral)] border-[var(--coral)]",
-  expired: "text-muted border-border",
+  draft: "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
+  sent: "text-accent-cyan border-[color-mix(in_oklab,var(--color-accent-cyan)_45%,var(--border))]",
+  accepted: "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
+  rejected: "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+  expired: "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
 };
 
 const STATUS_LABEL: Record<Quote["status"], string> = {
@@ -62,6 +66,15 @@ export default async function QuotesPage() {
               quote,
               quote.acceptance?.selectedOptionalIds ?? []
             ).oneTimeTotal;
+            // Surface the domain's send preconditions early in the UI so an
+            // incomplete draft can't be sent by mistake. sendQuote() remains
+            // the authoritative gate; this only mirrors it for UX.
+            const sendBlockReason =
+              quote.lineItems.length === 0
+                ? "Aggiungi almeno una voce prima di inviare."
+                : !quote.client.email?.trim()
+                  ? "Aggiungi un'email cliente prima di inviare."
+                  : undefined;
             return (
               <div
                 key={quote.id}
@@ -82,11 +95,16 @@ export default async function QuotesPage() {
                   {formatMoney(total)}
                 </span>
                 <span
-                  className={`font-mono text-[11px] tracking-[0.08em] uppercase px-[10px] py-[5px] rounded-full border ${STATUS_STYLE[quote.status]}`}
+                  className={`inline-flex items-center justify-center w-[104px] font-mono text-[11px] tracking-[0.08em] uppercase py-[5px] rounded-full border ${STATUS_STYLE[quote.status]}`}
                 >
                   {STATUS_LABEL[quote.status]}
                 </span>
-                <QuoteRowActions quoteId={quote.id} status={quote.status} />
+                <QuoteRowActions
+                  quoteId={quote.id}
+                  status={quote.status}
+                  clientName={quote.client.name}
+                  sendBlockReason={sendBlockReason}
+                />
               </div>
             );
           })}
