@@ -1,8 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { acceptQuote } from "@/application/quote/accept-quote";
-import { quoteRepository } from "@/infrastructure/container";
+import { quoteNotifier, quoteRepository } from "@/infrastructure/container";
 
 export interface AcceptQuoteActionResult {
   readonly ok: boolean;
@@ -22,12 +23,20 @@ export async function acceptQuoteAction(
   const ipAddress =
     headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? undefined;
 
-  const result = await acceptQuote(quoteRepository, {
+  const result = await acceptQuote(quoteRepository, quoteNotifier, {
     quoteId,
     acceptedByName,
     selectedOptionalIds,
     ipAddress,
   });
 
-  return result.ok ? { ok: true } : { ok: false, error: result.error };
+  if (!result.ok) return { ok: false, error: result.error };
+
+  // Bust the cached views so the new "accepted" status is consistent
+  // everywhere: the admin list and the public quote page (which otherwise
+  // serves an optimistic/stale render).
+  revalidatePath("/admin/quotes");
+  revalidatePath(`/p/${quoteId}`);
+
+  return { ok: true };
 }

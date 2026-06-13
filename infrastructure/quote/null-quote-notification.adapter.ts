@@ -17,4 +17,13 @@ export class NullQuoteNotificationAdapter implements QuoteNotificationPort {
     );
     return { ok: true, messageId: `null-${quote.id}` };
   }
+
+  async notifyQuoteAccepted(quote: Quote): Promise<NotificationResult> {
+    console.warn(
+      `[NullQuoteNotificationAdapter] Nessun provider email configurato — ` +
+        `alert "accettato" simulato per il preventivo ${quote.number} ` +
+        `(accettato da ${quote.acceptance?.acceptedByName ?? quote.client.name}).`
+    );
+    return { ok: true, messageId: `null-accepted-${quote.id}` };
+  }
 }

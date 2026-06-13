@@ -57,6 +57,9 @@ function notifier(
       spy.calls.push(quote);
       return result;
     },
+    async notifyQuoteAccepted() {
+      return { ok: true, messageId: "accepted-msg-1" } as NotificationResult;
+    },
   };
   return spy;
 }
