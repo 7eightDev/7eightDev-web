@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ArrowUpRight01Icon,
-  CopyLinkIcon,
   Edit02Icon,
+  Link01Icon,
+  MoreHorizontalIcon,
   SentIcon,
   Tick02Icon
 } from '@hugeicons/core-free-icons';
@@ -41,11 +42,20 @@ interface QuoteRowActionsProps {
   sendBlockReason?: string;
 }
 
+// Ghost by default: no bordered box, so the row reads quieter and the only
+// filled control (Send, below) clearly carries the primary action. The box
+// surfaces on hover/focus instead of sitting there permanently.
 const iconBtn =
-  'inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border text-soft cursor-pointer transition-all duration-150 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+  'inline-flex items-center justify-center w-9 h-9 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
 const sendBtn =
   'inline-flex items-center justify-center w-9 h-9 rounded-lg bg-accent text-[#0a0b0d] cursor-pointer transition-all duration-150 hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+// The row stays quiet by default: a single toggle holds the actions. Clicking
+// it slides the icon cluster in from the right, inside the row, so the list
+// reads as one calm control per row and the status badges keep their alignment.
+const toggleBtn =
+  'relative z-20 inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
 export function QuoteRowActions({
   quoteId,
@@ -56,7 +66,29 @@ export function QuoteRowActions({
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const cellRef = useRef<HTMLDivElement>(null);
+
+  // The slide-in lives inside the row (no portal), so dismissal is ours to
+  // manage: collapse on outside pointer-down or Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (cellRef.current && !cellRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(
@@ -79,7 +111,18 @@ export function QuoteRowActions({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex items-center gap-2 justify-end">
+      <div
+        ref={cellRef}
+        className="relative flex items-center justify-self-end self-stretch"
+      >
+        <div
+          inert={!menuOpen}
+          className={`absolute -top-4 -bottom-4 -right-5 z-10 flex items-center gap-1 rounded-l-lg bg-[rgba(35,38,46,0.82)] pl-4 pr-16 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+            menuOpen
+              ? 'translate-x-0 opacity-100'
+              : 'translate-x-full opacity-0'
+          }`}
+        >
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -89,7 +132,7 @@ export function QuoteRowActions({
               className={iconBtn}
             >
               <HugeiconsIcon
-                icon={copied ? Tick02Icon : CopyLinkIcon}
+                icon={copied ? Tick02Icon : Link01Icon}
                 size={18}
                 aria-hidden
                 className={copied ? 'text-accent' : undefined}
@@ -201,6 +244,20 @@ export function QuoteRowActions({
             </AlertDialog>
           </>
         )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Mostra le azioni del preventivo"
+          aria-expanded={menuOpen}
+          className={`${toggleBtn} ${
+            menuOpen
+              ? 'bg-foreground/[0.06] text-accent'
+              : 'text-soft hover:text-foreground'
+          }`}
+        >
+          <HugeiconsIcon icon={MoreHorizontalIcon} size={18} aria-hidden />
+        </button>
       </div>
     </TooltipProvider>
   );
