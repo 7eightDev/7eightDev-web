@@ -8,8 +8,6 @@ import {
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { ClerkProvider } from '@clerk/nextjs';
-import { Nav } from '@/presentation/features/landing/nav';
-import { QuoteProvider } from '@/presentation/features/landing/quote-context';
 
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -44,12 +42,7 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <ClerkProvider>
-          <QuoteProvider>
-            <Nav />
-            {children}
-          </QuoteProvider>
-        </ClerkProvider>
+        <ClerkProvider>{children}</ClerkProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { Home } from "lucide-react";
 import { Container } from "@/presentation/components/shared/container";
 import { LogoLockup } from "@/presentation/components/shared/logo";
 
@@ -25,6 +26,16 @@ export default function AdminLayout({
             <span className="font-mono text-[13px] text-soft hidden sm:block">admin</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              aria-label="Torna alla home del sito"
+              title="Home del sito"
+              className="flex items-center gap-2 font-mono text-[13px] text-soft hover:text-foreground transition-colors duration-150 no-underline"
+            >
+              <Home className="size-4" />
+              <span className="hidden sm:block">Sito</span>
+            </Link>
+            <span className="w-px h-[22px] bg-border hidden sm:block" />
             <div className="shrink-0">
               <UserButton />
             </div>
