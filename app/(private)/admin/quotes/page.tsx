@@ -4,6 +4,12 @@ import type { Quote } from "@/domain/quote/quote.types";
 import { formatMoney } from "@/domain/shared/money";
 import { quoteRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
+import { QuoteFilterBar } from "@/presentation/features/admin/quote-filter-bar";
+import {
+  filterQuotes,
+  parseDueFilter,
+  parseStatusFilter,
+} from "@/presentation/features/admin/quote-filters";
 import { QuoteRowActions } from "@/presentation/features/admin/quote-row-actions";
 import { formatDateIt } from "@/presentation/lib/format-date";
 
@@ -29,8 +35,25 @@ const STATUS_LABEL: Record<Quote["status"], string> = {
   expired: "scaduto",
 };
 
-export default async function QuotesPage() {
+export default async function QuotesPage({
+  searchParams,
+}: {
+  // Next.js 16: searchParams is async. Filters are read from the URL so this
+  // stays a Server Component and the filtered view is shareable/bookmarkable.
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const statusParam = Array.isArray(params.status)
+    ? params.status[0]
+    : params.status;
+  const dueParam = Array.isArray(params.due) ? params.due[0] : params.due;
+  const filters = {
+    status: parseStatusFilter(statusParam),
+    due: parseDueFilter(dueParam),
+  };
+
   const quotes = await quoteRepository.findAll();
+  const visibleQuotes = filterQuotes(quotes, filters);
 
   return (
     <Container className="max-w-[1100px] py-12">
@@ -60,8 +83,26 @@ export default async function QuotesPage() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {quotes.map((quote) => {
+        <>
+          <QuoteFilterBar status={filters.status} due={filters.due} />
+
+          <p className="font-mono text-[12.5px] text-muted mb-3">
+            {visibleQuotes.length}{" "}
+            {visibleQuotes.length === 1 ? "preventivo" : "preventivi"}
+            {visibleQuotes.length !== quotes.length
+              ? ` su ${quotes.length}`
+              : ""}
+          </p>
+
+          {visibleQuotes.length === 0 ? (
+            <div className="p-10 rounded-2xl bg-surface border border-border text-center">
+              <p className="font-hanken text-soft">
+                Nessun preventivo corrisponde ai filtri selezionati.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+          {visibleQuotes.map((quote) => {
             const total = calculateQuote(
               quote,
               quote.acceptance?.selectedOptionalIds ?? []
@@ -108,7 +149,9 @@ export default async function QuotesPage() {
               </div>
             );
           })}
-        </div>
+            </div>
+          )}
+        </>
       )}
     </Container>
   );
