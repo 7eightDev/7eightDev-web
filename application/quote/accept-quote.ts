@@ -75,7 +75,11 @@ export async function acceptQuote(
   // Best-effort owner alert: never let a notification failure fail acceptance.
   try {
     const notification = await notifier.notifyQuoteAccepted(accepted);
-    if (!notification.ok) {
+    if (notification.ok) {
+      console.info(
+        `[acceptQuote] Notifica "accettato" inviata per ${accepted.number} (messageId: ${notification.messageId}).`
+      );
+    } else {
       console.error(
         `[acceptQuote] Notifica "accettato" non riuscita per ${accepted.number}: ${notification.error}`
       );
