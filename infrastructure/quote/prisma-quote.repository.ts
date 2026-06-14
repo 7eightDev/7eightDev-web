@@ -37,6 +37,7 @@ export class PrismaQuoteRepository implements QuoteRepository {
       intro: row.intro,
       issuedAt: row.issuedAt,
       validUntil: row.validUntil,
+      fiscalRegime: row.fiscalRegime,
       vatRate: row.vatRate,
       lineItems: row.lineItems as object,
       metadata: row.metadata as object,

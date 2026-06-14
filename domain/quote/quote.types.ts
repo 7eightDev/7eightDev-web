@@ -1,4 +1,5 @@
 import type { Money } from "@/domain/shared/money";
+import type { FiscalRegime } from "@/domain/quote/fiscal";
 
 /* ----------------------------- Status ----------------------------- */
 
@@ -110,7 +111,9 @@ export interface Quote {
   readonly intro: string;
   readonly issuedAt: string; // ISO 8601
   readonly validUntil: string; // ISO 8601
-  readonly vatRate: number; // e.g. 0.22
+  /** Fiscal regime; `occasional` always implies vatRate 0. */
+  readonly fiscalRegime: FiscalRegime;
+  readonly vatRate: number; // e.g. 0.22 — always 0 when fiscalRegime is "occasional"
   readonly lineItems: readonly LineItem[];
   readonly metadata: QuoteMetadata;
   readonly acceptance?: AcceptanceRecord;

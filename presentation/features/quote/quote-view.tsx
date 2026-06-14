@@ -67,6 +67,7 @@ export function QuoteView({ quote }: QuoteViewProps) {
   };
 
   const meta = quote.metadata;
+  const isOccasional = quote.fiscalRegime === "occasional";
   const vatLabel = `IVA ${Math.round(quote.vatRate * 100)}%`;
 
   return (
@@ -191,10 +192,18 @@ export function QuoteView({ quote }: QuoteViewProps) {
               </div>
             )}
             <div className="flex items-baseline justify-between gap-4 mb-4 pb-4 border-b border-border">
-              <span className="font-hanken text-[14.5px] text-soft">{vatLabel}</span>
-              <span className="font-mono text-[14.5px] text-soft whitespace-nowrap">
-                {formatMoney(calc.vat)}
-              </span>
+              {isOccasional ? (
+                <span className="font-hanken text-[14.5px] text-soft">
+                  Fuori campo IVA
+                </span>
+              ) : (
+                <>
+                  <span className="font-hanken text-[14.5px] text-soft">{vatLabel}</span>
+                  <span className="font-mono text-[14.5px] text-soft whitespace-nowrap">
+                    {formatMoney(calc.vat)}
+                  </span>
+                </>
+              )}
             </div>
             <div className="flex items-baseline justify-between gap-4">
               <span className="font-space text-lg font-semibold text-foreground">
@@ -216,6 +225,18 @@ export function QuoteView({ quote }: QuoteViewProps) {
             )}
           </div>
         </Reveal>
+
+        {isOccasional && (
+          <Reveal delay={80}>
+            <p className="mt-4 ml-auto max-w-[420px] font-hanken text-[12.5px] leading-relaxed text-muted">
+              Operazione fuori campo IVA — prestazione occasionale ai sensi
+              dell&rsquo;art. 67 TUIR. L&rsquo;importo indicato è il compenso lordo;
+              se il committente è sostituto d&rsquo;imposta, è soggetto a ritenuta
+              d&rsquo;acconto del 20%. Marca da bollo da €2 sulla ricevuta per
+              importi superiori a €77,47.
+            </p>
+          </Reveal>
+        )}
 
         {/* 03 — tempi */}
         {meta.phases && meta.phases.length > 0 && (

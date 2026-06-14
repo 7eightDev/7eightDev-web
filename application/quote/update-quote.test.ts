@@ -15,6 +15,7 @@ function existingQuote(status: QuoteStatus = "draft"): Quote {
     intro: "Bozza iniziale.",
     issuedAt: "2026-06-10T00:00:00.000Z",
     validUntil: "2026-07-10T23:59:59.999Z",
+    fiscalRegime: "vat",
     vatRate: 0.22,
     lineItems: [
       {

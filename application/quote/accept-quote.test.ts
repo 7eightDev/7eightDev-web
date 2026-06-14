@@ -16,6 +16,7 @@ const baseQuote: Quote = {
   intro: "",
   issuedAt: "2026-06-01T00:00:00.000Z",
   validUntil: "2026-07-01T00:00:00.000Z",
+  fiscalRegime: "vat",
   vatRate: 0.22,
   lineItems: [
     {

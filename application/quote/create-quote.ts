@@ -8,6 +8,7 @@ import {
   buildClient,
   buildLineItem,
   buildMetadata,
+  buildVatRate,
 } from "@/application/quote/quote-builders";
 
 export type CreateQuoteResult =
@@ -63,7 +64,8 @@ export async function createQuote(
     intro: input.intro,
     issuedAt: issuedAt.toISOString(),
     validUntil: validUntil.toISOString(),
-    vatRate: input.vatRate,
+    fiscalRegime: input.fiscalRegime,
+    vatRate: buildVatRate(input),
     lineItems: input.lineItems.map(buildLineItem),
     metadata: buildMetadata(input),
   };

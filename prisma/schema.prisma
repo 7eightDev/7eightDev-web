@@ -15,6 +15,11 @@ enum QuoteStatus {
   expired
 }
 
+enum FiscalRegime {
+  vat
+  occasional
+}
+
 enum CatalogTier {
   web_assets
   enterprise
@@ -70,6 +75,9 @@ model Quote {
   intro      String
   issuedAt   DateTime
   validUntil DateTime
+  // Default `vat` keeps existing rows (created under VAT assumptions) correct on
+  // backfill; the composer always sends the regime explicitly (default occasional).
+  fiscalRegime FiscalRegime @default(vat)
   vatRate    Float
   lineItems  Json
   metadata   Json
