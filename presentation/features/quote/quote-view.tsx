@@ -74,20 +74,20 @@ export function QuoteView({ quote }: QuoteViewProps) {
     <>
       {/* top bar */}
       <header className="sticky top-0 z-40 bg-[rgba(10,11,13,0.85)] backdrop-blur-[14px] border-b border-border print:hidden">
-        <Container className="max-w-[980px] h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <Container className="max-w-[980px] h-16 flex items-center justify-between gap-3 px-5 sm:px-8">
+          <div className="flex items-center gap-4 min-w-0">
             <LogoLockup size={15} />
-            <span className="w-px h-[22px] bg-border" />
-            <span className="font-mono text-[13px] text-soft">
+            <span className="hidden sm:block w-px h-[22px] bg-border" />
+            <span className="hidden sm:block font-mono text-[13px] text-soft truncate">
               Preventivo ·{" "}
               <span className="text-foreground">{quote.client.name}</span>
             </span>
           </div>
-          <div className="flex items-center gap-[10px]">
+          <div className="flex items-center gap-[10px] shrink-0">
             <button
               type="button"
               onClick={() => window.print()}
-              className="font-mono text-sm font-semibold px-[14px] py-[9px] rounded-[9px] border border-border text-foreground bg-transparent cursor-pointer transition-all duration-150 hover:border-accent hover:text-accent"
+              className="font-mono text-sm font-semibold px-[14px] py-[9px] rounded-[9px] border border-border text-foreground bg-transparent cursor-pointer transition-all duration-150 hover:border-accent hover:text-accent max-[400px]:hidden"
             >
               Stampa
             </button>
@@ -103,11 +103,11 @@ export function QuoteView({ quote }: QuoteViewProps) {
         </Container>
       </header>
 
-      <Container className="max-w-[980px] px-8 pt-14 pb-[100px]">
+      <Container className="max-w-[980px] px-5 sm:px-8 pt-14 pb-[100px]">
         {/* header */}
         <Reveal>
           <Eyebrow>
-            preventivo · /p/{quote.id.slice(0, 18)}…
+            preventivo · {quote.number}
           </Eyebrow>
           <h1 className="font-space font-semibold text-[clamp(32px,4.4vw,48px)] tracking-[-0.03em] leading-[1.05] mt-[18px] mb-0 text-foreground">
             {quote.project}

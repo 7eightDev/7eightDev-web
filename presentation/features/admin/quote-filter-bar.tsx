@@ -100,12 +100,20 @@ export function QuoteFilterBar({ status, due }: QuoteFilterBarProps) {
         value={status}
         onValueChange={(v) => setParam('status', v, DEFAULT_STATUS_FILTER)}
         aria-label="Filtra per stato"
-        className="items-end gap-x-5 gap-y-1"
+        className="items-end gap-x-4 gap-y-1 sm:gap-x-5"
       >
         {STATUS_FILTER_VALUES.map((value) => (
-          <ToggleGroupItem key={value} value={value} className={tab}>
+          <ToggleGroupItem
+            key={value}
+            value={value}
+            className={tab}
+            title={STATUS_FILTER_LABEL[value]}
+            aria-label={STATUS_FILTER_LABEL[value]}
+          >
             <HugeiconsIcon icon={STATUS_ICON[value]} size={15} aria-hidden />
-            {STATUS_FILTER_LABEL[value]}
+            <span className="hidden sm:inline">
+              {STATUS_FILTER_LABEL[value]}
+            </span>
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
