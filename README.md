@@ -12,6 +12,7 @@ Engineering-first digital studio — corporate site & B2B **Digital Quote System
 ![Prisma](https://img.shields.io/badge/Prisma-PostgreSQL-2D3748?logo=prisma&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-78%20passing-2ea44f)
 ![Architecture](https://img.shields.io/badge/architecture-DDD-6E56CF)
+![License](https://img.shields.io/badge/license-proprietary-blue)
 
 <br/>
 
