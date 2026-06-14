@@ -6,6 +6,7 @@ import type {
   QuoteMetadata,
   QuoteStatus,
 } from "@/domain/quote/quote.types";
+import type { FiscalRegime } from "@/domain/quote/fiscal";
 
 /**
  * Structural row type matching the `quotes` table.
@@ -21,6 +22,7 @@ export interface QuoteRow {
   intro: string;
   issuedAt: Date;
   validUntil: Date;
+  fiscalRegime: FiscalRegime;
   vatRate: number;
   lineItems: unknown;
   metadata: unknown;
@@ -37,6 +39,8 @@ export function rowToQuote(row: QuoteRow): Quote {
     intro: row.intro,
     issuedAt: row.issuedAt.toISOString(),
     validUntil: row.validUntil.toISOString(),
+    // Legacy rows predating the column default to "vat" (their vatRate is honoured).
+    fiscalRegime: (row.fiscalRegime as FiscalRegime | undefined) ?? "vat",
     vatRate: row.vatRate,
     lineItems: row.lineItems as LineItem[],
     metadata: (row.metadata ?? {}) as QuoteMetadata,
@@ -54,6 +58,7 @@ export function quoteToRow(quote: Quote): QuoteRow {
     intro: quote.intro,
     issuedAt: new Date(quote.issuedAt),
     validUntil: new Date(quote.validUntil),
+    fiscalRegime: quote.fiscalRegime,
     vatRate: quote.vatRate,
     lineItems: quote.lineItems,
     metadata: quote.metadata,

@@ -144,4 +144,21 @@ describe("createQuote use case", () => {
     );
     expect(repo.saved?.metadata.discount).toBeUndefined();
   });
+
+  it("defaults to the vat regime and honours the typed vatRate when omitted", async () => {
+    const repo = makeRepo();
+    await createQuote({ repository: repo, now: NOW }, validInput);
+    expect(repo.saved?.fiscalRegime).toBe("vat");
+    expect(repo.saved?.vatRate).toBe(0.22);
+  });
+
+  it("forces vatRate to 0 under the occasional regime, ignoring the typed value", async () => {
+    const repo = makeRepo();
+    await createQuote(
+      { repository: repo, now: NOW },
+      { ...validInput, fiscalRegime: "occasional", vatRate: 0.22 }
+    );
+    expect(repo.saved?.fiscalRegime).toBe("occasional");
+    expect(repo.saved?.vatRate).toBe(0);
+  });
 });

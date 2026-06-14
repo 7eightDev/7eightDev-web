@@ -46,6 +46,15 @@ export function buildDiscount(input?: DiscountInput): Discount | undefined {
   return { kind: "fixed", amount: moneyFromUnits(input.amountUnits) };
 }
 
+/**
+ * Resolves the effective VAT rate. Prestazione occasionale is outside the
+ * scope of VAT, so the regime — not the form field — is the source of truth:
+ * an "occasional" quote is always 0, regardless of what was typed.
+ */
+export function buildVatRate(input: CreateQuoteInput): number {
+  return input.fiscalRegime === "occasional" ? 0 : input.vatRate;
+}
+
 export function buildClient(input: CreateQuoteInput): ClientInfo {
   return {
     name: input.clientName,

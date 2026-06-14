@@ -7,6 +7,11 @@ import {
 } from "@/application/quote/admin.actions";
 import type { ServiceCatalogItem } from "@/domain/catalog/catalog.types";
 import type { Quote } from "@/domain/quote/quote.types";
+import {
+  type FiscalRegime,
+  netAfterWithholding,
+  OCCASIONAL_WITHHOLDING_RATE,
+} from "@/domain/quote/fiscal";
 import { formatMoney, moneyFromUnits, sum } from "@/domain/shared/money";
 import { cn } from "@/presentation/lib/utils";
 import {
@@ -47,11 +52,16 @@ interface InitialState {
   project: string;
   intro: string;
   validUntil: string;
+  fiscalRegime: FiscalRegime;
   vatPercent: number;
   items: LineItemDraft[];
   phases: Pair[];
   terms: Pair[];
   techStack: Pair[];
+  /** Per-quote visibility of optional sections on the public page. */
+  showPhases: boolean;
+  showTerms: boolean;
+  showTechStack: boolean;
   timelineNote: string;
   discountKind: DiscountKind;
   discountValue: number;
@@ -76,6 +86,7 @@ function quoteToState(quote: Quote): InitialState {
     project: quote.project,
     intro: quote.intro,
     validUntil: quote.validUntil.slice(0, 10),
+    fiscalRegime: quote.fiscalRegime,
     vatPercent: Math.round(quote.vatRate * 100),
     items: quote.lineItems.map((li) => ({
       key: nextKey(),
@@ -99,6 +110,10 @@ function quoteToState(quote: Quote): InitialState {
       (t) => ({ a: t.label, b: t.technology }),
       DEFAULT_STACK
     ),
+    // Section is "shown" iff the saved quote actually carried its data.
+    showPhases: (meta.phases?.length ?? 0) > 0,
+    showTerms: (meta.terms?.length ?? 0) > 0,
+    showTechStack: (meta.techStack?.length ?? 0) > 0,
     timelineNote: meta.timelineNote ?? "",
     discountKind: discount ? discount.kind : "none",
     discountValue: discount
@@ -117,11 +132,17 @@ function blankState(): InitialState {
     project: "",
     intro: "",
     validUntil: defaultValidUntil(),
-    vatPercent: 22,
+    // Default regime: prestazione occasionale (current operating status).
+    fiscalRegime: "occasional",
+    vatPercent: 0,
     items: [],
     phases: DEFAULT_PHASES,
     terms: DEFAULT_TERMS,
     techStack: DEFAULT_STACK,
+    // Defaults: fasi e termini visibili, stack tecnico nascosto (target non tecnico).
+    showPhases: true,
+    showTerms: true,
+    showTechStack: false,
     timelineNote: "",
     discountKind: "none",
     discountValue: 0,
@@ -188,6 +209,31 @@ const inputClass =
 const labelClass =
   "font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-[6px] block";
 
+/** Checkbox that toggles whether an optional section is shown on the public quote. */
+function SectionToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        className="w-3.5 h-3.5 accent-accent"
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
+        Mostra «{label}» al cliente
+      </span>
+    </label>
+  );
+}
+
 export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
   const isEdit = !!quote;
   const [initial] = useState<InitialState>(() =>
@@ -200,11 +246,17 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
   const [project, setProject] = useState(initial.project);
   const [intro, setIntro] = useState(initial.intro);
   const [validUntil, setValidUntil] = useState(initial.validUntil);
+  const [fiscalRegime, setFiscalRegime] = useState<FiscalRegime>(
+    initial.fiscalRegime
+  );
   const [vatPercent, setVatPercent] = useState(initial.vatPercent);
   const [items, setItems] = useState<LineItemDraft[]>(initial.items);
   const [phases, setPhases] = useState<Pair[]>(initial.phases);
   const [terms, setTerms] = useState<Pair[]>(initial.terms);
   const [techStack, setTechStack] = useState<Pair[]>(initial.techStack);
+  const [showPhases, setShowPhases] = useState(initial.showPhases);
+  const [showTerms, setShowTerms] = useState(initial.showTerms);
+  const [showTechStack, setShowTechStack] = useState(initial.showTechStack);
   const [timelineNote, setTimelineNote] = useState(initial.timelineNote);
   const [tier, setTier] = useState<"web_assets" | "enterprise">("web_assets");
   const [discountKind, setDiscountKind] = useState<DiscountKind>(
@@ -292,7 +344,8 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
         project,
         intro,
         validUntil,
-        vatRate: vatPercent / 100,
+        fiscalRegime,
+        vatRate: fiscalRegime === "occasional" ? 0 : vatPercent / 100,
         lineItems: items.map((item) => ({
           catalogRef: item.catalogRef,
           title: item.title,
@@ -303,9 +356,9 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
           type: item.type,
           interval: item.interval,
         })),
-        phases: phases.filter((p) => p.a && p.b),
-        terms: terms.filter((t) => t.a && t.b),
-        techStack: techStack.filter((t) => t.a && t.b),
+        phases: showPhases ? phases.filter((p) => p.a && p.b) : [],
+        terms: showTerms ? terms.filter((t) => t.a && t.b) : [],
+        techStack: showTechStack ? techStack.filter((t) => t.a && t.b) : [],
         timelineNote,
         discount:
           discountKind === "percent"
@@ -421,11 +474,40 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                     onChange={(e) => setValidUntil(e.target.value)} />
                 </div>
                 <div>
+                  <label className={labelClass}>Regime fiscale</label>
+                  <div className="flex items-center gap-2">
+                    {([
+                      { v: "occasional", label: "Prest. occasionale" },
+                      { v: "vat", label: "IVA" },
+                    ] as const).map((r) => (
+                      <button key={r.v} type="button"
+                        onClick={() => {
+                          setFiscalRegime(r.v);
+                          if (r.v === "occasional") setVatPercent(0);
+                          else if (vatPercent === 0) setVatPercent(22);
+                        }}
+                        className={cn(
+                          "font-mono text-[11px] px-3 py-2 rounded-lg border cursor-pointer transition-all",
+                          fiscalRegime === r.v ? "border-accent text-accent" : "border-border text-muted hover:text-soft"
+                        )}>
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {fiscalRegime === "vat" ? (
+                <div className="sm:max-w-[12rem]">
                   <label className={labelClass}>IVA %</label>
                   <input className={inputClass} type="number" min={0} max={100} value={vatPercent}
                     onChange={(e) => setVatPercent(Number(e.target.value))} />
                 </div>
-              </div>
+              ) : (
+                <p className="font-mono text-[11px] text-muted m-0">
+                  Operazione fuori campo IVA (art. 67 TUIR) · la nota fiscale completa
+                  appare in automatico sul preventivo pubblico.
+                </p>
+              )}
               <div className="mt-4 hidden sm:block">
                 <button type="button" onClick={() => setStep("items")}
                   className="font-mono text-sm font-semibold px-5 py-3 rounded-lg bg-raised border border-border text-soft hover:text-foreground hover:border-accent transition-all">
@@ -536,16 +618,28 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
               <h2 className="font-space text-lg font-semibold text-foreground m-0">
                 Tempi & stack tecnico
               </h2>
-              <PairListEditor label="Fasi (timeline)" aPlaceholder="Discovery" bPlaceholder="Sett. 1"
-                value={phases} onChange={setPhases} />
-              <div>
-                <label className={labelClass}>Nota timeline</label>
-                <input className={inputClass} value={timelineNote}
-                  placeholder="Stima complessiva: ~8 settimane dall’avvio."
-                  onChange={(e) => setTimelineNote(e.target.value)} />
+              <div className="flex flex-col gap-4">
+                <SectionToggle label="Fasi / timeline" checked={showPhases} onChange={setShowPhases} />
+                {showPhases && (
+                  <>
+                    <PairListEditor label="Fasi (timeline)" aPlaceholder="Discovery" bPlaceholder="Sett. 1"
+                      value={phases} onChange={setPhases} />
+                    <div>
+                      <label className={labelClass}>Nota timeline</label>
+                      <input className={inputClass} value={timelineNote}
+                        placeholder="Stima complessiva: ~8 settimane dall’avvio."
+                        onChange={(e) => setTimelineNote(e.target.value)} />
+                    </div>
+                  </>
+                )}
               </div>
-              <PairListEditor label="Stack tecnico" aPlaceholder="Framework" bPlaceholder="Next.js 16"
-                value={techStack} onChange={setTechStack} />
+              <div className="flex flex-col gap-4">
+                <SectionToggle label="Stack tecnico" checked={showTechStack} onChange={setShowTechStack} />
+                {showTechStack && (
+                  <PairListEditor label="Stack tecnico" aPlaceholder="Framework" bPlaceholder="Next.js 16"
+                    value={techStack} onChange={setTechStack} />
+                )}
+              </div>
               <div className="hidden sm:flex gap-3 mt-4">
                 <button type="button" onClick={() => setStep("items")}
                   className="font-mono text-xs font-semibold px-4 py-3 rounded-lg border border-border text-muted hover:text-soft transition-all">
@@ -564,8 +658,13 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
               <h2 className="font-space text-lg font-semibold text-foreground m-0">
                 Termini contrattuali
               </h2>
-              <PairListEditor label="Termini" aPlaceholder="Pagamento" bPlaceholder="40/30/30…"
-                value={terms} onChange={setTerms} bMultiline />
+              <div className="flex flex-col gap-4">
+                <SectionToggle label="Termini" checked={showTerms} onChange={setShowTerms} />
+                {showTerms && (
+                  <PairListEditor label="Termini" aPlaceholder="Pagamento" bPlaceholder="40/30/30…"
+                    value={terms} onChange={setTerms} bMultiline />
+                )}
+              </div>
 
               <div>
                 <label className={labelClass}>Sconto commerciale</label>
@@ -598,6 +697,26 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   </p>
                 )}
               </div>
+
+              {fiscalRegime === "occasional" && (
+                <div className="rounded-lg bg-raised border border-border p-3">
+                  <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-muted m-0 mb-1">
+                    Promemoria interno (non visibile al cliente)
+                  </p>
+                  <p className="font-mono text-[12px] text-soft m-0">
+                    Lordo {formatMoney(totals.netAfterDiscount)} · ritenuta{" "}
+                    {Math.round(OCCASIONAL_WITHHOLDING_RATE * 100)}% → netto a te{" "}
+                    {formatMoney(
+                      moneyFromUnits(
+                        netAfterWithholding(
+                          totals.netAfterDiscount.amountCents,
+                          "occasional"
+                        ) / 100
+                      )
+                    )}
+                  </p>
+                </div>
+              )}
 
               {error && (
                 <p className="font-hanken text-sm text-[var(--coral)] m-0" role="alert">

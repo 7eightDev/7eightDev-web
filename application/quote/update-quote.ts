@@ -5,6 +5,7 @@ import {
   buildClient,
   buildLineItem,
   buildMetadata,
+  buildVatRate,
 } from "@/application/quote/quote-builders";
 
 export type UpdateQuoteResult =
@@ -54,7 +55,8 @@ export async function updateQuote(
     project: input.project,
     intro: input.intro,
     validUntil: validUntil.toISOString(),
-    vatRate: input.vatRate,
+    fiscalRegime: input.fiscalRegime,
+    vatRate: buildVatRate(input),
     lineItems: input.lineItems.map(buildLineItem),
     metadata: buildMetadata(input),
   };

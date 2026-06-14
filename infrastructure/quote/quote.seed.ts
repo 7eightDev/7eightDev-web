@@ -18,6 +18,7 @@ export const AVIS_QUOTE: Quote = {
     "Un sito istituzionale veloce e accessibile, con un’area riservata dove i donatori prenotano la donazione e consultano lo storico. Costruito con Next.js, performante e facile da aggiornare in autonomia.",
   issuedAt: "2026-06-10T00:00:00.000Z",
   validUntil: "2026-07-10T00:00:00.000Z",
+  fiscalRegime: "vat",
   vatRate: 0.22,
   lineItems: [
     {

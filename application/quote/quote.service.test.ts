@@ -47,6 +47,7 @@ const quote: Quote = {
   intro: "Proposta per il rifacimento del sito",
   issuedAt: "2026-06-11T00:00:00.000Z",
   validUntil: "2026-07-11T00:00:00.000Z",
+  fiscalRegime: "vat",
   vatRate: 0.22,
   lineItems,
   metadata: {},

@@ -37,6 +37,12 @@ export const createQuoteInputSchema = z.object({
   project: z.string().min(2, "Nome progetto obbligatorio"),
   intro: z.string(),
   validUntil: z.iso.date("Data di scadenza non valida"),
+  /**
+   * Fiscal regime. Defaults to "vat" for omitted callers (legacy/tests) so
+   * their vatRate is honoured; the composer always sends it explicitly.
+   * When "occasional", the use case forces vatRate to 0.
+   */
+  fiscalRegime: z.enum(["vat", "occasional"]).default("vat"),
   vatRate: z.number().min(0).max(1),
   lineItems: z.array(lineItemInputSchema).min(1, "Aggiungi almeno una voce"),
   /** phases: a = title, b = weeks */
