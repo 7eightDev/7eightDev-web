@@ -94,7 +94,7 @@ When a catalog item is added to a quote, its price and terms are **snapshotted**
 
 - **Private dashboard** (`/admin`) — compose quotes from the Service Catalog, with control over billing, quantity, discounts, and per-quote optional sections (phases, terms, tech stack).
 - **Service Catalog** — full CRUD admin on PostgreSQL, with relational discriminated unions guarded by `CHECK` constraints.
-- **Fiscal regime** — VAT and *prestazione occasionale* (out-of-VAT-scope) handled at the domain level, with automatic VAT rate and explanatory notes.
+- **Fiscal regime** — VAT and a VAT-exempt occasional-service regime, handled at the domain level, with automatic VAT rate and explanatory notes.
 - **Interactive public proposals** — each quote is published to a unique, unguessable URL (`/p/[uuid]`) where the client reviews and accepts.
 - **Email workflow** — branded proposal delivery to clients, plus an owner alert on acceptance, behind a confirmation + validity gate.
 - **Admin tooling** — status & due-date filters, a dev-only email preview/test studio, and a fail-closed Clerk admin allowlist.
