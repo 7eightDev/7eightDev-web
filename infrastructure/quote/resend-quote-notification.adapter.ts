@@ -1,9 +1,11 @@
 import { Resend } from "resend";
+import { calculateQuote } from "@/application/quote/quote.service";
 import type {
   NotificationResult,
   QuoteNotificationPort,
 } from "@/domain/quote/quote-notification.port";
 import type { Quote } from "@/domain/quote/quote.types";
+import { formatMoney } from "@/domain/shared/money";
 
 export interface ResendQuoteNotificationConfig {
   /** Resend API key (server-only secret). */
@@ -45,7 +47,7 @@ export class ResendQuoteNotificationAdapter implements QuoteNotificationPort {
     }
 
     const publicUrl = `${this.config.appBaseUrl.replace(/\/+$/, "")}/p/${quote.id}`;
-    const { subject, html, text } = renderEmail(quote, publicUrl);
+    const { subject, html, text } = renderEmail(quote, publicUrl, this.config.appBaseUrl);
 
     try {
       const { data, error } = await this.client.emails.send({
@@ -72,7 +74,7 @@ export class ResendQuoteNotificationAdapter implements QuoteNotificationPort {
 
   async notifyQuoteAccepted(quote: Quote): Promise<NotificationResult> {
     const publicUrl = `${this.config.appBaseUrl.replace(/\/+$/, "")}/p/${quote.id}`;
-    const { subject, html, text } = renderAcceptedEmail(quote, publicUrl);
+    const { subject, html, text } = renderAcceptedEmail(quote, publicUrl, this.config.appBaseUrl);
 
     try {
       const { data, error } = await this.client.emails.send({
@@ -98,55 +100,108 @@ export class ResendQuoteNotificationAdapter implements QuoteNotificationPort {
   }
 }
 
-/** Minimal, deliverability-friendly body. Replaced later by a branded template. */
-function renderEmail(
+/**
+ * Branded client-facing "quote sent" email (dark, on-brand).
+ * Lean by design: greeting, key figures (base total incl. VAT, recurring,
+ * validity) and a single CTA — the full breakdown lives on the public page.
+ */
+export function renderEmail(
   quote: Quote,
-  publicUrl: string
+  publicUrl: string,
+  appBaseUrl: string
 ): { subject: string; html: string; text: string } {
   const name = quote.client.name;
   const project = quote.project;
   const subject = `Il tuo preventivo da 7eightDev — ${quote.number}`;
 
+  // Optionals aren't selected yet at send time → this is the base figure.
+  const calc = calculateQuote(quote);
+  const total = formatMoney(calc.oneTimeTotal);
+  const hasOptional = quote.lineItems.some((item) => item.optional);
+  const monthly =
+    calc.monthlyRecurring.amountCents > 0
+      ? formatMoney(calc.monthlyRecurring)
+      : null;
+  const yearly =
+    calc.yearlyRecurring.amountCents > 0
+      ? formatMoney(calc.yearlyRecurring)
+      : null;
+  const validUntil = formatDateIt(quote.validUntil);
+  // No partita IVA → prestazione occasionale: the quote is outside the scope of
+  // VAT. Drive the label off the quote's vatRate so a 0 rate never prints "IVA".
+  const vatIncluded = quote.vatRate > 0;
+  const totalCaption = vatIncluded ? "Totale base · IVA inclusa" : "Totale base";
+  const fiscalNote = vatIncluded
+    ? null
+    : "Operazione non soggetta a IVA — prestazione occasionale (art. 67 TUIR).";
+
   const text = [
     `Ciao ${name},`,
     "",
     `trovi qui il preventivo per "${project}" (${quote.number}).`,
+    `${vatIncluded ? "Totale base (IVA inclusa)" : "Totale base"}: ${total}${hasOptional ? " — opzioni aggiuntive selezionabili nel preventivo" : ""}`,
+    fiscalNote ?? "",
+    monthly ? `Canone: ${monthly}/mese` : "",
+    yearly ? `Canone: ${yearly}/anno` : "",
+    `Valido fino al ${validUntil}.`,
+    "",
     "Puoi consultarlo e accettarlo a questo link:",
     publicUrl,
     "",
     "Per qualsiasi domanda rispondi pure a questa email.",
     "",
     "7eightDev",
-  ].join("\n");
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
 
-  const html = `<!doctype html>
-<html lang="it">
-  <body style="margin:0;padding:24px;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;">
-      <tr><td>
-        <p style="margin:0 0 16px;font-size:16px;">Ciao ${escapeHtml(name)},</p>
-        <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">
-          trovi qui il preventivo per <strong>${escapeHtml(project)}</strong>
-          (${escapeHtml(quote.number)}). Puoi consultarlo e accettarlo online:
-        </p>
-        <p style="margin:24px 0;">
-          <a href="${publicUrl}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;">
-            Apri il preventivo
-          </a>
-        </p>
-        <p style="margin:0 0 8px;font-size:13px;color:#71717a;line-height:1.5;">
-          Se il pulsante non funziona, copia questo link nel browser:<br />
-          <a href="${publicUrl}" style="color:#3f3f46;">${publicUrl}</a>
-        </p>
-        <p style="margin:24px 0 0;font-size:14px;color:#52525b;">
-          Per qualsiasi domanda rispondi pure a questa email.<br />— 7eightDev
-        </p>
+  const recurringRows = [
+    monthly
+      ? `<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">+ ${escapeHtml(monthly)} <span style="color:#6B7280;">/ mese</span></td></tr>`
+      : "",
+    yearly
+      ? `<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">+ ${escapeHtml(yearly)} <span style="color:#6B7280;">/ anno</span></td></tr>`
+      : "",
+  ].join("");
+
+  const inner = `
+    <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#EEF1F5;">Ciao ${escapeHtml(name)},</p>
+    <p style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.55;color:#AAB2BF;">
+      ecco il preventivo per <strong style="color:#EEF1F5;">${escapeHtml(project)}</strong>
+      <span style="color:#6B7280;">(${escapeHtml(quote.number)})</span>. Puoi consultarlo, scegliere le opzioni e accettarlo online.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#16191F" style="background:#16191F;border:1px solid #23262E;border-radius:12px;">
+      <tr><td style="padding:18px 20px;border-left:3px solid #C7F94E;border-radius:12px;">
+        <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6B7280;">${escapeHtml(totalCaption)}</p>
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:bold;color:#EEF1F5;">${escapeHtml(total)}</p>
+        ${fiscalNote ? `<p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6B7280;">${escapeHtml(fiscalNote)}</p>` : ""}
+        ${recurringRows}
+        ${hasOptional ? `<p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6B7280;">Opzioni aggiuntive selezionabili direttamente nel preventivo.</p>` : ""}
+        <p style="margin:12px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#AAB2BF;">Valido fino al <strong style="color:#EEF1F5;">${escapeHtml(validUntil)}</strong></p>
       </td></tr>
     </table>
-  </body>
-</html>`;
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px;">
+      <tr><td bgcolor="#C7F94E" style="background:#C7F94E;border-radius:10px;">
+        <a href="${publicUrl}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0A0B0D;text-decoration:none;">Apri il preventivo →</a>
+      </td></tr>
+    </table>
+    <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6B7280;">
+      Se il pulsante non funziona, copia questo link nel browser:<br />
+      <a href="${publicUrl}" style="color:#AAB2BF;word-break:break-all;">${publicUrl}</a>
+    </p>
+    <p style="margin:24px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">
+      Per qualsiasi domanda rispondi pure a questa email.<br />— 7eightDev
+    </p>`;
 
-  return { subject, html, text };
+  return {
+    subject,
+    html: emailShell({
+      appBaseUrl,
+      preheader: `Preventivo ${quote.number} — totale base ${total}, valido fino al ${validUntil}.`,
+      inner,
+    }),
+    text,
+  };
 }
 
 /**
@@ -154,9 +209,10 @@ function renderEmail(
  * deliverability stance as {@link renderEmail}; a branded template can replace
  * this without touching the adapter contract.
  */
-function renderAcceptedEmail(
+export function renderAcceptedEmail(
   quote: Quote,
-  publicUrl: string
+  publicUrl: string,
+  appBaseUrl: string
 ): { subject: string; html: string; text: string } {
   const acceptance = quote.acceptance;
   const acceptedBy = acceptance?.acceptedByName ?? quote.client.name;
@@ -191,7 +247,6 @@ function renderAcceptedEmail(
     `Accettato da: ${acceptedBy}`,
     `Data: ${acceptedAt}`,
     `Opzioni selezionate: ${optionsLine}`,
-    acceptance?.ipAddress ? `IP: ${acceptance.ipAddress}` : "",
     "",
     `Apri il preventivo: ${publicUrl}`,
     "",
@@ -200,34 +255,100 @@ function renderAcceptedEmail(
     .filter((line) => line !== "")
     .join("\n");
 
-  const html = `<!doctype html>
+  const detailRows = [
+    ["Cliente", `${quote.client.name}${company}`],
+    ["Progetto", quote.project],
+    ["Accettato da", acceptedBy],
+    ["Data", acceptedAt],
+    ["Opzioni selezionate", optionsLine],
+  ]
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:10px 0 0;font-family:Arial,Helvetica,sans-serif;">
+          <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6B7280;margin:0 0 3px;">${escapeHtml(label)}</span>
+          <span style="display:block;font-size:15px;line-height:1.45;font-weight:bold;color:#EEF1F5;">${escapeHtml(value)}</span>
+        </td></tr>`
+    )
+    .join("");
+
+  const inner = `
+    <p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#EEF1F5;">
+      <span style="color:#C7F94E;">✓</span> Preventivo ${escapeHtml(quote.number)} accettato
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#16191F" style="background:#16191F;border:1px solid #23262E;border-radius:12px;">
+      <tr><td style="padding:16px 20px;border-left:3px solid #C7F94E;border-radius:12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>
+      </td></tr>
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:36px 0 0;">
+      <tr><td bgcolor="#C7F94E" style="background:#C7F94E;border-radius:10px;">
+        <a href="${publicUrl}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0A0B0D;text-decoration:none;">Apri il preventivo →</a>
+      </td></tr>
+    </table>`;
+
+  return {
+    subject,
+    html: emailShell({
+      appBaseUrl,
+      preheader: `${acceptedBy} ha accettato il preventivo ${quote.number}.`,
+      inner,
+    }),
+    text,
+  };
+}
+
+/** Shared dark, on-brand email layout: logo header + content card + footer. */
+function emailShell(opts: {
+  appBaseUrl: string;
+  preheader: string;
+  inner: string;
+}): string {
+  const logo = `${opts.appBaseUrl.replace(/\/+$/, "")}/icon-192.png`;
+  return `<!doctype html>
 <html lang="it">
-  <body style="margin:0;padding:24px;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;">
-      <tr><td>
-        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;">
-          ✅ Preventivo ${escapeHtml(quote.number)} accettato
-        </p>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;line-height:1.6;color:#3f3f46;">
-          <tr><td style="padding:2px 0;"><strong>Cliente:</strong> ${escapeHtml(quote.client.name)}${escapeHtml(company)}</td></tr>
-          <tr><td style="padding:2px 0;"><strong>Progetto:</strong> ${escapeHtml(quote.project)}</td></tr>
-          <tr><td style="padding:2px 0;"><strong>Accettato da:</strong> ${escapeHtml(acceptedBy)}</td></tr>
-          <tr><td style="padding:2px 0;"><strong>Data:</strong> ${escapeHtml(acceptedAt)}</td></tr>
-          <tr><td style="padding:2px 0;"><strong>Opzioni selezionate:</strong> ${escapeHtml(optionsLine)}</td></tr>
-          ${acceptance?.ipAddress ? `<tr><td style="padding:2px 0;"><strong>IP:</strong> ${escapeHtml(acceptance.ipAddress)}</td></tr>` : ""}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+  </head>
+  <body style="margin:0;padding:0;background:#0A0B0D;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(opts.preheader)}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0A0B0D" style="background:#0A0B0D;padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+          <tr><td style="padding:0 4px 20px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;padding-right:10px;">
+                <img src="${logo}" width="36" height="36" alt="7eightDev" style="display:block;border-radius:8px;" />
+              </td>
+              <td style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:-0.5px;color:#EEF1F5;">
+                7eight<span style="color:#C7F94E;">Dev</span>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td bgcolor="#101216" style="background:#101216;border:1px solid #23262E;border-radius:16px;padding:32px;">
+            ${opts.inner}
+          </td></tr>
+          <tr><td style="padding:20px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#6B7280;">
+            7eightDev · Engineering-first web &amp; software<br />
+            Hai ricevuto questa email perché ti è stato inviato un preventivo.
+          </td></tr>
         </table>
-        <p style="margin:24px 0;">
-          <a href="${publicUrl}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;">
-            Apri il preventivo
-          </a>
-        </p>
-        <p style="margin:24px 0 0;font-size:14px;color:#52525b;">— 7eightDev</p>
       </td></tr>
     </table>
   </body>
 </html>`;
+}
 
-  return { subject, html, text };
+/** Long Italian date in Europe/Rome, e.g. "30 giugno 2026". */
+function formatDateIt(iso: string): string {
+  return new Date(iso).toLocaleDateString("it-IT", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Rome",
+  });
 }
 
 function escapeHtml(value: string): string {
