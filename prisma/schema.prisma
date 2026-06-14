@@ -15,6 +15,52 @@ enum QuoteStatus {
   expired
 }
 
+enum CatalogTier {
+  web_assets
+  enterprise
+}
+
+enum PricingKind {
+  fixed
+  range
+  on_request
+}
+
+enum BillingKind {
+  one_time
+  recurring
+}
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+/// Service Catalog bounded context. Reference data composed into quotes.
+/// Pricing/billing discriminated unions are modelled relationally: the *Kind
+/// enum is the discriminant and the variant-specific columns are nullable,
+/// guarded by CHECK constraints in the migration (see catalog_items SQL).
+model CatalogItem {
+  id              String           @id
+  tier            CatalogTier
+  title           String
+  description     String
+  pricingKind     PricingKind
+  currency        String           @default("EUR")
+  priceCents      Int? // pricingKind = fixed
+  fromCents       Int? // pricingKind = range
+  toCents         Int? // pricingKind = range
+  billingKind     BillingKind
+  billingInterval BillingInterval? // billingKind = recurring
+  defaultOptional Boolean          @default(true)
+  sortOrder       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([tier])
+  @@map("catalog_items")
+}
+
 model Quote {
   id         String      @id @db.Uuid
   number     String      @unique

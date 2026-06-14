@@ -32,4 +32,6 @@ export interface ServiceCatalogItem {
   readonly billing: BillingModel;
   /** Suggested default when added to a quote. */
   readonly defaultOptional: boolean;
+  /** Position in the catalog; lower comes first. Drives display order. */
+  readonly sortOrder: number;
 }
