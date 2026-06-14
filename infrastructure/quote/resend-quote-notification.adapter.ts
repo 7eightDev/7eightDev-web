@@ -155,12 +155,14 @@ export function renderEmail(
     .filter((line) => line !== "")
     .join("\n");
 
+  // Plain <p> blocks so they sit inside the total cell (the green-bordered box),
+  // not stray <tr> rows that email clients hoist out of the <td>.
   const recurringRows = [
     monthly
-      ? `<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">+ ${escapeHtml(monthly)} <span style="color:#6B7280;">/ mese</span></td></tr>`
+      ? `<p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">+ ${escapeHtml(monthly)} <span style="color:#6B7280;">/ mese</span></p>`
       : "",
     yearly
-      ? `<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">+ ${escapeHtml(yearly)} <span style="color:#6B7280;">/ anno</span></td></tr>`
+      ? `<p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">+ ${escapeHtml(yearly)} <span style="color:#6B7280;">/ anno</span></p>`
       : "",
   ].join("");
 
