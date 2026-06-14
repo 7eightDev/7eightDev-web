@@ -6,6 +6,7 @@ import {
   ArrowUpRight01Icon,
   Edit02Icon,
   Link01Icon,
+  Mail01Icon,
   MoreHorizontalIcon,
   SentIcon,
   Tick02Icon
@@ -158,6 +159,23 @@ export function QuoteRowActions({
           </TooltipTrigger>
           <TooltipContent>Apri Preventivo</TooltipContent>
         </Tooltip>
+
+        {process.env.NODE_ENV !== 'production' && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a
+                href={`/admin/email?quote=${quoteId}`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Anteprima dell'email prima dell'invio (dev)"
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={Mail01Icon} size={18} aria-hidden />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent>Anteprima email</TooltipContent>
+          </Tooltip>
+        )}
 
         {status === 'draft' && (
           <>

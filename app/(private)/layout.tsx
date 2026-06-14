@@ -36,6 +36,14 @@ export default function AdminLayout({
               >
                 Catalogo
               </Link>
+              {process.env.NODE_ENV !== "production" && (
+                <Link
+                  href="/admin/email"
+                  className="font-mono text-[13px] text-dim hover:text-foreground transition-colors duration-150 no-underline"
+                >
+                  Email
+                </Link>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-3">
