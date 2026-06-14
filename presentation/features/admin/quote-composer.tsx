@@ -268,20 +268,24 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
 
   const addFromCatalog = (item: ServiceCatalogItem) => {
     const recurring = item.billing.kind === "recurring";
-    setItems((prev) => [
-      ...prev,
-      {
-        key: nextKey(),
-        catalogRef: item.id,
-        title: item.title,
-        description: item.description,
-        priceUnits: catalogPriceUnits(item),
-        quantity: 1,
-        optional: item.defaultOptional,
-        type: recurring ? "recurring" : "one_time",
-        interval: recurring ? item.billing.interval : undefined,
-      },
-    ]);
+    setItems((prev) => {
+      // A catalog item can only appear once per quote: ignore re-adds.
+      if (prev.some((i) => i.catalogRef === item.id)) return prev;
+      return [
+        ...prev,
+        {
+          key: nextKey(),
+          catalogRef: item.id,
+          title: item.title,
+          description: item.description,
+          priceUnits: catalogPriceUnits(item),
+          quantity: 1,
+          optional: item.defaultOptional,
+          type: recurring ? "recurring" : "one_time",
+          interval: recurring ? item.billing.interval : undefined,
+        },
+      ];
+    });
   };
 
   const addFreeItem = () => {
@@ -388,6 +392,10 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
   };
 
   const visibleCatalog = catalog.filter((item) => item.tier === tier);
+  const addedRefs = useMemo(
+    () => new Set(items.map((i) => i.catalogRef).filter(Boolean) as string[]),
+    [items]
+  );
 
   return (
     <div className="flex flex-col gap-10 pb-24 sm:pb-0">
@@ -521,11 +529,12 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
             <div className="flex flex-col gap-6 sm:gap-8">
               {/* Su mobile portiamo il catalogo in cima */}
               <div className="lg:hidden">
-                <CatalogSidebar 
-                  tier={tier} 
-                  setTier={setTier} 
-                  visibleCatalog={visibleCatalog} 
-                  addFromCatalog={addFromCatalog} 
+                <CatalogSidebar
+                  tier={tier}
+                  setTier={setTier}
+                  visibleCatalog={visibleCatalog}
+                  addFromCatalog={addFromCatalog}
+                  addedRefs={addedRefs}
                   compact={true}
                 />
               </div>
@@ -750,11 +759,12 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
         {/* ── sidebar ── */}
         <aside className="hidden lg:flex flex-col gap-5 sticky top-24">
           {step === "items" ? (
-            <CatalogSidebar 
-              tier={tier} 
-              setTier={setTier} 
-              visibleCatalog={visibleCatalog} 
-              addFromCatalog={addFromCatalog} 
+            <CatalogSidebar
+              tier={tier}
+              setTier={setTier}
+              visibleCatalog={visibleCatalog}
+              addFromCatalog={addFromCatalog}
+              addedRefs={addedRefs}
             />
           ) : (
             <div className="p-5 rounded-2xl bg-surface border border-border">
@@ -844,17 +854,19 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
 
 /* ---------------------------- sub-components --------------------------- */
 
-function CatalogSidebar({ 
-  tier, 
-  setTier, 
-  visibleCatalog, 
-  addFromCatalog, 
-  compact = false 
-}: { 
-  tier: "web_assets" | "enterprise", 
-  setTier: (t: "web_assets" | "enterprise") => void, 
-  visibleCatalog: readonly ServiceCatalogItem[], 
+function CatalogSidebar({
+  tier,
+  setTier,
+  visibleCatalog,
+  addFromCatalog,
+  addedRefs,
+  compact = false,
+}: {
+  tier: "web_assets" | "enterprise",
+  setTier: (t: "web_assets" | "enterprise") => void,
+  visibleCatalog: readonly ServiceCatalogItem[],
   addFromCatalog: (item: ServiceCatalogItem) => void,
+  addedRefs: ReadonlySet<string>,
   compact?: boolean
 }) {
   return (
@@ -879,24 +891,42 @@ function CatalogSidebar({
         "flex gap-2 custom-scrollbar",
         compact ? "flex-row overflow-x-auto no-scrollbar pb-2" : "flex-col max-h-[400px] overflow-y-auto pr-1"
       )}>
-        {visibleCatalog.map((item) => (
-          <button key={item.id} type="button" onClick={() => addFromCatalog(item)}
-            className={cn(
-              "text-left p-2.5 rounded-xl bg-raised border border-border cursor-pointer transition-all hover:border-accent group shrink-0",
-              compact ? "w-[160px]" : "w-full"
-            )}>
-            <div className="flex flex-col gap-1">
-              <span className="font-space text-[12px] font-semibold text-foreground group-hover:text-accent transition-colors truncate">
-                {item.title}
-              </span>
-              <span className="font-mono text-[10px] text-muted">
-                {catalogPriceLabel(item)}
-                {item.billing.kind === "recurring" &&
-                  (item.billing.interval === "yearly" ? " /anno" : " /mese")}
-              </span>
-            </div>
-          </button>
-        ))}
+        {visibleCatalog.map((item) => {
+          const added = addedRefs.has(item.id);
+          return (
+            <button key={item.id} type="button" disabled={added}
+              onClick={() => addFromCatalog(item)}
+              aria-disabled={added}
+              title={added ? "Già aggiunto al preventivo" : undefined}
+              className={cn(
+                "text-left p-2.5 rounded-xl border transition-all group shrink-0",
+                compact ? "w-[160px]" : "w-full",
+                added
+                  ? "bg-surface border-border/60 opacity-60 cursor-not-allowed"
+                  : "bg-raised border-border cursor-pointer hover:border-accent"
+              )}>
+              <div className="flex flex-col gap-1">
+                <span className={cn(
+                  "font-space text-[12px] font-semibold text-foreground transition-colors truncate",
+                  added ? "" : "group-hover:text-accent"
+                )}>
+                  {item.title}
+                </span>
+                <span className="font-mono text-[10px] text-muted">
+                  {added ? (
+                    <span className="text-accent">✓ Aggiunto</span>
+                  ) : (
+                    <>
+                      {catalogPriceLabel(item)}
+                      {item.billing.kind === "recurring" &&
+                        (item.billing.interval === "yearly" ? " /anno" : " /mese")}
+                    </>
+                  )}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
