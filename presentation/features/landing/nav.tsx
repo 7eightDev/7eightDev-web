@@ -7,7 +7,7 @@ import { LogoLockup } from '@/presentation/components/shared/logo';
 import { Btn } from '@/presentation/components/shared/btn';
 import { useQuoteModal } from './quote-context';
 import { SignInButton, Show, UserButton } from '@clerk/nextjs';
-import { User, Plus } from 'lucide-react';
+import { User, LayoutDashboard } from 'lucide-react';
 
 const NAV_LINKS = [
   ['#doppio', 'Doppio livello'],
@@ -81,9 +81,9 @@ export function Nav() {
               >
                 <UserButton.MenuItems>
                   <UserButton.Link
-                    label="Crea Preventivo"
-                    labelIcon={<Plus size={16} />}
-                    href="/admin/quotes/new"
+                    label="Area Admin"
+                    labelIcon={<LayoutDashboard size={16} />}
+                    href="/admin/quotes"
                   />
                 </UserButton.MenuItems>
               </UserButton>

@@ -23,7 +23,20 @@ export default function AdminLayout({
               <LogoLockup size={15} />
             </Link>
             <span className="w-px h-[22px] bg-border hidden sm:block" />
-            <span className="font-mono text-[13px] text-soft hidden sm:block">admin</span>
+            <nav className="flex items-center gap-3">
+              <Link
+                href="/admin/quotes"
+                className="font-mono text-[13px] text-soft hover:text-foreground transition-colors duration-150 no-underline"
+              >
+                Preventivi
+              </Link>
+              <Link
+                href="/admin/catalog"
+                className="font-mono text-[13px] text-soft hover:text-foreground transition-colors duration-150 no-underline"
+              >
+                Catalogo
+              </Link>
+            </nav>
           </div>
           <div className="flex items-center gap-3">
             <Link
