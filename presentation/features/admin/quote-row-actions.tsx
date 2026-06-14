@@ -41,6 +41,8 @@ interface QuoteRowActionsProps {
    * reason is surfaced in its tooltip. Undefined means the quote is sendable.
    */
   sendBlockReason?: string;
+  /** Extra classes for the root cell (e.g. layout/placement from the parent row). */
+  className?: string;
 }
 
 // Ghost by default: no bordered box, so the row reads quieter and the only
@@ -62,7 +64,8 @@ export function QuoteRowActions({
   quoteId,
   status,
   clientName,
-  sendBlockReason
+  sendBlockReason,
+  className
 }: QuoteRowActionsProps) {
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
@@ -114,7 +117,9 @@ export function QuoteRowActions({
     <TooltipProvider delayDuration={200}>
       <div
         ref={cellRef}
-        className="relative flex items-center justify-self-end self-stretch"
+        className={`relative flex items-center justify-self-end self-stretch${
+          className ? ` ${className}` : ''
+        }`}
       >
         <div
           inert={!menuOpen}

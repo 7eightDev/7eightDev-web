@@ -119,12 +119,12 @@ export default async function QuotesPage({
             return (
               <div
                 key={quote.id}
-                className="grid grid-cols-[110px_1fr_auto_150px_auto_auto] max-[820px]:grid-cols-1 gap-5 items-center overflow-hidden rounded-xl border border-border bg-surface px-5 py-4"
+                className="grid grid-cols-[110px_1fr_auto_150px_auto_auto] gap-5 items-center overflow-hidden rounded-xl border border-border bg-surface px-5 py-4 transition-colors duration-300 has-[button[aria-expanded=true]]:border-accent max-[820px]:grid-cols-[1fr_auto] max-[820px]:gap-x-3 max-[820px]:gap-y-3 max-[820px]:[grid-template-areas:'num_actions''client_client''price_price''meta_meta']"
               >
-                <span className="font-mono text-[13px] text-muted">
+                <span className="font-mono text-[13px] text-muted max-[820px]:[grid-area:num]">
                   {quote.number}
                 </span>
-                <div>
+                <div className="max-[820px]:[grid-area:client]">
                   <div className="font-space text-[15.5px] font-semibold text-foreground">
                     {quote.client.name}
                   </div>
@@ -132,40 +132,45 @@ export default async function QuotesPage({
                     {quote.project}
                   </div>
                 </div>
-                <span className="font-mono text-[14px] text-foreground whitespace-nowrap">
+                <span className="font-mono text-[14px] text-foreground whitespace-nowrap max-[820px]:[grid-area:price] max-[820px]:text-[18px]">
                   {formatMoney(total)}
                 </span>
-                <span
-                  className="inline-flex items-center justify-end gap-1.5 font-mono text-[12px] text-muted whitespace-nowrap"
-                  title={`Scade il ${formatDateIt(quote.validUntil)}`}
-                >
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                    className="opacity-70 shrink-0"
+                {/* date + status share a row on mobile; `contents` keeps them as
+                    direct grid items in the desktop 6-column layout. */}
+                <div className="contents max-[820px]:flex max-[820px]:items-center max-[820px]:justify-between max-[820px]:[grid-area:meta]">
+                  <span
+                    className="inline-flex items-center justify-end gap-1.5 font-mono text-[12px] text-muted whitespace-nowrap"
+                    title={`Scade il ${formatDateIt(quote.validUntil)}`}
                   >
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" />
-                  </svg>
-                  {formatDateIt(quote.validUntil)}
-                </span>
-                <span
-                  className={`inline-flex items-center justify-center w-[104px] font-mono text-[11px] tracking-[0.08em] uppercase py-[5px] rounded-full border ${STATUS_STYLE[quote.status]}`}
-                >
-                  {STATUS_LABEL[quote.status]}
-                </span>
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                      className="opacity-70 shrink-0"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <path d="M16 2v4M8 2v4M3 10h18" />
+                    </svg>
+                    {formatDateIt(quote.validUntil)}
+                  </span>
+                  <span
+                    className={`inline-flex items-center justify-center w-[104px] font-mono text-[11px] tracking-[0.08em] uppercase py-[5px] rounded-full border ${STATUS_STYLE[quote.status]}`}
+                  >
+                    {STATUS_LABEL[quote.status]}
+                  </span>
+                </div>
                 <QuoteRowActions
                   quoteId={quote.id}
                   status={quote.status}
                   clientName={quote.client.name}
                   sendBlockReason={sendBlockReason}
+                  className="max-[820px]:[grid-area:actions] max-[820px]:justify-self-end max-[820px]:self-start"
                 />
               </div>
             );

@@ -34,7 +34,7 @@ export function AcceptancePanel({
   return (
     <div
       className={cn(
-        "p-9 rounded-2xl border transition-all duration-300",
+        "p-6 sm:p-9 rounded-2xl border transition-all duration-300",
         accepted
           ? "border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_8%,var(--surface))]"
           : "border-border bg-surface"
@@ -76,7 +76,7 @@ export function AcceptancePanel({
           </div>
 
           <div className="flex flex-wrap items-end gap-4">
-            <label className="flex flex-col gap-[6px]">
+            <label className="flex flex-col gap-[6px] w-full sm:w-auto">
               <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
                 Nome e cognome
               </span>
@@ -86,7 +86,7 @@ export function AcceptancePanel({
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Mario Rossi"
                 autoComplete="name"
-                className="w-[260px] px-4 py-3 rounded-[9px] bg-raised border border-border text-foreground font-hanken text-[15px] outline-none transition-colors focus:border-accent placeholder:text-dim"
+                className="w-full sm:w-[260px] px-4 py-3 rounded-[9px] bg-raised border border-border text-foreground font-hanken text-[15px] outline-none transition-colors focus:border-accent placeholder:text-dim"
               />
             </label>
 
@@ -95,7 +95,7 @@ export function AcceptancePanel({
               onClick={submit}
               disabled={!canSubmit}
               className={cn(
-                "font-mono text-[15px] font-semibold px-6 py-[15px] rounded-[9px] border border-transparent transition-all duration-150 whitespace-nowrap",
+                "font-mono text-[15px] font-semibold px-6 py-[15px] rounded-[9px] border border-transparent transition-all duration-150 whitespace-nowrap w-full sm:w-auto",
                 canSubmit
                   ? "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
                   : "bg-raised text-muted cursor-not-allowed"
