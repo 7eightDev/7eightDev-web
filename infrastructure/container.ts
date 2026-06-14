@@ -1,5 +1,7 @@
+import type { CatalogRepository } from "@/domain/catalog/catalog.repository";
 import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
+import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
 import { PrismaQuoteRepository } from "@/infrastructure/quote/prisma-quote.repository";
 import { ResendQuoteNotificationAdapter } from "@/infrastructure/quote/resend-quote-notification.adapter";
@@ -9,6 +11,10 @@ import { ResendQuoteNotificationAdapter } from "@/infrastructure/quote/resend-qu
  * Swap implementations here (e.g. in-memory for local demos without DB).
  */
 export const quoteRepository: QuoteRepository = new PrismaQuoteRepository();
+
+/** Service Catalog persistence (reference data composed into quotes). */
+export const catalogRepository: CatalogRepository =
+  new PrismaCatalogRepository();
 
 /**
  * Outbound quote notifications. Uses Resend when fully configured, otherwise

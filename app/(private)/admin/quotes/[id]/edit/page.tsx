@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { SERVICE_CATALOG } from "@/infrastructure/catalog/catalog.data";
-import { quoteRepository } from "@/infrastructure/container";
+import { catalogRepository, quoteRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { QuoteComposer } from "@/presentation/features/admin/quote-composer";
 
@@ -18,6 +17,8 @@ export default async function EditQuotePage({
   // Only drafts are editable; a sent/accepted quote is frozen.
   if (quote.status !== "draft") redirect("/admin/quotes");
 
+  const catalog = await catalogRepository.findAll();
+
   return (
     <Container className="max-w-275 py-12">
       <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] mb-2 text-foreground text-center w-full">
@@ -26,7 +27,7 @@ export default async function EditQuotePage({
       <p className="font-mono text-[13px] text-muted text-center mb-8">
         {quote.number} · bozza
       </p>
-      <QuoteComposer catalog={SERVICE_CATALOG} quote={quote} />
+      <QuoteComposer catalog={catalog} quote={quote} />
     </Container>
   );
 }
