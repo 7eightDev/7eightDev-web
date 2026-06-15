@@ -142,6 +142,6 @@ describe("updateQuote use case", () => {
       { ...editInput, clientName: "" }
     );
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("clientName");
+    if (!result.ok) expect(result.error).toMatch(/nome cliente/i);
   });
 });
