@@ -68,6 +68,8 @@ export function QuoteView({ quote }: QuoteViewProps) {
 
   const meta = quote.metadata;
   const isOccasional = quote.fiscalRegime === "occasional";
+  const isLumpSum = meta.pricingDisplay === "lump_sum";
+  const hasDiscount = calc.discount.amountCents > 0;
   const vatLabel = `IVA ${Math.round(quote.vatRate * 100)}%`;
 
   return (
@@ -140,15 +142,15 @@ export function QuoteView({ quote }: QuoteViewProps) {
                     i < mandatory.length - 1 ? "border-b border-border" : ""
                   }
                 >
-                  <ItemLine item={item} />
+                  <ItemLine item={item} hidePrice={isLumpSum} />
                 </div>
               ))}
             </div>
           </Reveal>
         </div>
 
-        {/* 02 — moduli opzionali */}
-        {optional.length > 0 && (
+        {/* 02 — moduli opzionali (mai in modalità prezzo unico) */}
+        {!isLumpSum && optional.length > 0 && (
           <div className="mt-[52px]">
             <Reveal>
               <SectionTitle n="02">Moduli opzionali</SectionTitle>
@@ -177,13 +179,28 @@ export function QuoteView({ quote }: QuoteViewProps) {
         {/* totale */}
         <Reveal delay={60}>
           <div className="mt-10 ml-auto max-w-[420px] p-6 rounded-[14px] bg-surface border border-border">
-            <div className="flex items-baseline justify-between gap-4 mb-3">
-              <span className="font-hanken text-[14.5px] text-soft">Subtotale</span>
-              <span className="font-mono text-[14.5px] text-foreground whitespace-nowrap">
-                {formatMoney(calc.oneTimeSubtotal)}
-              </span>
-            </div>
-            {calc.discount.amountCents > 0 && (
+            {/*
+              Itemized: always show "Subtotale".
+              Lump sum: hide the breakdown, but if there is a discount show the
+              listino (strikethrough) + sconto so the saving is visible.
+            */}
+            {(!isLumpSum || hasDiscount) && (
+              <div className="flex items-baseline justify-between gap-4 mb-3">
+                <span className="font-hanken text-[14.5px] text-soft">
+                  {isLumpSum ? "Listino" : "Subtotale"}
+                </span>
+                <span
+                  className={
+                    isLumpSum
+                      ? "font-mono text-[14.5px] text-muted line-through whitespace-nowrap"
+                      : "font-mono text-[14.5px] text-foreground whitespace-nowrap"
+                  }
+                >
+                  {formatMoney(calc.oneTimeSubtotal)}
+                </span>
+              </div>
+            )}
+            {hasDiscount && (
               <div className="flex items-baseline justify-between gap-4 mb-3">
                 <span className="font-hanken text-[14.5px] text-soft">Sconto</span>
                 <span className="font-mono text-[14.5px] text-[var(--coral)] whitespace-nowrap">

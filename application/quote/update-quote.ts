@@ -1,6 +1,7 @@
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import type { Quote } from "@/domain/quote/quote.types";
 import { createQuoteInputSchema } from "@/application/quote/quote.schemas";
+import { firstValidationMessage } from "@/application/quote/quote.errors";
 import {
   buildClient,
   buildLineItem,
@@ -29,8 +30,7 @@ export async function updateQuote(
 ): Promise<UpdateQuoteResult> {
   const parsed = createQuoteInputSchema.safeParse(rawInput);
   if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { ok: false, error: `${first.path.join(".")}: ${first.message}` };
+    return { ok: false, error: firstValidationMessage(parsed.error) };
   }
   const input = parsed.data;
 

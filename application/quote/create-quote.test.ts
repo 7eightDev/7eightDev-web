@@ -75,7 +75,25 @@ describe("createQuote use case", () => {
       { ...validInput, clientName: "" }
     );
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("clientName");
+    if (!result.ok) expect(result.error).toMatch(/nome cliente/i);
+  });
+
+  it("reports a line-item error with a 1-based 'Voce N' prefix, no dotted path", async () => {
+    const result = await createQuote(
+      { repository: makeRepo(), now: NOW },
+      {
+        ...validInput,
+        lineItems: [
+          validInput.lineItems[0],
+          { ...validInput.lineItems[1], title: "x" },
+        ],
+      }
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("Voce 2: Titolo troppo corto");
+      expect(result.error).not.toContain("lineItems");
+    }
   });
 
   it("rejects a non-future expiry date", async () => {
@@ -160,5 +178,20 @@ describe("createQuote use case", () => {
     );
     expect(repo.saved?.fiscalRegime).toBe("occasional");
     expect(repo.saved?.vatRate).toBe(0);
+  });
+
+  it("defaults pricingDisplay to itemized when omitted", async () => {
+    const repo = makeRepo();
+    await createQuote({ repository: repo, now: NOW }, validInput);
+    expect(repo.saved?.metadata.pricingDisplay).toBe("itemized");
+  });
+
+  it("carries an explicit lump_sum pricingDisplay into metadata", async () => {
+    const repo = makeRepo();
+    await createQuote(
+      { repository: repo, now: NOW },
+      { ...validInput, pricingDisplay: "lump_sum" }
+    );
+    expect(repo.saved?.metadata.pricingDisplay).toBe("lump_sum");
   });
 });

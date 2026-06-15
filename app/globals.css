@@ -102,4 +102,22 @@ body {
   html {
     @apply font-sans;
   }
+  /* Native date/time inputs: render their controls against the dark theme so
+     the calendar icon is legible instead of near-black on a dark field. */
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"] {
+    color-scheme: dark;
+  }
+  /* color-scheme: dark already makes the glyph light; just add affordance. */
+  input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+  }
+  input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
 }
