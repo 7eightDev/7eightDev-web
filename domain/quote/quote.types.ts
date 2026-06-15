@@ -92,6 +92,14 @@ export interface QuoteMetadata {
    * persisted metadata JSON) so re-pricing the catalog never alters it.
    */
   readonly discount?: Discount;
+  /**
+   * Presentation-only pricing mode. "lump_sum" hides per-line prices and
+   * quantities on the public page and renders a single all-inclusive one-time
+   * figure; "itemized" (the default when absent) shows the full breakdown.
+   * This flag NEVER affects how the total is computed — the total always
+   * derives from the line items, so there is a single source of truth.
+   */
+  readonly pricingDisplay?: "itemized" | "lump_sum";
 }
 
 export interface AcceptanceRecord {

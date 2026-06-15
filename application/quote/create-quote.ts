@@ -4,6 +4,7 @@ import {
   type CreateQuoteInput,
   createQuoteInputSchema,
 } from "@/application/quote/quote.schemas";
+import { firstValidationMessage } from "@/application/quote/quote.errors";
 import {
   buildClient,
   buildLineItem,
@@ -27,8 +28,7 @@ function parse(rawInput: unknown):
   | { ok: false; error: string } {
   const parsed = createQuoteInputSchema.safeParse(rawInput);
   if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { ok: false, error: `${first.path.join(".")}: ${first.message}` };
+    return { ok: false, error: firstValidationMessage(parsed.error) };
   }
   return { ok: true, input: parsed.data };
 }

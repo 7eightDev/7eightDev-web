@@ -8,9 +8,17 @@ interface ItemLineProps {
   selected?: boolean;
   onToggle?: () => void;
   disabled?: boolean;
+  /** Lump-sum mode: render as a pure scope entry (no price/quantity column). */
+  hidePrice?: boolean;
 }
 
-export function ItemLine({ item, selected, onToggle, disabled }: ItemLineProps) {
+export function ItemLine({
+  item,
+  selected,
+  onToggle,
+  disabled,
+  hidePrice,
+}: ItemLineProps) {
   const optional = item.optional;
   const on = !optional || selected;
   const qty = item.quantity ?? 1;
@@ -53,29 +61,36 @@ export function ItemLine({ item, selected, onToggle, disabled }: ItemLineProps) 
           {item.description}
         </div>
       </div>
-      <div
-        className={cn(
-          "font-mono text-[15px] font-medium whitespace-nowrap text-right",
-          on ? "text-foreground" : "text-muted"
-        )}
-      >
-        {qty > 1 && (
-          <div className="text-muted text-[12px]">
-            {qty}
-            {item.unit ? ` ${item.unit}` : "×"} · {formatMoney(item.unitPrice)}
-          </div>
-        )}
-        {formatMoney(total)}
-        {recurringSuffix && (
-          <span className="text-muted text-[12px]">{recurringSuffix}</span>
-        )}
-      </div>
+      {!hidePrice && (
+        <div
+          className={cn(
+            "font-mono text-[15px] font-medium whitespace-nowrap text-right",
+            on ? "text-foreground" : "text-muted"
+          )}
+        >
+          {qty > 1 && (
+            <div className="text-muted text-[12px]">
+              {qty}
+              {item.unit ? ` ${item.unit}` : "×"} · {formatMoney(item.unitPrice)}
+            </div>
+          )}
+          {formatMoney(total)}
+          {recurringSuffix && (
+            <span className="text-muted text-[12px]">{recurringSuffix}</span>
+          )}
+        </div>
+      )}
     </>
   );
 
   if (!optional) {
     return (
-      <div className="grid grid-cols-[1fr_auto] gap-4 items-start px-5 py-[18px]">
+      <div
+        className={cn(
+          "grid gap-4 items-start px-5 py-[18px]",
+          hidePrice ? "grid-cols-1" : "grid-cols-[1fr_auto]"
+        )}
+      >
         {content}
       </div>
     );

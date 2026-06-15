@@ -53,6 +53,12 @@ export const createQuoteInputSchema = z.object({
   techStack: z.array(pairSchema),
   timelineNote: z.string().optional(),
   discount: discountInputSchema.optional(),
+  /**
+   * Presentation-only pricing mode. Defaults to "itemized" so legacy callers
+   * and existing tests keep the per-line breakdown; "lump_sum" hides per-line
+   * prices on the public page. Never affects the computed total.
+   */
+  pricingDisplay: z.enum(["itemized", "lump_sum"]).default("itemized"),
 });
 
 export type CreateQuoteInput = z.infer<typeof createQuoteInputSchema>;

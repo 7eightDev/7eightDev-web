@@ -65,6 +65,8 @@ interface InitialState {
   timelineNote: string;
   discountKind: DiscountKind;
   discountValue: number;
+  /** Presentation-only: single all-inclusive price vs. per-line breakdown. */
+  pricingDisplay: "itemized" | "lump_sum";
 }
 
 function pairsFrom<T>(
@@ -121,6 +123,7 @@ function quoteToState(quote: Quote): InitialState {
         ? Math.round(discount.value * 100)
         : discount.amount.amountCents / 100
       : 0,
+    pricingDisplay: meta.pricingDisplay ?? "itemized",
   };
 }
 
@@ -146,6 +149,7 @@ function blankState(): InitialState {
     timelineNote: "",
     discountKind: "none",
     discountValue: 0,
+    pricingDisplay: "itemized",
   };
 }
 
@@ -263,8 +267,16 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
     initial.discountKind
   );
   const [discountValue, setDiscountValue] = useState(initial.discountValue);
+  const [pricingDisplay, setPricingDisplay] = useState<"itemized" | "lump_sum">(
+    initial.pricingDisplay
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Lump-sum is an all-inclusive fixed price: optional line items make no
+  // sense (decision 1), so the per-item "Opzionale" toggle is disabled and
+  // every item is forced mandatory on submit.
+  const isLumpSum = pricingDisplay === "lump_sum";
 
   const addFromCatalog = (item: ServiceCatalogItem) => {
     const recurring = item.billing.kind === "recurring";
@@ -356,7 +368,8 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
           description: item.description,
           priceUnits: item.priceUnits,
           quantity: item.quantity || 1,
-          optional: item.optional,
+          // In lump-sum mode there are no optional items: everything is included.
+          optional: isLumpSum ? false : item.optional,
           type: item.type,
           interval: item.interval,
         })),
@@ -370,6 +383,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
             : discountKind === "fixed"
               ? { kind: "fixed" as const, amountUnits: discountValue }
               : undefined,
+        pricingDisplay,
       };
       const result = quote
         ? await updateQuoteAction(quote.id, payload)
@@ -586,8 +600,14 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                           placeholder="Descrizione per il cliente"
                           onChange={(e) => updateItem(item.key, { description: e.target.value })} />
                         <div className="flex items-center gap-3 flex-wrap">
-                          <label className="flex items-center gap-2 cursor-pointer font-hanken text-[12px] text-soft bg-surface/50 px-2 py-1 rounded-md border border-border/50">
-                            <input type="checkbox" checked={item.optional}
+                          <label
+                            title={isLumpSum ? "Disattivato in modalità prezzo unico: tutto è incluso." : undefined}
+                            className={cn(
+                              "flex items-center gap-2 font-hanken text-[12px] text-soft bg-surface/50 px-2 py-1 rounded-md border border-border/50",
+                              isLumpSum ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            )}>
+                            <input type="checkbox" checked={isLumpSum ? false : item.optional}
+                              disabled={isLumpSum}
                               className="w-3.5 h-3.5 accent-accent"
                               onChange={(e) => updateItem(item.key, { optional: e.target.checked })} />
                             Opzionale
@@ -703,6 +723,33 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   <p className="font-mono text-[12px] text-soft mt-2 m-0">
                     Sconto applicato: −{formatMoney(totals.discount)} · netto{" "}
                     {formatMoney(totals.netAfterDiscount)}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-lg bg-raised border border-border p-3 flex flex-col gap-2">
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isLumpSum}
+                    className="w-3.5 h-3.5 mt-0.5 accent-accent"
+                    onChange={(e) =>
+                      setPricingDisplay(e.target.checked ? "lump_sum" : "itemized")
+                    }
+                  />
+                  <span className="font-hanken text-[13px] text-foreground leading-snug">
+                    Mostra prezzo unico{" "}
+                    <span className="text-soft">
+                      (nascondi i prezzi delle singole voci)
+                    </span>
+                  </span>
+                </label>
+                {isLumpSum && (
+                  <p className="font-mono text-[11px] text-muted m-0 pl-[22px]">
+                    Le voci appaiono solo come elenco descrittivo, con un unico
+                    totale una tantum. I moduli opzionali sono disattivati (prezzo
+                    tutto incluso); eventuale sconto mostrato come listino barrato.
+                    Il canone ricorrente resta una riga a parte.
                   </p>
                 )}
               </div>

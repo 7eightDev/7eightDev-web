@@ -151,3 +151,38 @@ describe("calculateQuote with discount", () => {
     expect(calc.oneTimeTotal.amountCents).toBe(0);
   });
 });
+
+describe("calculateQuote ignores pricingDisplay (presentation-only flag)", () => {
+  it("produces identical totals for absent, itemized and lump_sum", () => {
+    const itemized = calculateQuote({
+      ...quote,
+      metadata: { pricingDisplay: "itemized" },
+    });
+    const lumpSum = calculateQuote({
+      ...quote,
+      metadata: { pricingDisplay: "lump_sum" },
+    });
+    const absent = calculateQuote(quote);
+
+    for (const calc of [itemized, lumpSum]) {
+      expect(calc.oneTimeSubtotal.amountCents).toBe(absent.oneTimeSubtotal.amountCents);
+      expect(calc.discount.amountCents).toBe(absent.discount.amountCents);
+      expect(calc.oneTimeNet.amountCents).toBe(absent.oneTimeNet.amountCents);
+      expect(calc.vat.amountCents).toBe(absent.vat.amountCents);
+      expect(calc.oneTimeTotal.amountCents).toBe(absent.oneTimeTotal.amountCents);
+    }
+  });
+
+  it("does not change how a discount is computed in lump_sum mode", () => {
+    const calc = calculateQuote({
+      ...quote,
+      metadata: {
+        pricingDisplay: "lump_sum",
+        discount: { kind: "percent", value: 0.1 },
+      },
+    });
+    expect(calc.discount.amountCents).toBe(30_000);
+    expect(calc.oneTimeNet.amountCents).toBe(270_000);
+    expect(calc.oneTimeTotal.amountCents).toBe(329_400);
+  });
+});

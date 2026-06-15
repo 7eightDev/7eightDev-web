@@ -73,5 +73,6 @@ export function buildMetadata(input: CreateQuoteInput): QuoteMetadata {
     })),
     timelineNote: input.timelineNote || undefined,
     discount: buildDiscount(input.discount),
+    pricingDisplay: input.pricingDisplay,
   };
 }
