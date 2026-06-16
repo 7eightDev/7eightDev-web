@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/presentation/lib/utils';
-import { Container } from '@/presentation/components/shared/container';
 import { Btn } from '@/presentation/components/shared/btn';
 
 const TYPES = ['Sito PMI', 'Web app / SaaS', 'Non sono sicuro'];
