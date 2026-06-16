@@ -3,8 +3,7 @@
 import { Container } from '@/presentation/components/shared/container';
 import { Reveal } from '@/presentation/components/shared/reveal';
 import { Btn } from '@/presentation/components/shared/btn';
-import { Eyebrow } from '@/presentation/components/shared/eyebrow';
-import { cn } from '@/presentation/lib/utils';
+import { TagLabel } from '@/presentation/components/shared/tag-label';
 import { useQuoteModal } from './quote-context';
 
 export function CtaBand() {
@@ -14,9 +13,7 @@ export function CtaBand() {
       <div className="absolute -bottom-50 left-[50%] translate-x-[-50%] w-190 h-130 bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_14%,_transparent),_transparent_60%)] pointer-events-none" />
       <Container className="relative text-center max-w-205">
         <Reveal>
-          <Eyebrow className="justify-center">
-            Preventivi · /preventivi/[cliente]
-          </Eyebrow>
+          <TagLabel name="Preventivi" propKey="cliente" propValue="tu" center />
         </Reveal>
         <Reveal delay={60}>
           <h2 className="font-space font-semibold text-[clamp(32px,4vw,52px)] tracking-[-0.03em] leading-[1.05] mt-5 text-foreground text-balance">

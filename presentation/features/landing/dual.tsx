@@ -2,6 +2,7 @@ import { Container } from "@/presentation/components/shared/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { Chip } from "@/presentation/components/shared/chip";
 import { SectionHead } from "@/presentation/components/shared/section-head";
+import { TagLabel } from "@/presentation/components/shared/tag-label";
 import { cn } from "@/presentation/lib/utils";
 
 const TRACKS = [
@@ -57,8 +58,8 @@ export function Dual() {
   return (
     <section id="doppio" className="py-16 md:py-23 border-t border-border">
       <Container>
-        <SectionHead 
-          eyebrow="Doppio livello"
+        <SectionHead
+          eyebrow={<TagLabel name="DoppioLivello" propKey="livelli" propValue={2} />}
           title="Stesso sviluppatore, due scale di complessità."
           sub="La maggior parte sceglie tra ‘economico ma scadente’ e ‘bravo ma solo per grandi aziende’. Io copro entrambi i mondi, con lo stesso standard di cura." 
         />
