@@ -65,7 +65,7 @@ export function Metodo() {
       <Container>
         <SectionHead
           eyebrow={<TagLabel name="Metodo" propKey="garanzie" propValue={6} />}
-          title="Niente case study (ancora). In compenso, un metodo che è una garanzia."
+          title="La qualità non è fortuna. È metodo."
           sub="Un portfolio mostra cosa ho fatto. Il metodo mostra come lavoro su ogni progetto — ed è ciò che protegge il tuo investimento nel tempo." 
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[20px] mt-[50px]">

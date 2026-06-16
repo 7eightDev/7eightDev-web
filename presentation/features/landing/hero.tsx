@@ -87,13 +87,13 @@ function Terminal({ mode }: { mode: 'pmi' | 'ent' }) {
 const HERO = {
   pmi: {
     tag: 'PMI',
-    h: ['Un sito web veloce', 'e curato', ', costruito come si deve.'],
+    h: ['Il tuo sito, costruito ', 'come si deve', '.'],
     sub: 'Per piccole e medie imprese che vogliono un partner affidabile: un sito performante, manutenibile e pensato per durare — non un template gonfio.',
     points: ['Performance reali', 'SEO tecnica', 'Manutenibile']
   },
   ent: {
     tag: 'Enterprise & SaaS',
-    h: ['Web app che reggono', ' la crescita', ', architettate sul serio.'],
+    h: ['Web app che reggono ', 'la crescita', '.'],
     sub: 'Per startup SaaS e aziende enterprise: Clean Architecture, Domain-Driven Design e Test-Driven Development applicati dal frontend in su. Scalabilità e qualità del codice come default.',
     points: ['Clean Architecture', 'DDD', 'TDD']
   }

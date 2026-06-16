@@ -60,7 +60,7 @@ export function Dual() {
       <Container>
         <SectionHead
           eyebrow={<TagLabel name="DoppioLivello" propKey="livelli" propValue={2} />}
-          title="Stesso sviluppatore, due scale di complessità."
+          title="Un solo sviluppatore, due mondi: il tuo sito e la tua piattaforma."
           sub="La maggior parte sceglie tra ‘economico ma scadente’ e ‘bravo ma solo per grandi aziende’. Io copro entrambi i mondi, con lo stesso standard di cura." 
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[22px] mt-[46px]">

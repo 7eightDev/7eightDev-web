@@ -16,7 +16,7 @@ export function Stack() {
       <Container>
         <SectionHead
           eyebrow={<TagLabel name="Stack" />}
-          title="Strumenti moderni, scelti per durare."
+          title="Lo stack giusto per non pentirti tra due anni."
           sub="Niente mode passeggere: tecnologie mature, con community solide e un percorso di manutenzione chiaro." 
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-[20px] mt-[46px]">

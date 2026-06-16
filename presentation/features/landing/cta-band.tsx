@@ -17,7 +17,7 @@ export function CtaBand() {
         </Reveal>
         <Reveal delay={60}>
           <h2 className="font-space font-semibold text-[clamp(32px,4vw,52px)] tracking-[-0.03em] leading-[1.05] mt-5 text-foreground text-balance">
-            Hai un progetto? Ti preparo un preventivo su misura.
+            Hai un progetto? Te lo metto nero su bianco, senza sorprese.
           </h2>
         </Reveal>
         <Reveal delay={120}>
