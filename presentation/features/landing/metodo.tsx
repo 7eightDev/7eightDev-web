@@ -1,8 +1,14 @@
 import { Container } from "@/presentation/components/shared/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
-import { Chip } from "@/presentation/components/shared/chip";
 import { SectionHead } from "@/presentation/components/shared/section-head";
-import { cn } from "@/presentation/lib/utils";
+
+function Check() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-none mt-[3px]">
+      <path d="M3 8.5l3 3 7-8" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function CleanArchDiagram() {
   return (
@@ -77,9 +83,18 @@ export function Metodo() {
           })}
         </div>
         <Reveal delay={120}>
-          <div className="flex flex-wrap gap-[10px] mt-[34px] items-center">
-            <span className="font-mono text-[13px] text-muted mr-[4px]">incluso sempre →</span>
-            {GUARANTEES.map((g) => <Chip key={g}>{g}</Chip>)}
+          <div className="mt-8.5">
+            <div className="font-mono text-[12px] text-accent tracking-[0.12em] uppercase mb-4.5">
+              Incluso sempre
+            </div>
+            <ul className="list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3.5">
+              {GUARANTEES.map((g) => (
+                <li key={g} className="flex gap-[11px] items-start font-sans text-[14.5px] leading-[1.45] text-[#cdd3dc]">
+                  <Check />
+                  {g}
+                </li>
+              ))}
+            </ul>
           </div>
         </Reveal>
       </Container>
