@@ -11,7 +11,7 @@ const STACK = [
 
 export function Stack() {
   return (
-    <section id="stack" className="py-[92px] border-t border-border">
+    <section id="stack" className="py-16 md:py-23 border-t border-border">
       <Container>
         <SectionHead 
           eyebrow="Stack"

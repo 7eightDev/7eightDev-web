@@ -10,7 +10,7 @@ import { useQuoteModal } from './quote-context';
 export function CtaBand() {
   const { open } = useQuoteModal();
   return (
-    <section className="py-25 border-t border-border relative overflow-hidden">
+    <section className="py-16 md:py-25 border-t border-border relative overflow-hidden">
       <div className="absolute -bottom-50 left-[50%] translate-x-[-50%] w-190 h-130 bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_14%,_transparent),_transparent_60%)] pointer-events-none" />
       <Container className="relative text-center max-w-205">
         <Reveal>

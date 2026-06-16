@@ -12,7 +12,7 @@ const STEPS = [
 
 export function Processo() {
   return (
-    <section id="processo" className="py-[92px] bg-surface border-t border-border">
+    <section id="processo" className="py-16 md:py-23 bg-surface border-t border-border">
       <Container>
         <div className="max-w-[720px]">
           <Reveal>
