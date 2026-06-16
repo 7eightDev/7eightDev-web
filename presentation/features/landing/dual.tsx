@@ -55,7 +55,7 @@ function TrackCard({ tr }: { tr: typeof TRACKS[0] }) {
 
 export function Dual() {
   return (
-    <section id="doppio" className="py-[92px] border-t border-border">
+    <section id="doppio" className="py-16 md:py-23 border-t border-border">
       <Container>
         <SectionHead 
           eyebrow="Doppio livello"

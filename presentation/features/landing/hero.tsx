@@ -86,7 +86,7 @@ export function Hero() {
   return (
     <section id="top" className="relative overflow-hidden">
       <div className="absolute top-[-180px] right-[-120px] w-[620px] h-[620px] bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_16%,_transparent),_transparent_62%)] pointer-events-none blur-[8px]" />
-      <Container className="relative p-[64px_32px_92px]">
+      <Container className="relative pt-12 px-8 pb-16 md:pt-16 md:pb-23">
         <Reveal>
           <Eyebrow>agenzia di sviluppo · Next.js / TypeScript / React</Eyebrow>
         </Reveal>

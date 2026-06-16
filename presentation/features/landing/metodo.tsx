@@ -54,7 +54,7 @@ const GUARANTEES = ['copertura test', 'code review', 'architettura documentata',
 
 export function Metodo() {
   return (
-    <section id="metodo" className="py-[92px] bg-surface border-t border-border">
+    <section id="metodo" className="py-16 md:py-23 bg-surface border-t border-border">
       <Container>
         <SectionHead 
           eyebrow="Metodo · al posto del portfolio"
