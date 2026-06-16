@@ -20,7 +20,7 @@ export function Processo() {
           </Reveal>
           <Reveal delay={60}>
             <h2 className="font-space font-semibold text-[clamp(28px,3.4vw,42px)] tracking-[-0.03em] leading-[1.06] mt-[18px] text-foreground text-balance">
-              Un processo trasparente, dal primo contatto al deploy.
+              Sai sempre a che punto siamo. Dal primo contatto al lancio.
             </h2>
           </Reveal>
         </div>
