@@ -32,7 +32,7 @@ const Check = () => (
 
 function TrackCard({ tr }: { tr: typeof TRACKS[0] }) {
   return (
-    <div className={cn("relative p-[34px] rounded-[16px] bg-surface border border-border h-full box-border", tr.hot && "border-accent/38 shadow-[0_0_60px_-34px_var(--accent)]")}>
+    <div className={cn("relative flex flex-col p-[34px] rounded-[16px] bg-surface border border-border h-full box-border", tr.hot && "border-accent/38 shadow-[0_0_60px_-34px_var(--accent)]")}>
       <div className="flex items-center justify-between mb-[18px]">
         <span className="font-mono text-[13px] text-muted tracking-[0.1em]">{tr.i}</span>
         {tr.hot && <Chip accent>alta complessità</Chip>}
@@ -47,7 +47,7 @@ function TrackCard({ tr }: { tr: typeof TRACKS[0] }) {
           </li>
         ))}
       </ul>
-      <div className="pt-[18px] border-t border-border font-mono text-[13px] text-accent flex items-center gap-[8px]">
+      <div className="mt-auto pt-[18px] border-t border-border font-mono text-[13px] text-accent flex items-center gap-[8px]">
         <span className="opacity-60">→</span>{tr.out}
       </div>
     </div>
