@@ -1,6 +1,7 @@
 import { Container } from "@/presentation/components/shared/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { SectionHead } from "@/presentation/components/shared/section-head";
+import { TagLabel } from "@/presentation/components/shared/tag-label";
 
 function Check() {
   return (
@@ -62,8 +63,8 @@ export function Metodo() {
   return (
     <section id="metodo" className="py-16 md:py-23 bg-surface border-t border-border">
       <Container>
-        <SectionHead 
-          eyebrow="Metodo · al posto del portfolio"
+        <SectionHead
+          eyebrow={<TagLabel name="Metodo" propKey="garanzie" propValue={6} />}
           title="Niente case study (ancora). In compenso, un metodo che è una garanzia."
           sub="Un portfolio mostra cosa ho fatto. Il metodo mostra come lavoro su ogni progetto — ed è ciò che protegge il tuo investimento nel tempo." 
         />

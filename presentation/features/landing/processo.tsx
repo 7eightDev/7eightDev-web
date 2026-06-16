@@ -1,6 +1,6 @@
 import { Container } from "@/presentation/components/shared/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
-import { SectionHead } from "@/presentation/components/shared/section-head";
+import { TagLabel } from "@/presentation/components/shared/tag-label";
 import { cn } from "@/presentation/lib/utils";
 
 const STEPS = [
@@ -16,7 +16,7 @@ export function Processo() {
       <Container>
         <div className="max-w-[720px]">
           <Reveal>
-            <span className="font-mono text-[12px] text-accent tracking-[0.1em] uppercase block mb-[10px]">Come lavoro</span>
+            <TagLabel name="Processo" propKey="step" propValue={4} className="mb-2.5" />
           </Reveal>
           <Reveal delay={60}>
             <h2 className="font-space font-semibold text-[clamp(28px,3.4vw,42px)] tracking-[-0.03em] leading-[1.06] mt-[18px] text-foreground text-balance">

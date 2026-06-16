@@ -1,6 +1,7 @@
 import { Container } from "@/presentation/components/shared/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { SectionHead } from "@/presentation/components/shared/section-head";
+import { TagLabel } from "@/presentation/components/shared/tag-label";
 
 const STACK = [
   { g: 'Core', items: ['Next.js', 'TypeScript', 'React'] },
@@ -13,8 +14,8 @@ export function Stack() {
   return (
     <section id="stack" className="py-16 md:py-23 border-t border-border">
       <Container>
-        <SectionHead 
-          eyebrow="Stack"
+        <SectionHead
+          eyebrow={<TagLabel name="Stack" />}
           title="Strumenti moderni, scelti per durare."
           sub="Niente mode passeggere: tecnologie mature, con community solide e un percorso di manutenzione chiaro." 
         />
