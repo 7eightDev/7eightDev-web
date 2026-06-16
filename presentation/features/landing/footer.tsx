@@ -4,6 +4,52 @@ import { LogoLockup } from '@/presentation/components/shared/logo';
 import { Container } from '@/presentation/components/shared/container';
 import { useQuoteModal } from './quote-context';
 
+interface FooterLink {
+  label: string;
+  href: string;
+  /** Opens the quote modal instead of navigating. */
+  modal?: boolean;
+  /** Opens in a new tab with rel="noreferrer". */
+  external?: boolean;
+}
+
+const LINK_COLUMNS: { heading: string; links: FooterLink[] }[] = [
+  {
+    heading: 'Servizi',
+    links: [
+      { label: 'Siti PMI', href: '#doppio' },
+      { label: 'Web app SaaS', href: '#doppio' },
+      { label: 'Enterprise', href: '#doppio' },
+      { label: 'Consulenza', href: '#doppio' }
+    ]
+  },
+  {
+    heading: 'Approccio',
+    links: [
+      { label: 'Metodo', href: '#metodo' },
+      { label: 'Stack', href: '#stack' },
+      { label: 'Come lavoro', href: '#processo' }
+    ]
+  },
+  {
+    heading: 'Contatti',
+    links: [
+      { label: 'Preventivo', href: '#', modal: true },
+      { label: 'info@7eightdev.com', href: 'mailto:info@7eightdev.com' },
+      {
+        label: 'LinkedIn',
+        href: 'https://www.linkedin.com/in/giuseppe-pesce-dev/',
+        external: true
+      },
+      {
+        label: 'GitHub',
+        href: 'https://github.com/7eightDev',
+        external: true
+      }
+    ]
+  }
+];
+
 export function Footer() {
   const { open } = useQuoteModal();
   return (
@@ -17,35 +63,28 @@ export function Footer() {
               con un solo standard di cura.
             </p>
           </div>
-          {[
-            [
-              'Servizi',
-              ['Siti PMI', 'Web app SaaS', 'Enterprise', 'Consulenza']
-            ],
-            ['Approccio', ['Metodo', 'Stack', 'Come lavoro']],
-            [
-              'Contatti',
-              ['Preventivo', 'info@7eightdev.com', 'LinkedIn', 'GitHub']
-            ]
-          ].map(([h, items]) => (
-            <div key={h as string}>
+          {LINK_COLUMNS.map((col) => (
+            <div key={col.heading}>
               <div className="font-mono text-[12px] text-muted tracking-widest uppercase mb-4">
-                {h as string}
+                {col.heading}
               </div>
               <div className="flex flex-col gap-3">
-                {(items as string[]).map((it) => (
+                {col.links.map((link) => (
                   <a
-                    key={it}
-                    href="#"
+                    key={link.label}
+                    href={link.href}
                     onClick={(e) => {
-                      if (it === 'Preventivo') {
+                      if (link.modal) {
                         e.preventDefault();
                         open();
                       }
                     }}
+                    {...(link.external
+                      ? { target: '_blank', rel: 'noreferrer' }
+                      : {})}
                     className="font-sans text-[14px] text-soft hover:text-accent no-underline transition-colors duration-150"
                   >
-                    {it}
+                    {link.label}
                   </a>
                 ))}
               </div>
