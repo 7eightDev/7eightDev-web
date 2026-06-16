@@ -54,7 +54,7 @@ export function Footer() {
         </div>
         <div className="flex justify-between items-center mt-11 pt-6 border-t border-border flex-wrap gap-3">
           <span className="font-mono text-[12px] text-muted">
-            © 2026 7eightDev · P.IVA 00000000000
+            © 2026 7eightDev · C.F. PSCGPP78H04D662A
           </span>
           <span className="font-mono text-[12px] text-muted">
             made with clean code, not magic
