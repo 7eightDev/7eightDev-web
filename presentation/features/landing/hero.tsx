@@ -66,13 +66,13 @@ function Terminal({ mode }: { mode: 'pmi' | 'ent' }) {
 
 const HERO = {
   pmi: {
-    tag: 'Per PMI',
+    tag: 'PMI',
     h: ['Un sito web veloce', 'e curato', ', costruito come si deve.'],
     sub: 'Per piccole e medie imprese che vogliono un partner affidabile: un sito performante, manutenibile e pensato per durare — non un template gonfio.',
     points: ['Performance reali', 'SEO tecnica', 'Manutenibile'],
   },
   ent: {
-    tag: 'Per Enterprise & SaaS',
+    tag: 'Enterprise & SaaS',
     h: ['Web app che reggono', ' la crescita', ', architettate sul serio.'],
     sub: 'Per startup SaaS e aziende enterprise: Clean Architecture, Domain-Driven Design e Test-Driven Development applicati dal frontend in su. Scalabilità e qualità del codice come default.',
     points: ['Clean Architecture', 'DDD', 'TDD'],
@@ -99,10 +99,10 @@ export function Hero() {
         </Reveal>
 
         <Reveal delay={120}>
-          <div className="inline-flex p-[4px] rounded-[11px] bg-surface border border-border gap-[4px] mb-[48px]">
+          <div className="flex w-full sm:inline-flex sm:w-auto p-[4px] rounded-[11px] bg-surface border border-border gap-[4px] mb-[48px]">
             {Object.keys(HERO).map((k) => (
               <button key={k} onClick={() => setMode(k as 'pmi' | 'ent')} className={cn(
-                "font-mono text-[13px] font-semibold cursor-pointer p-[9px_16px] rounded-[8px] border-none transition-all duration-200",
+                "flex-1 sm:flex-none text-center font-mono text-[13px] font-semibold leading-tight cursor-pointer px-3 sm:px-4 py-[9px] rounded-[8px] border-none transition-all duration-200",
                 mode === k ? "bg-accent text-[#0a0b0d]" : "bg-transparent text-soft"
               )}>
                 {HERO[k as 'pmi' | 'ent'].tag}
