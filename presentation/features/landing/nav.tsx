@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/presentation/lib/utils';
-import { Container } from '@/presentation/components/shared/container';
 import { LogoLockup } from '@/presentation/components/shared/logo';
 import { Btn } from '@/presentation/components/shared/btn';
 import { useQuoteModal } from './quote-context';
@@ -66,7 +65,11 @@ export function Nav() {
           <div className="flex items-center">
             <Show when="signed-out">
               <SignInButton mode="modal">
-                <button className="flex items-center justify-center p-2 text-soft hover:text-foreground transition-colors border-none bg-transparent cursor-pointer">
+                <button
+                  type="button"
+                  aria-label="Accedi"
+                  className="flex items-center justify-center p-2 text-soft hover:text-foreground transition-colors border-none bg-transparent cursor-pointer"
+                >
                   <User size={20} />
                 </button>
               </SignInButton>
