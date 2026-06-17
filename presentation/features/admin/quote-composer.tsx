@@ -785,19 +785,18 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   className="font-mono text-xs font-semibold px-4 py-3 rounded-lg border border-border text-muted hover:text-soft transition-all">
                   ← Roadmap
                 </button>
-                <button type="button" onClick={submit} disabled={pending || items.length === 0}
-                  className={cn(
-                    "flex-1 font-mono text-[15px] font-semibold px-6 py-[14px] rounded-[9px] transition-all duration-150",
-                    pending || items.length === 0
-                      ? "bg-raised text-muted cursor-not-allowed"
-                      : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
-                  )}>
-                  {pending
-                    ? "Salvataggio…"
-                    : isEdit
-                      ? "Salva modifiche →"
-                      : "Crea bozza preventivo →"}
-                </button>
+                {/* In edit mode the persistent sidebar save covers this; avoid a duplicate. */}
+                {!isEdit && (
+                  <button type="button" onClick={submit} disabled={pending || items.length === 0}
+                    className={cn(
+                      "flex-1 font-mono text-[15px] font-semibold px-6 py-[14px] rounded-[9px] transition-all duration-150",
+                      pending || items.length === 0
+                        ? "bg-raised text-muted cursor-not-allowed"
+                        : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
+                    )}>
+                    {pending ? "Salvataggio…" : "Crea bozza preventivo →"}
+                  </button>
+                )}
               </div>
             </section>
           )}
@@ -805,6 +804,29 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
 
         {/* ── sidebar ── */}
         <aside className="hidden lg:flex flex-col gap-5 sticky top-24">
+          {/* In edit mode the save action is always reachable, on every step. */}
+          {isEdit && (
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={submit}
+                disabled={pending || items.length === 0}
+                className={cn(
+                  "font-mono text-sm font-semibold px-5 py-3 rounded-xl transition-all duration-150",
+                  pending || items.length === 0
+                    ? "bg-raised text-muted cursor-not-allowed border border-border"
+                    : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
+                )}
+              >
+                {pending ? "Salvataggio…" : "Salva modifiche"}
+              </button>
+              {error && (
+                <p className="font-hanken text-[13px] text-[var(--coral)] m-0" role="alert">
+                  {error}
+                </p>
+              )}
+            </div>
+          )}
           {step === "items" ? (
             <CatalogSidebar
               tier={tier}
@@ -880,7 +902,8 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
           <span className="text-[16px] font-mono font-bold text-accent">{formatMoney(totals.net)}</span>
         </div>
         
-        {step === "terms" ? (
+        {/* In edit mode, save is always available; create keeps its guided flow. */}
+        {isEdit || step === "terms" ? (
           <button type="button" onClick={submit} disabled={pending || items.length === 0}
             className={cn(
               "px-6 py-3 rounded-xl font-mono text-sm font-bold transition-all",
