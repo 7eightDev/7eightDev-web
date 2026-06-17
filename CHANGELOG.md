@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-06-17
+
+Quote composer UI consistency & mobile polish. Patch release, presentation-only, no behavioural or schema changes.
+
+### Changed
+- **Work-item rows (step 2)**: the title field is now full-width on its own row, so it is no longer squeezed by the drag handle on narrow screens. Quantity and unit-price fields gained visible labels, the price field fills the available width, and the header reflows on mobile (title on one line, actions below).
+- **Add actions** are now consistently placed at the bottom-right of each list: "+ Voce libera" (step 2) mirrors "+ Aggiungi" (step 3), so adding an entry no longer requires scrolling back to the top.
+- **Roadmap / terms / tech-stack rows (step 3)** were unified with the work-item styling: each entry is a card matching step 2, with the label/value pair side-by-side on desktop (narrow value field) and stacked on mobile. The drag handle and remove control are vertically centred.
+- **Step navigation footers** are now visually separated from their section content with a top divider and consistent spacing across all steps.
+- Added breathing room between the timeline and tech-stack sections.
+
+### Added
+- **Collapsible catalog on mobile**: a "Catalogo" toggle next to the work-items header opens the service catalog on demand (the catalog stays in the sidebar on desktop).
+
+### Fixed
+- The unit-price label (`Prezzo unit. (€)`) no longer wraps onto a second line and misaligns the field row.
+- On mobile the remove control adapts to the full height of its row (neutral by default, accent on press); on desktop it keeps the accent border on hover.
+
 ## [1.3.0] - 2026-06-17
 
 Quote composer editing & ordering improvements. Minor release, backward compatible.

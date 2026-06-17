@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { LayoutGrid } from "lucide-react";
 import {
   createQuoteAction,
   updateQuoteAction,
@@ -268,6 +269,9 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
   const [showTechStack, setShowTechStack] = useState(initial.showTechStack);
   const [timelineNote, setTimelineNote] = useState(initial.timelineNote);
   const [tier, setTier] = useState<"web_assets" | "enterprise">("web_assets");
+  // Mobile-only: the catalog is collapsed by default and opened via the toggle
+  // next to "+ Voce libera". On desktop (lg+) it lives in the sidebar, always visible.
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [discountKind, setDiscountKind] = useState<DiscountKind>(
     initial.discountKind
   );
@@ -535,7 +539,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   appare in automatico sul preventivo pubblico.
                 </p>
               )}
-              <div className="mt-4 hidden sm:block">
+              <div className="hidden sm:block pt-6 border-t border-border mt-6">
                 <button type="button" onClick={() => setStep("items")}
                   className="font-mono text-sm font-semibold px-5 py-3 rounded-lg bg-raised border border-border text-soft hover:text-foreground hover:border-accent transition-all">
                   Prossimo step: Voci →
@@ -546,26 +550,36 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
 
           {step === "items" && (
             <div className="flex flex-col gap-6 sm:gap-8">
-              {/* Su mobile portiamo il catalogo in cima */}
-              <div className="lg:hidden">
-                <CatalogSidebar
-                  tier={tier}
-                  setTier={setTier}
-                  visibleCatalog={visibleCatalog}
-                  addFromCatalog={addFromCatalog}
-                  addedRefs={addedRefs}
-                  compact={true}
-                />
-              </div>
+              {/* Su mobile il catalogo è collassabile, aperto dal toggle accanto a "+ Voce libera" */}
+              {catalogOpen && (
+                <div className="lg:hidden animate-fade-up">
+                  <CatalogSidebar
+                    tier={tier}
+                    setTier={setTier}
+                    visibleCatalog={visibleCatalog}
+                    addFromCatalog={addFromCatalog}
+                    addedRefs={addedRefs}
+                    compact={true}
+                  />
+                </div>
+              )}
 
               <section className="animate-fade-up p-4 sm:p-6 rounded-2xl bg-surface border border-border flex flex-col gap-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <h2 className="font-space text-lg font-semibold text-foreground m-0">
                     Voci di lavoro
                   </h2>
-                  <button type="button" onClick={addFreeItem}
-                    className="font-mono text-xs font-semibold text-soft px-3 py-2 rounded-lg border border-border cursor-pointer transition-all duration-150 hover:border-accent hover:text-accent">
-                    + Voce libera
+                  <button type="button" onClick={() => setCatalogOpen((o) => !o)}
+                    aria-expanded={catalogOpen}
+                    aria-label={catalogOpen ? "Chiudi catalogo servizi" : "Apri catalogo servizi"}
+                    className={cn(
+                      "lg:hidden inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-mono text-xs font-semibold px-3 py-2 rounded-lg border cursor-pointer transition-all duration-150",
+                      catalogOpen
+                        ? "border-accent text-accent"
+                        : "border-border text-soft hover:border-accent hover:text-accent"
+                    )}>
+                    <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                    Catalogo
                   </button>
                 </div>
 
@@ -582,20 +596,29 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   >
                     {(item, handleProps) => (
                       <div className="p-4 rounded-xl bg-raised border border-border flex flex-col gap-3">
-                        <div className="grid grid-cols-[auto_1fr_52px_100px_auto] gap-2 items-start">
-                          <DragHandle handleProps={handleProps} className="px-1 py-[10px] self-start" />
+                        <div className="grid grid-cols-[auto_1fr_auto] gap-2 items-center">
+                          <DragHandle handleProps={handleProps} className="px-1 py-[10px]" />
                           <input className={inputClass} value={item.title} placeholder="Titolo voce *"
                             onChange={(e) => updateItem(item.key, { title: e.target.value })} />
-                          <input className={inputClass} type="number" min={1} value={item.quantity}
-                            title="Quantità" aria-label="Quantità"
-                            onChange={(e) => updateItem(item.key, { quantity: Math.max(1, Number(e.target.value) || 1) })} />
-                          <input className={inputClass} type="number" min={0} value={item.priceUnits}
-                            title="Prezzo unitario (€)" aria-label="Prezzo unitario"
-                            onChange={(e) => updateItem(item.key, { priceUnits: Number(e.target.value) })} />
                           <button type="button" onClick={() => removeItem(item.key)}
-                            className="font-mono text-sm text-muted px-2 py-2.5 cursor-pointer hover:text-[var(--coral)] transition-colors">
+                            className="font-mono text-sm text-muted px-2 py-2.5 cursor-pointer hover:text-[var(--coral)] transition-colors"
+                            title="Rimuovi voce" aria-label="Rimuovi voce">
                             ×
                           </button>
+                        </div>
+                        <div className="flex items-end gap-3">
+                          <div className="w-[96px] shrink-0">
+                            <label className={`${labelClass} whitespace-nowrap`}>Quantità</label>
+                            <input className={inputClass} type="number" min={1} value={item.quantity}
+                              aria-label="Quantità"
+                              onChange={(e) => updateItem(item.key, { quantity: Math.max(1, Number(e.target.value) || 1) })} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <label className={`${labelClass} whitespace-nowrap`}>Prezzo unit. (€)</label>
+                            <input className={inputClass} type="number" min={0} value={item.priceUnits}
+                              aria-label="Prezzo unitario (€)"
+                              onChange={(e) => updateItem(item.key, { priceUnits: Number(e.target.value) })} />
+                          </div>
                         </div>
                         {item.quantity > 1 && (
                           <p className="font-mono text-[11px] text-muted m-0 -mt-1">
@@ -606,7 +629,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                             {item.type === "recurring" && (item.interval === "yearly" ? " /anno" : " /mese")}
                           </p>
                         )}
-                        <textarea className={`${inputClass} resize-y text-[13px]`} rows={2} value={item.description}
+                        <textarea className={`${inputClass} resize-y text-[13px] min-h-[88px]`} rows={4} value={item.description}
                           placeholder="Descrizione per il cliente"
                           onChange={(e) => updateItem(item.key, { description: e.target.value })} />
                         <div className="flex items-center gap-3 flex-wrap">
@@ -638,7 +661,11 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                     )}
                   </SortableList>
                 )}
-                <div className="hidden sm:flex gap-3 mt-4">
+                <button type="button" onClick={addFreeItem}
+                  className="self-end font-mono text-xs font-semibold text-soft px-3 py-2 rounded-lg border border-border cursor-pointer transition-all duration-150 hover:border-accent hover:text-accent">
+                  + Voce libera
+                </button>
+                <div className="hidden sm:flex gap-3 pt-6 border-t border-border mt-6">
                   <button type="button" onClick={() => setStep("info")}
                     className="font-mono text-xs font-semibold px-4 py-3 rounded-lg border border-border text-muted hover:text-soft transition-all">
                     ← Info
@@ -672,14 +699,14 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   </>
                 )}
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 mt-4">
                 <SectionToggle label="Stack tecnico" checked={showTechStack} onChange={setShowTechStack} />
                 {showTechStack && (
                   <PairListEditor label="Stack tecnico" aPlaceholder="Framework" bPlaceholder="Next.js 16"
                     value={techStack} onChange={setTechStack} />
                 )}
               </div>
-              <div className="hidden sm:flex gap-3 mt-4">
+              <div className="hidden sm:flex gap-3 pt-6 border-t border-border mt-6">
                 <button type="button" onClick={() => setStep("items")}
                   className="font-mono text-xs font-semibold px-4 py-3 rounded-lg border border-border text-muted hover:text-soft transition-all">
                   ← Voci
@@ -790,7 +817,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                 </p>
               )}
 
-              <div className="hidden sm:flex gap-4 items-center pt-4 border-t border-border mt-4">
+              <div className="hidden sm:flex gap-4 items-center pt-6 border-t border-border mt-6">
                 <button type="button" onClick={() => setStep("details")}
                   className="font-mono text-xs font-semibold px-4 py-3 rounded-lg border border-border text-muted hover:text-soft transition-all">
                   ← Roadmap
