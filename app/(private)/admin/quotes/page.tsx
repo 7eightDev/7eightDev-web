@@ -6,7 +6,9 @@ import { quoteRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { QuoteFilterBar } from "@/presentation/features/admin/quote-filter-bar";
 import {
+  dueBucket,
   filterQuotes,
+  parseArchivedFilter,
   parseDueFilter,
   parseStatusFilter,
 } from "@/presentation/features/admin/quote-filters";
@@ -47,13 +49,23 @@ export default async function QuotesPage({
     ? params.status[0]
     : params.status;
   const dueParam = Array.isArray(params.due) ? params.due[0] : params.due;
+  const archivedParam = Array.isArray(params.archived)
+    ? params.archived[0]
+    : params.archived;
   const filters = {
     status: parseStatusFilter(statusParam),
     due: parseDueFilter(dueParam),
+    archived: parseArchivedFilter(archivedParam),
   };
 
   const quotes = await quoteRepository.findAll();
   const visibleQuotes = filterQuotes(quotes, filters);
+  // Denominator for the count line: total quotes in the current (active vs
+  // archived) partition, so "N su M" never mixes the two views.
+  const partitionTotal = quotes.filter(
+    (quote) => Boolean(quote.archivedAt) === filters.archived
+  ).length;
+  const archivedCount = quotes.length - quotes.filter((q) => !q.archivedAt).length;
 
   return (
     <Container className="max-w-[1100px] py-12">
@@ -84,14 +96,20 @@ export default async function QuotesPage({
         </div>
       ) : (
         <>
-          <QuoteFilterBar status={filters.status} due={filters.due} />
+          <QuoteFilterBar
+            status={filters.status}
+            due={filters.due}
+            archived={filters.archived}
+            archivedCount={archivedCount}
+          />
 
           <p className="font-mono text-[12.5px] text-muted mb-3">
             {visibleQuotes.length}{" "}
             {visibleQuotes.length === 1 ? "preventivo" : "preventivi"}
-            {visibleQuotes.length !== quotes.length
-              ? ` su ${quotes.length}`
+            {visibleQuotes.length !== partitionTotal
+              ? ` su ${partitionTotal}`
               : ""}
+            {filters.archived ? " archiviati" : ""}
           </p>
 
           {visibleQuotes.length === 0 ? (
@@ -170,6 +188,11 @@ export default async function QuotesPage({
                   status={quote.status}
                   clientName={quote.client.name}
                   sendBlockReason={sendBlockReason}
+                  archived={Boolean(quote.archivedAt)}
+                  canExpire={
+                    quote.status === "sent" &&
+                    dueBucket(quote.validUntil) === "expired"
+                  }
                   className="max-[820px]:[grid-area:actions] max-[820px]:justify-self-end max-[820px]:self-start"
                 />
               </div>

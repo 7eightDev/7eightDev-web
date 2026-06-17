@@ -27,6 +27,10 @@ class InMemoryQuoteRepository implements QuoteRepository {
     this.store.set(quote.id, quote);
   }
 
+  async delete(id: string): Promise<void> {
+    this.store.delete(id);
+  }
+
   async countByYear(year: number): Promise<number> {
     return [...this.store.values()].filter(
       (quote) => new Date(quote.issuedAt).getUTCFullYear() === year

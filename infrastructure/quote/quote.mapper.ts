@@ -27,6 +27,7 @@ export interface QuoteRow {
   lineItems: unknown;
   metadata: unknown;
   acceptance: unknown | null;
+  archivedAt: Date | null;
 }
 
 export function rowToQuote(row: QuoteRow): Quote {
@@ -45,6 +46,7 @@ export function rowToQuote(row: QuoteRow): Quote {
     lineItems: row.lineItems as LineItem[],
     metadata: (row.metadata ?? {}) as QuoteMetadata,
     acceptance: (row.acceptance as AcceptanceRecord | null) ?? undefined,
+    archivedAt: row.archivedAt?.toISOString() ?? undefined,
   };
 }
 
@@ -63,5 +65,6 @@ export function quoteToRow(quote: Quote): QuoteRow {
     lineItems: quote.lineItems,
     metadata: quote.metadata,
     acceptance: quote.acceptance ?? null,
+    archivedAt: quote.archivedAt ? new Date(quote.archivedAt) : null,
   };
 }

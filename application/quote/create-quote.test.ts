@@ -13,6 +13,7 @@ function makeRepo(existingInYear = 0): QuoteRepository & { saved?: Quote } {
     async save(q: Quote) {
       repo.saved = q;
     },
+    async delete() {},
     async countByYear() {
       return existingInYear;
     },

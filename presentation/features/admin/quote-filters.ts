@@ -14,17 +14,18 @@ import type { Quote } from '@/domain/quote/quote.types';
 /* ----------------------------- Status ----------------------------- */
 
 /**
- * Status filter options. Limited to the statuses the app can actually produce
- * today (draft → sent → accepted). The domain lifecycle also defines `rejected`
- * and `expired`, but no use case sets them yet, so surfacing them as tabs would
- * mean always-empty filters. Re-add them here when the reject/expire use cases
- * ship. (Date-based expiry is already covered by the due-date filter.)
+ * Status filter options, mirroring the full domain lifecycle now that every
+ * status is reachable: draft → sent → {accepted, rejected, expired}. The
+ * reject/expire use cases set the two closed-negative states; date-based expiry
+ * remains available separately via the due-date filter.
  */
 export const STATUS_FILTER_VALUES = [
   'all',
   'draft',
   'sent',
   'accepted',
+  'rejected',
+  'expired',
 ] as const;
 
 export type StatusFilter = (typeof STATUS_FILTER_VALUES)[number];
@@ -93,11 +94,25 @@ export function dueBucket(validUntilIso: string, now: Date = new Date()): DueBuc
   return 'valid';
 }
 
+/* --------------------------- Archived ----------------------------- */
+
+/**
+ * Archiving is orthogonal to the status lifecycle, so it is its own filter
+ * dimension rather than a status value. The default list shows active quotes
+ * only; the `?archived=1` view shows archived quotes only. Within either view
+ * the status and due-date filters still compose.
+ */
+export function parseArchivedFilter(raw: string | undefined): boolean {
+  return raw === '1';
+}
+
 /* --------------------------- Composition -------------------------- */
 
 export interface QuoteFilters {
   readonly status: StatusFilter;
   readonly due: DueFilter;
+  /** false = active quotes only (default); true = archived quotes only. */
+  readonly archived: boolean;
 }
 
 /**
@@ -110,6 +125,10 @@ export function filterQuotes(
   now: Date = new Date()
 ): Quote[] {
   return quotes.filter((quote) => {
+    // Archived state is the first gate: the two views never overlap.
+    if (Boolean(quote.archivedAt) !== filters.archived) {
+      return false;
+    }
     if (filters.status !== 'all' && quote.status !== filters.status) {
       return false;
     }
@@ -132,6 +151,8 @@ export const STATUS_FILTER_LABEL: Record<StatusFilter, string> = {
   draft: 'bozza',
   sent: 'inviato',
   accepted: 'accettato',
+  rejected: 'rifiutato',
+  expired: 'scaduto',
 };
 
 export const DUE_FILTER_LABEL: Record<DueFilter, string> = {
