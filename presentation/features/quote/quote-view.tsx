@@ -72,6 +72,23 @@ export function QuoteView({ quote }: QuoteViewProps) {
   const hasDiscount = calc.discount.amountCents > 0;
   const vatLabel = `IVA ${Math.round(quote.vatRate * 100)}%`;
 
+  // Section numbers must reflect only the sections actually rendered.
+  // Otherwise hiding a section (e.g. Tempi or Stack tecnico) leaves a gap in
+  // the sequence (01 → 04). Numbers are assigned in render order.
+  const showOptional = !isLumpSum && optional.length > 0;
+  const showPhases = (meta.phases?.length ?? 0) > 0;
+  const showTerms = (meta.terms?.length ?? 0) > 0;
+  const showTechStack = (meta.techStack?.length ?? 0) > 0;
+
+  let sectionCount = 0;
+  const sectionNo = (visible: boolean) =>
+    visible ? String(++sectionCount).padStart(2, "0") : "";
+  const nItems = sectionNo(true);
+  const nOptional = sectionNo(showOptional);
+  const nPhases = sectionNo(showPhases);
+  const nTerms = sectionNo(showTerms);
+  const nTechStack = sectionNo(showTechStack);
+
   return (
     <>
       {/* top bar */}
@@ -131,7 +148,7 @@ export function QuoteView({ quote }: QuoteViewProps) {
         {/* 01 — voci */}
         <div className="mt-14">
           <Reveal>
-            <SectionTitle n="01">Voci di lavoro</SectionTitle>
+            <SectionTitle n={nItems}>Voci di lavoro</SectionTitle>
           </Reveal>
           <Reveal delay={60}>
             <div className="flex flex-col gap-[2px]">
@@ -150,10 +167,10 @@ export function QuoteView({ quote }: QuoteViewProps) {
         </div>
 
         {/* 02 — moduli opzionali (mai in modalità prezzo unico) */}
-        {!isLumpSum && optional.length > 0 && (
+        {showOptional && (
           <div className="mt-[52px]">
             <Reveal>
-              <SectionTitle n="02">Moduli opzionali</SectionTitle>
+              <SectionTitle n={nOptional}>Moduli opzionali</SectionTitle>
               <p className="font-hanken text-[14.5px] text-soft -mt-3 mb-[22px] max-w-[560px]">
                 {accepted
                   ? "Selezione confermata in fase di accettazione."
@@ -256,14 +273,14 @@ export function QuoteView({ quote }: QuoteViewProps) {
         )}
 
         {/* 03 — tempi */}
-        {meta.phases && meta.phases.length > 0 && (
+        {showPhases && (
           <div className="mt-16">
             <Reveal>
-              <SectionTitle n="03">Tempi</SectionTitle>
+              <SectionTitle n={nPhases}>Tempi</SectionTitle>
             </Reveal>
             <Reveal delay={60}>
               <div className="grid grid-cols-4 max-[820px]:grid-cols-2 gap-4">
-                {meta.phases.map((phase, i) => (
+                {meta.phases?.map((phase, i) => (
                   <div key={phase.title} className="relative pt-6">
                     <div
                       className={`absolute top-0 left-0 right-0 h-[2px] rounded-[1px] ${
@@ -289,14 +306,14 @@ export function QuoteView({ quote }: QuoteViewProps) {
         )}
 
         {/* 04 — termini */}
-        {meta.terms && meta.terms.length > 0 && (
+        {showTerms && (
           <div className="mt-16">
             <Reveal>
-              <SectionTitle n="04">Termini</SectionTitle>
+              <SectionTitle n={nTerms}>Termini</SectionTitle>
             </Reveal>
             <Reveal delay={60}>
               <div className="grid grid-cols-2 max-[820px]:grid-cols-1 gap-[18px]">
-                {meta.terms.map((term) => (
+                {meta.terms?.map((term) => (
                   <div
                     key={term.label}
                     className="p-5 rounded-xl bg-surface border border-border"
@@ -315,17 +332,17 @@ export function QuoteView({ quote }: QuoteViewProps) {
         )}
 
         {/* 05 — stack tecnico */}
-        {meta.techStack && meta.techStack.length > 0 && (
+        {showTechStack && (
           <div className="mt-16">
             <Reveal>
-              <SectionTitle n="05">Stack tecnico</SectionTitle>
+              <SectionTitle n={nTechStack}>Stack tecnico</SectionTitle>
               <p className="font-hanken text-[14.5px] text-soft -mt-3 mb-[22px] max-w-[560px]">
                 Le tecnologie scelte per il tuo progetto — e perché contano.
               </p>
             </Reveal>
             <Reveal delay={60}>
               <div className="grid grid-cols-3 max-[820px]:grid-cols-2 gap-3">
-                {meta.techStack.map((entry) => (
+                {meta.techStack?.map((entry) => (
                   <div
                     key={entry.label}
                     className="px-4 py-[14px] rounded-xl bg-surface border border-border"
