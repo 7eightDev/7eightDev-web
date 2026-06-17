@@ -15,9 +15,14 @@ import {
 import { formatMoney, moneyFromUnits, sum } from "@/domain/shared/money";
 import { cn } from "@/presentation/lib/utils";
 import {
+  makePair,
   PairListEditor,
   type Pair,
 } from "@/presentation/features/admin/pair-list-editor";
+import {
+  DragHandle,
+  SortableList,
+} from "@/presentation/components/shared/sortable-list";
 
 /* ----------------------------- types ------------------------------ */
 
@@ -103,13 +108,13 @@ function quoteToState(quote: Quote): InitialState {
     })),
     phases: pairsFrom(
       meta.phases,
-      (p) => ({ a: p.title, b: p.weeks }),
+      (p) => makePair(p.title, p.weeks),
       DEFAULT_PHASES
     ),
-    terms: pairsFrom(meta.terms, (t) => ({ a: t.label, b: t.body }), DEFAULT_TERMS),
+    terms: pairsFrom(meta.terms, (t) => makePair(t.label, t.body), DEFAULT_TERMS),
     techStack: pairsFrom(
       meta.techStack,
-      (t) => ({ a: t.label, b: t.technology }),
+      (t) => makePair(t.label, t.technology),
       DEFAULT_STACK
     ),
     // Section is "shown" iff the saved quote actually carried its data.
@@ -156,22 +161,22 @@ function blankState(): InitialState {
 /* ---------------------------- defaults ---------------------------- */
 
 const DEFAULT_TERMS: Pair[] = [
-  { a: "Pagamento", b: "40% all’avvio · 30% a metà progetto · 30% alla consegna." },
-  { a: "Cosa serve da te", b: "Contenuti (testi, logo, immagini) e un referente per le approvazioni." },
-  { a: "Incluso", b: "Codice sorgente tuo, documentazione e 3 mesi di assistenza post-lancio." },
+  makePair("Pagamento", "40% all’avvio · 30% a metà progetto · 30% alla consegna."),
+  makePair("Cosa serve da te", "Contenuti (testi, logo, immagini) e un referente per le approvazioni."),
+  makePair("Incluso", "Codice sorgente tuo, documentazione e 3 mesi di assistenza post-lancio."),
 ];
 
 const DEFAULT_STACK: Pair[] = [
-  { a: "Framework", b: "Next.js 16 + React 19" },
-  { a: "Linguaggio", b: "TypeScript (strict)" },
-  { a: "Qualità", b: "Jest · Playwright · CI/CD" },
+  makePair("Framework", "Next.js 16 + React 19"),
+  makePair("Linguaggio", "TypeScript (strict)"),
+  makePair("Qualità", "Jest · Playwright · CI/CD"),
 ];
 
 const DEFAULT_PHASES: Pair[] = [
-  { a: "Discovery", b: "Sett. 1" },
-  { a: "Design", b: "Sett. 2–3" },
-  { a: "Sviluppo", b: "Sett. 4–7" },
-  { a: "Lancio", b: "Sett. 8" },
+  makePair("Discovery", "Sett. 1"),
+  makePair("Design", "Sett. 2–3"),
+  makePair("Sviluppo", "Sett. 4–7"),
+  makePair("Lancio", "Sett. 8"),
 ];
 
 function defaultValidUntil(): string {
@@ -564,16 +569,21 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  {items.length === 0 ? (
-                    <p className="font-hanken text-sm text-muted m-0 italic py-4">
-                      Seleziona servizi dal catalogo o aggiungi una voce libera.
-                    </p>
-                  ) : (
-                    items.map((item) => (
-                      <div key={item.key}
-                        className="p-4 rounded-xl bg-raised border border-border flex flex-col gap-3">
-                        <div className="grid grid-cols-[1fr_52px_100px_auto] gap-2 items-start">
+                {items.length === 0 ? (
+                  <p className="font-hanken text-sm text-muted m-0 italic py-4">
+                    Seleziona servizi dal catalogo o aggiungi una voce libera.
+                  </p>
+                ) : (
+                  <SortableList
+                    items={items}
+                    getId={(i) => i.key}
+                    onReorder={setItems}
+                    className="flex flex-col gap-3"
+                  >
+                    {(item, handleProps) => (
+                      <div className="p-4 rounded-xl bg-raised border border-border flex flex-col gap-3">
+                        <div className="grid grid-cols-[auto_1fr_52px_100px_auto] gap-2 items-start">
+                          <DragHandle handleProps={handleProps} className="px-1 py-[10px] self-start" />
                           <input className={inputClass} value={item.title} placeholder="Titolo voce *"
                             onChange={(e) => updateItem(item.key, { title: e.target.value })} />
                           <input className={inputClass} type="number" min={1} value={item.quantity}
@@ -625,9 +635,9 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                           </label>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    )}
+                  </SortableList>
+                )}
                 <div className="hidden sm:flex gap-3 mt-4">
                   <button type="button" onClick={() => setStep("info")}
                     className="font-mono text-xs font-semibold px-4 py-3 rounded-lg border border-border text-muted hover:text-soft transition-all">
