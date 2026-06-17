@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-06-17
+
+Quote composer editing & ordering improvements. Minor release, backward compatible.
+
+### Added
+- **Drag-and-drop reordering** in the quote composer for work items, timeline phases, terms, and tech-stack entries (built on `@dnd-kit`, with pointer, touch, and keyboard support). The chosen order is persisted and reflected on the public quote.
+- **Persistent save in edit mode**: when editing an existing quote the save action is reachable from every step — a sticky button in the desktop sidebar and in the mobile footer — instead of only on the final step. Save errors surface next to the persistent button.
+
+### Fixed
+- Public quote **section numbering** now counts only the sections actually rendered, so hiding Roadmap and/or Tech stack no longer leaves a gap in the sequence (e.g. `01 → 04`).
+
+### Notes
+- No breaking changes. Dragging is initiated only from a dedicated grip handle, so inline inputs stay editable. A client-side `id` added to composer pair items is presentation-only and is stripped by input validation.
+
 ## [1.2.0] - 2026-06-17
 
 Quote lifecycle & admin filter overhaul. Minor release, backward compatible.
@@ -44,6 +58,7 @@ Landing page refinement.
 
 Initial release: landing page and the digital quote system MVP (admin quote composer, public quote view, email delivery).
 
+[1.3.0]: https://github.com/7eightDev/7eightDev-web/releases/tag/v1.3.0
 [1.2.0]: https://github.com/7eightDev/7eightDev-web/releases/tag/v1.2.0
 [1.1.0]: https://github.com/7eightDev/7eightDev-web/releases/tag/v1.1.0
 [1.0.0]: https://github.com/7eightDev/7eightDev-web/releases/tag/v1.0.0
