@@ -48,54 +48,56 @@ export function PairListEditor({
       <div className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-2">
         {label}
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         <SortableList
           items={value}
           getId={(p) => p.id}
           onReorder={onChange}
-          className="flex flex-col gap-2"
+          className="flex flex-col gap-3"
         >
           {(pair, handleProps) => {
             const i = value.findIndex((p) => p.id === pair.id);
             return (
-              <div className="flex flex-col sm:grid sm:grid-cols-[auto_180px_1fr] gap-2 items-start pb-4 sm:pb-0 border-b border-border/40 sm:border-0 last:border-0">
-                <DragHandle handleProps={handleProps} />
-                <input
-                  type="text"
-                  value={pair.a}
-                  placeholder={aPlaceholder}
-                  onChange={(e) => update(i, "a", e.target.value)}
-                  className={inputClass}
-                />
-                <div className="flex gap-2 w-full items-start">
-                  <div className="flex-1">
-                    {bMultiline ? (
-                      <textarea
-                        value={pair.b}
-                        placeholder={bPlaceholder}
-                        rows={2}
-                        onChange={(e) => update(i, "b", e.target.value)}
-                        className={`${inputClass} resize-y`}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={pair.b}
-                        placeholder={bPlaceholder}
-                        onChange={(e) => update(i, "b", e.target.value)}
-                        className={inputClass}
-                      />
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Rimuovi riga"
-                    onClick={() => onChange(value.filter((p) => p.id !== pair.id))}
-                    className="font-mono text-sm text-muted px-3 py-[10px] rounded-lg border border-transparent cursor-pointer hover:text-[var(--coral)] hover:border-border shrink-0"
-                  >
-                    ×
-                  </button>
+              <div className="p-4 rounded-xl bg-raised border border-border flex items-center gap-2">
+                <DragHandle handleProps={handleProps} className="px-1 py-[10px] shrink-0" />
+                <div
+                  className={`flex-1 min-w-0 flex flex-col gap-2 ${
+                    bMultiline ? "" : "sm:flex-row sm:items-center sm:gap-3"
+                  }`}
+                >
+                  <input
+                    type="text"
+                    value={pair.a}
+                    placeholder={aPlaceholder}
+                    onChange={(e) => update(i, "a", e.target.value)}
+                    className={`${inputClass} ${bMultiline ? "" : "sm:flex-1 sm:min-w-0"}`}
+                  />
+                  {bMultiline ? (
+                    <textarea
+                      value={pair.b}
+                      placeholder={bPlaceholder}
+                      rows={2}
+                      onChange={(e) => update(i, "b", e.target.value)}
+                      className={`${inputClass} resize-y`}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={pair.b}
+                      placeholder={bPlaceholder}
+                      onChange={(e) => update(i, "b", e.target.value)}
+                      className={`${inputClass} sm:w-[150px] sm:shrink-0`}
+                    />
+                  )}
                 </div>
+                <button
+                  type="button"
+                  aria-label="Rimuovi riga"
+                  onClick={() => onChange(value.filter((p) => p.id !== pair.id))}
+                  className="font-mono text-sm text-muted cursor-pointer transition-colors shrink-0 rounded-lg self-stretch flex items-center justify-center px-3 border border-border active:text-[var(--coral)] active:border-[var(--coral)] sm:self-center sm:px-2 sm:py-2.5 sm:border-transparent sm:hover:text-[var(--coral)] sm:hover:border-[var(--coral)]"
+                >
+                  ×
+                </button>
               </div>
             );
           }}
@@ -103,7 +105,7 @@ export function PairListEditor({
         <button
           type="button"
           onClick={() => onChange([...value, makePair()])}
-          className="self-start font-mono text-xs font-semibold text-soft px-3 py-2 rounded-lg border border-border cursor-pointer transition-all duration-150 hover:border-accent hover:text-accent"
+          className="self-end font-mono text-xs font-semibold text-soft px-3 py-2 rounded-lg border border-border cursor-pointer transition-all duration-150 hover:border-accent hover:text-accent"
         >
           + Aggiungi
         </button>
