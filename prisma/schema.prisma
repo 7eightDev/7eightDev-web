@@ -82,6 +82,9 @@ model Quote {
   lineItems  Json
   metadata   Json
   acceptance Json?
+  // Set when the quote is archived (hidden from the default admin list).
+  // Orthogonal to `status`; null means active.
+  archivedAt DateTime?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 

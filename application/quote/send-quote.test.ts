@@ -42,6 +42,7 @@ function repoWith(quote: Quote | null): QuoteRepository & { saved?: Quote } {
     async save(q: Quote) {
       repo.saved = q;
     },
+    async delete() {},
     async countByYear() {
       return 0;
     },

@@ -125,6 +125,13 @@ export interface Quote {
   readonly lineItems: readonly LineItem[];
   readonly metadata: QuoteMetadata;
   readonly acceptance?: AcceptanceRecord;
+  /**
+   * When set (ISO 8601), the quote has been archived: hidden from the default
+   * admin list but fully preserved. Orthogonal to `status` — archiving never
+   * alters the lifecycle state, so a quote can be unarchived back into its
+   * original status. Absent means the quote is active.
+   */
+  readonly archivedAt?: string;
 }
 
 /* --------------------------- Calculation -------------------------- */

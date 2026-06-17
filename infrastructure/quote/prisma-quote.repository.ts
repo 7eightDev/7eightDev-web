@@ -42,12 +42,32 @@ export class PrismaQuoteRepository implements QuoteRepository {
       lineItems: row.lineItems as object,
       metadata: row.metadata as object,
       acceptance: (row.acceptance as object | null) ?? undefined,
+      archivedAt: row.archivedAt,
     };
     await prisma.quote.upsert({
       where: { id: row.id },
       create: { id: row.id, ...data },
       update: data,
     });
+  }
+
+  async delete(id: string): Promise<void> {
+    // A malformed UUID can match no row; deleting an absent id is also a no-op
+    // for callers, so swallow Prisma's "record not found" (P2025).
+    if (!UUID_PATTERN.test(id)) return;
+    try {
+      await prisma.quote.delete({ where: { id } });
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2025"
+      ) {
+        return;
+      }
+      throw error;
+    }
   }
 
   async countByYear(year: number): Promise<number> {
