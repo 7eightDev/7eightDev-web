@@ -32,7 +32,7 @@ const Check = () => (
 
 function TrackCard({ tr }: { tr: typeof TRACKS[0] }) {
   return (
-    <div className={cn("relative flex flex-col p-[34px] rounded-[16px] bg-surface border border-border h-full box-border", tr.hot && "border-accent/38 shadow-[0_0_60px_-34px_var(--accent)]")}>
+    <div className={cn("relative flex flex-col p-[34px] rounded-[16px] bg-surface border border-border h-full box-border transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_22px_60px_-32px_var(--accent)]", tr.hot && "border-accent/38 shadow-[0_0_60px_-34px_var(--accent)]")}>
       <div className="flex items-center justify-between mb-[18px]">
         <span className="font-mono text-[13px] text-muted tracking-[0.1em]">{tr.i}</span>
         {tr.hot && <Chip accent>alta complessità</Chip>}

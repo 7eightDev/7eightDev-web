@@ -43,9 +43,11 @@ export function TagLabel({ name, propKey, propValue, center, className }: TagLab
             ))}
         </>
       )}
-      {" "}
-      <span className="text-accent" aria-hidden="true">/</span>
-      <span className="text-muted" aria-hidden="true">&gt;</span>
+      <span className="whitespace-nowrap">
+        {" "}
+        <span className="text-accent" aria-hidden="true">/</span>
+        <span className="text-muted" aria-hidden="true">&gt;</span>
+      </span>
     </div>
   );
 }

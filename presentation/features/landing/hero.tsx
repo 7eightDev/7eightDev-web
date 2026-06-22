@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/presentation/lib/utils';
 import { Container } from '@/presentation/components/shared/container';
 import { TagLabel } from '@/presentation/components/shared/tag-label';
 import { Reveal } from '@/presentation/components/shared/reveal';
 import { Btn } from '@/presentation/components/shared/btn';
 import { Chip } from '@/presentation/components/shared/chip';
+import Aurora from '@/presentation/components/shared/aurora';
 import { useQuoteModal } from './quote-context';
 
 const C = {
@@ -75,7 +77,7 @@ function Terminal({ mode }: { mode: 'pmi' | 'ent' }) {
               animationDelay: `${i * 75}ms`
             }}
           >
-            {ln.t || '\u00A0'}
+            {ln.t || ' '}
           </div>
         ))}
         <span className="inline-block w-2 h-4 bg-accent align-middle animate-blink" />
@@ -102,10 +104,26 @@ const HERO = {
 export function Hero() {
   const { open } = useQuoteModal();
   const [mode, setMode] = useState<'pmi' | 'ent'>('ent');
+  const reduceMotion = useReducedMotion();
   const d = HERO[mode];
   return (
     <section id="top" className="relative overflow-hidden">
-      <div className="absolute top-[-180px] right-[-120px] w-[620px] h-[620px] bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_16%,_transparent),_transparent_62%)] pointer-events-none blur-[8px]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        {reduceMotion ? (
+          <div className="absolute top-[-180px] right-[-120px] h-[620px] w-[620px] bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_9%,_transparent),_transparent_62%)] blur-[8px]" />
+        ) : (
+          <div className="absolute inset-x-0 top-0 h-[125%] opacity-60">
+            <Aurora
+              colorStops={['#274A2C', '#1E3A47', '#2B2747']}
+              amplitude={0.95}
+              blend={0.6}
+              speed={0.55}
+            />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,_transparent_20%,_rgba(8,9,13,0.5)_70%,_rgba(8,9,13,0.85))]" />
+      </div>
+
       <Container className="relative pt-12 px-8 pb-16 md:pt-16 md:pb-23">
         <Reveal>
           <TagLabel

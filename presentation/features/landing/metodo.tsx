@@ -2,52 +2,12 @@ import { Container } from "@/presentation/components/shared/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { SectionHead } from "@/presentation/components/shared/section-head";
 import { TagLabel } from "@/presentation/components/shared/tag-label";
+import { CleanArchDiagram, DDDDiagram, TDDDiagram } from "@/presentation/features/landing/method-diagrams";
 
 function Check() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-none mt-[3px]">
       <path d="M3 8.5l3 3 7-8" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function CleanArchDiagram() {
-  return (
-    <svg width="128" height="128" viewBox="0 0 128 128" fill="none">
-      <circle cx="64" cy="64" r="58" fill="none" stroke="var(--border)" strokeWidth="1.5" />
-      <circle cx="64" cy="64" r="44" fill="none" stroke="var(--dim)" strokeWidth="1.5" />
-      <circle cx="64" cy="64" r="30" fill="none" stroke="var(--muted)" strokeWidth="1.5" />
-      <circle cx="64" cy="64" r="16" fill="color-mix(in oklab, var(--accent) 18%, transparent)" stroke="var(--accent)" strokeWidth="1.5" />
-      <text x="64" y="64" textAnchor="middle" dominantBaseline="central" fill="var(--accent)"
-        className="font-mono font-bold text-[9px]">Domain</text>
-      <path d="M96 32l-10 4 4-10" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M90 38C80 48 74 52 70 56" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 3" />
-    </svg>
-  );
-}
-
-function DDDDiagram() {
-  return (
-    <svg width="128" height="128" viewBox="0 0 128 128" fill="none">
-      <rect x="14" y="30" width="46" height="40" rx="7" stroke="var(--muted)" strokeWidth="1.5" />
-      <rect x="70" y="58" width="46" height="40" rx="7" stroke="var(--accent)" strokeWidth="1.5"
-        fill="color-mix(in oklab, var(--accent) 10%, transparent)" />
-      <text x="37" y="50" textAnchor="middle" fill="var(--muted)" className="font-mono text-[8px]">Billing</text>
-      <text x="93" y="78" textAnchor="middle" fill="var(--accent)" className="font-mono text-[8px]">Quotes</text>
-      <path d="M58 56l16 8" stroke="var(--dim)" strokeWidth="1.5" strokeDasharray="3 3" />
-    </svg>
-  );
-}
-
-function TDDDiagram() {
-  return (
-    <svg width="128" height="128" viewBox="0 0 128 128" fill="none">
-      <path d="M52 40a26 26 0 1 1 -4 30" stroke="var(--dim)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M50 70l-4 6 7-1" stroke="var(--dim)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="40" cy="44" r="9" stroke="var(--accent)" strokeWidth="1.5" />
-      <circle cx="88" cy="44" r="9" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5" />
-      <circle cx="64" cy="88" r="9" stroke="var(--accent)" strokeWidth="1.5" />
-      <text x="64" y="64" textAnchor="middle" dominantBaseline="central" fill="var(--muted)" className="font-mono text-[8px]">R→G→R</text>
     </svg>
   );
 }
@@ -73,7 +33,7 @@ export function Metodo() {
             const Dia = p.dia;
             return (
               <Reveal key={p.t} delay={i * 90}>
-                <div className="p-[30px] rounded-[16px] bg-background border border-border h-full">
+                <div className="p-[30px] rounded-[16px] bg-background border border-border h-full transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_18px_50px_-30px_var(--accent)]">
                   <div className="flex justify-center mb-[18px]"><Dia /></div>
                   <div className="font-mono text-[12px] text-muted tracking-[0.1em] mb-[6px]">0{i + 1}</div>
                   <h3 className="font-mono font-bold text-[19px] tracking-[-0.01em] mb-[12px] text-foreground">{p.t}</h3>
