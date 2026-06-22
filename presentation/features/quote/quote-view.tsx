@@ -42,7 +42,16 @@ export function QuoteView({ quote }: QuoteViewProps) {
     quote.acceptance?.acceptedByName
   );
 
-  const mandatory = quote.lineItems.filter((item) => !item.optional);
+  // One-time and recurring mandatory items are presented separately: the
+  // lump-sum mode bundles only the one-time deliverable into a single figure,
+  // while recurring charges (manutenzione/canoni) are an ongoing, separately
+  // billed commitment and must always stay itemized and priced.
+  const mandatoryOneTime = quote.lineItems.filter(
+    (item) => !item.optional && item.type === "one_time"
+  );
+  const mandatoryRecurring = quote.lineItems.filter(
+    (item) => !item.optional && item.type === "recurring"
+  );
   const optional = quote.lineItems.filter((item) => item.optional);
 
   const calc = useMemo(
@@ -75,6 +84,8 @@ export function QuoteView({ quote }: QuoteViewProps) {
   // Section numbers must reflect only the sections actually rendered.
   // Otherwise hiding a section (e.g. Tempi or Stack tecnico) leaves a gap in
   // the sequence (01 → 04). Numbers are assigned in render order.
+  const showItems = mandatoryOneTime.length > 0;
+  const showRecurring = mandatoryRecurring.length > 0;
   const showOptional = !isLumpSum && optional.length > 0;
   const showPhases = (meta.phases?.length ?? 0) > 0;
   const showTerms = (meta.terms?.length ?? 0) > 0;
@@ -83,7 +94,8 @@ export function QuoteView({ quote }: QuoteViewProps) {
   let sectionCount = 0;
   const sectionNo = (visible: boolean) =>
     visible ? String(++sectionCount).padStart(2, "0") : "";
-  const nItems = sectionNo(true);
+  const nItems = sectionNo(showItems);
+  const nRecurring = sectionNo(showRecurring);
   const nOptional = sectionNo(showOptional);
   const nPhases = sectionNo(showPhases);
   const nTerms = sectionNo(showTerms);
@@ -145,28 +157,62 @@ export function QuoteView({ quote }: QuoteViewProps) {
           </div>
         </Reveal>
 
-        {/* 01 — voci */}
-        <div className="mt-14">
-          <Reveal>
-            <SectionTitle n={nItems}>Voci di lavoro</SectionTitle>
-          </Reveal>
-          <Reveal delay={60}>
-            <div className="flex flex-col gap-[2px]">
-              {mandatory.map((item, i) => (
-                <div
-                  key={item.id}
-                  className={
-                    i < mandatory.length - 1 ? "border-b border-border" : ""
-                  }
-                >
-                  <ItemLine item={item} hidePrice={isLumpSum} />
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
+        {/* 01 — voci (solo una tantum; lump-sum nasconde i prezzi qui) */}
+        {showItems && (
+          <div className="mt-14">
+            <Reveal>
+              <SectionTitle n={nItems}>Voci di lavoro</SectionTitle>
+            </Reveal>
+            <Reveal delay={60}>
+              <div className="flex flex-col gap-[2px]">
+                {mandatoryOneTime.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className={
+                      i < mandatoryOneTime.length - 1
+                        ? "border-b border-border"
+                        : ""
+                    }
+                  >
+                    <ItemLine item={item} hidePrice={isLumpSum} />
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        )}
 
-        {/* 02 — moduli opzionali (mai in modalità prezzo unico) */}
+        {/* 02 — manutenzione e canoni (sempre itemizzati, anche in lump-sum:
+            un impegno ricorrente non può essere bundlato nel prezzo unico) */}
+        {showRecurring && (
+          <div className="mt-[52px]">
+            <Reveal>
+              <SectionTitle n={nRecurring}>Manutenzione e canoni</SectionTitle>
+              <p className="font-hanken text-[14.5px] text-soft -mt-3 mb-[22px] max-w-[560px]">
+                Servizi continuativi fatturati separatamente dall&rsquo;importo
+                una tantum.
+              </p>
+            </Reveal>
+            <Reveal delay={60}>
+              <div className="flex flex-col gap-[2px]">
+                {mandatoryRecurring.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className={
+                      i < mandatoryRecurring.length - 1
+                        ? "border-b border-border"
+                        : ""
+                    }
+                  >
+                    <ItemLine item={item} />
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        )}
+
+        {/* 03 — moduli opzionali (mai in modalità prezzo unico) */}
         {showOptional && (
           <div className="mt-[52px]">
             <Reveal>
@@ -247,14 +293,29 @@ export function QuoteView({ quote }: QuoteViewProps) {
                 {formatMoney(calc.oneTimeTotal)}
               </span>
             </div>
-            {calc.monthlyRecurring.amountCents > 0 && (
-              <div className="flex items-baseline justify-between gap-4 mt-3 pt-3 border-t border-border">
-                <span className="font-hanken text-[14.5px] text-soft">
-                  Canoni ricorrenti
-                </span>
-                <span className="font-mono text-[14.5px] text-foreground whitespace-nowrap">
-                  {formatMoney(calc.monthlyRecurring)} /mese
-                </span>
+            {(calc.monthlyRecurring.amountCents > 0 ||
+              calc.yearlyRecurring.amountCents > 0) && (
+              <div className="mt-3 pt-3 border-t border-border flex flex-col gap-3">
+                {calc.monthlyRecurring.amountCents > 0 && (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="font-hanken text-[14.5px] text-soft">
+                      Canoni ricorrenti
+                    </span>
+                    <span className="font-mono text-[14.5px] text-foreground whitespace-nowrap">
+                      {formatMoney(calc.monthlyRecurring)} /mese
+                    </span>
+                  </div>
+                )}
+                {calc.yearlyRecurring.amountCents > 0 && (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="font-hanken text-[14.5px] text-soft">
+                      Canoni ricorrenti
+                    </span>
+                    <span className="font-mono text-[14.5px] text-foreground whitespace-nowrap">
+                      {formatMoney(calc.yearlyRecurring)} /anno
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
