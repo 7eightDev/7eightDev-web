@@ -40,13 +40,30 @@ const onRequestItem: ServiceCatalogItem = {
   sortOrder: 7,
 };
 
+const onDemandItem: ServiceCatalogItem = {
+  id: "on-demand-item",
+  tier: "web_assets",
+  title: "On demand",
+  description: "On-call work, priced from a starting base.",
+  pricing: { kind: "fixed", price: moneyFromUnits(50) },
+  billing: { kind: "on_demand" },
+  defaultOptional: false,
+  sortOrder: 9,
+};
+
 describe("Catalog mapper", () => {
-  it.each([fixedItem, rangeRecurringItem, onRequestItem])(
+  it.each([fixedItem, rangeRecurringItem, onRequestItem, onDemandItem])(
     "round-trips %# without losing information",
     (item) => {
       expect(rowToCatalogItem(catalogItemToRow(item))).toEqual(item);
     }
   );
+
+  it("nulls the interval for on_demand billing", () => {
+    const row = catalogItemToRow(onDemandItem);
+    expect(row.billingKind).toBe("on_demand");
+    expect(row.billingInterval).toBeNull();
+  });
 
   it("flattens a fixed price into priceCents and nulls the range columns", () => {
     const row = catalogItemToRow(fixedItem);

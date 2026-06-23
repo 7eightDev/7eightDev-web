@@ -34,6 +34,7 @@ enum PricingKind {
 enum BillingKind {
   one_time
   recurring
+  on_demand
 }
 
 enum BillingInterval {

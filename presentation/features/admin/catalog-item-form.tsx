@@ -13,7 +13,7 @@ import type {
 import { cn } from "@/presentation/lib/utils";
 
 type PricingKind = "fixed" | "range" | "on_request";
-type BillingKind = "one_time" | "recurring";
+type BillingKind = "one_time" | "recurring" | "on_demand";
 type Interval = "monthly" | "yearly";
 
 interface CatalogItemFormProps {
@@ -83,7 +83,9 @@ export function CatalogItemForm({ item }: CatalogItemFormProps) {
     billing:
       billingKind === "recurring"
         ? { kind: "recurring" as const, interval }
-        : { kind: "one_time" as const },
+        : billingKind === "on_demand"
+          ? { kind: "on_demand" as const }
+          : { kind: "one_time" as const },
     defaultOptional,
   });
 
@@ -224,14 +226,18 @@ export function CatalogItemForm({ item }: CatalogItemFormProps) {
           Fatturazione
         </h2>
         <div className="flex items-center gap-2 flex-wrap">
-          {(["one_time", "recurring"] as const).map((k) => (
+          {(["one_time", "recurring", "on_demand"] as const).map((k) => (
             <button
               key={k}
               type="button"
               onClick={() => setBillingKind(k)}
               className={pill(billingKind === k)}
             >
-              {k === "one_time" ? "Una tantum" : "Ricorrente"}
+              {k === "one_time"
+                ? "Una tantum"
+                : k === "recurring"
+                  ? "Ricorrente"
+                  : "A chiamata"}
             </button>
           ))}
           {billingKind === "recurring" &&
@@ -246,6 +252,13 @@ export function CatalogItemForm({ item }: CatalogItemFormProps) {
               </button>
             ))}
         </div>
+
+        {billingKind === "on_demand" && (
+          <p className="font-hanken text-sm text-muted m-0 italic">
+            Intervento a chiamata: aggiunto al preventivo come voce fuori dal
+            totale, con il prezzo mostrato come base di partenza («da €X»).
+          </p>
+        )}
 
         <label className="flex items-center gap-2 cursor-pointer font-hanken text-[13px] text-soft w-fit">
           <input

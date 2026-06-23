@@ -4,6 +4,7 @@ import { moneyFromUnits } from "@/domain/shared/money";
 
 const ONE_TIME = { kind: "one_time" } as const;
 const MONTHLY = { kind: "recurring", interval: "monthly" } as const;
+const ON_DEMAND = { kind: "on_demand" } as const;
 
 /**
  * Initial Service Catalog content. This is *seed* data, not a runtime source:
@@ -106,10 +107,20 @@ const CATALOG_SEED_ITEMS: ReadonlyArray<Omit<ServiceCatalogItem, "sortOrder">> =
       tier: "web_assets",
       title: "Manutenzione & monitoring",
       description:
-        "Aggiornamenti, monitoraggio uptime/errori, piccoli interventi evolutivi e assistenza prioritaria.",
+        "Continuità tecnica: aggiornamenti di sicurezza, monitoraggio uptime/errori, backup e assistenza prioritaria.",
       pricing: { kind: "fixed", price: moneyFromUnits(150) },
       billing: MONTHLY,
       defaultOptional: true,
+    },
+    {
+      id: "on-demand-intervention",
+      tier: "web_assets",
+      title: "Intervento a chiamata",
+      description:
+        "Servizio su misura: il costo dipende dal lavoro effettivo da svolgere (modifiche evolutive, nuove sezioni o contenuti richiesti dopo la messa online). Il prezzo indicato è sempre una base di partenza — «a partire da» — e non è incluso nel totale: paghi solo ciò che attivi, quando lo attivi.",
+      pricing: { kind: "fixed", price: moneyFromUnits(50) },
+      billing: ON_DEMAND,
+      defaultOptional: false,
     },
 
     /* ── Livello 2 · Enterprise & SaaS ── */

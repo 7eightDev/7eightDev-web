@@ -288,7 +288,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
   const isLumpSum = pricingDisplay === "lump_sum";
 
   const addFromCatalog = (item: ServiceCatalogItem) => {
-    const recurring = item.billing.kind === "recurring";
+    const billing = item.billing;
     setItems((prev) => {
       // A catalog item can only appear once per quote: ignore re-adds.
       if (prev.some((i) => i.catalogRef === item.id)) return prev;
@@ -301,9 +301,15 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
           description: item.description,
           priceUnits: catalogPriceUnits(item),
           quantity: 1,
-          optional: item.defaultOptional,
-          type: recurring ? "recurring" : "one_time",
-          interval: recurring ? item.billing.interval : undefined,
+          // On-demand items are never selectable nor part of the total.
+          optional: billing.kind === "on_demand" ? false : item.defaultOptional,
+          type:
+            billing.kind === "recurring"
+              ? "recurring"
+              : billing.kind === "on_demand"
+                ? "on_demand"
+                : "one_time",
+          interval: billing.kind === "recurring" ? billing.interval : undefined,
         },
       ];
     });
@@ -1051,8 +1057,13 @@ function CatalogSidebar({
                   ) : (
                     <>
                       {catalogPriceLabel(item)}
-                      {item.billing.kind === "recurring" &&
-                        (item.billing.interval === "yearly" ? " /anno" : " /mese")}
+                      {item.billing.kind === "recurring"
+                        ? item.billing.interval === "yearly"
+                          ? " /anno"
+                          : " /mese"
+                        : item.billing.kind === "on_demand"
+                          ? " · a chiamata"
+                          : null}
                     </>
                   )}
                 </span>

@@ -22,9 +22,14 @@ function buildPricing(input: CatalogItemInput["pricing"]): PricingModel {
 }
 
 function buildBilling(input: CatalogItemInput["billing"]): BillingModel {
-  return input.kind === "recurring"
-    ? { kind: "recurring", interval: input.interval }
-    : { kind: "one_time" };
+  switch (input.kind) {
+    case "recurring":
+      return { kind: "recurring", interval: input.interval };
+    case "on_demand":
+      return { kind: "on_demand" };
+    case "one_time":
+      return { kind: "one_time" };
+  }
 }
 
 /** Assembles the domain model from validated form input. */

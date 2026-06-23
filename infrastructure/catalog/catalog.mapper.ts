@@ -8,7 +8,7 @@ import type {
 import type { Currency, Money } from "@/domain/shared/money";
 
 type PricingKind = "fixed" | "range" | "on_request";
-type BillingKind = "one_time" | "recurring";
+type BillingKind = "one_time" | "recurring" | "on_demand";
 type BillingInterval = "monthly" | "yearly";
 
 /**
@@ -64,9 +64,14 @@ function rowToPricing(row: CatalogItemRow): PricingModel {
 }
 
 function rowToBilling(row: CatalogItemRow): BillingModel {
-  return row.billingKind === "recurring"
-    ? { kind: "recurring", interval: row.billingInterval ?? "monthly" }
-    : { kind: "one_time" };
+  switch (row.billingKind) {
+    case "recurring":
+      return { kind: "recurring", interval: row.billingInterval ?? "monthly" };
+    case "on_demand":
+      return { kind: "on_demand" };
+    case "one_time":
+      return { kind: "one_time" };
+  }
 }
 
 /**

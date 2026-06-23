@@ -30,6 +30,7 @@ export const billingModelSchema = z.discriminatedUnion("kind", [
     kind: z.literal("recurring"),
     interval: z.enum(["monthly", "yearly"]),
   }),
+  z.object({ kind: z.literal("on_demand") }),
 ]);
 
 export const catalogItemSchema = z.object({

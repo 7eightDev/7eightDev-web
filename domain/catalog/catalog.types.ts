@@ -15,7 +15,13 @@ export type PricingModel =
  */
 export type BillingModel =
   | { readonly kind: "one_time" }
-  | { readonly kind: "recurring"; readonly interval: "monthly" | "yearly" };
+  | { readonly kind: "recurring"; readonly interval: "monthly" | "yearly" }
+  /**
+   * On-demand work ("interventi a chiamata"): composed into the quote as an
+   * `on_demand` line item — priced as a starting base but never part of any
+   * total. Carries no interval.
+   */
+  | { readonly kind: "on_demand" };
 
 /**
  * A composable service from the 7eightDev catalog.
