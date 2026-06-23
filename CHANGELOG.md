@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-06-23
+
+Tooling. Patch release, no application or schema changes.
+
+### Added
+- `db:seed:catalog` script (`prisma/seed-catalog.ts`): catalog-only, environment-explicit seeding for ad-hoc provisioning, separate from the dev `prisma db seed` (which also inserts the example quote). It targets `DATABASE_URL`, always prints the destination host, and is a dry run unless `--yes` is passed, so an accidental run is a no-op.
+
+### Notes
+- Routine production provisioning of the catalog is intended to move to a deploy-time "seed only if empty" step; this script is for deliberate one-off baseline resets.
+
 ## [1.4.0] - 2026-06-23
 
 On-demand line items ("interventi a chiamata"). Minor release, backward compatible.
