@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-06-23
+
+On-demand line items ("interventi a chiamata"). Minor release, backward compatible.
+
+### Added
+- **On-demand line items** (`on_demand`): a third line-item type for on-call work, priced as a starting base (rendered "da €X") but never included in any total — a rate annex for future, on-request work, distinct from one-time deliverables and recurring fees.
+  - Public quote page: a dedicated **"Interventi a chiamata"** section, rendered below the total with an explicit "not included in the total" note.
+  - Composer: a three-way **Tipo** selector per work item (Una tantum / Ricorrente / A chiamata); the Opzionale flag is disabled for on-demand items.
+- **On-demand catalog billing**: catalog items can now use an `on_demand` billing model, so a catalog entry composes straight into an on-demand line. Adds an "A chiamata" option in the catalog admin form, the composer mapping, and a seed placeholder **"Intervento a chiamata"** (€50 starting base).
+- New `on_demand` value on the `BillingKind` enum (migration `20260623120000_catalog_on_demand_billing`).
+
+### Changed
+- The billing variant CHECK on `catalog_items` was rewritten so an interval is required iff the item is recurring (one-time and on-demand both carry a NULL interval).
+- Seed "Manutenzione & monitoring" description softened to continuity-only (security, uptime, backups), aligning with the on-call vs maintenance split.
+
+### Notes
+- No breaking changes. The pricing engine sums only one-time and recurring items, so on-demand items are excluded from totals by construction; line items are JSON snapshots, so no data migration was required.
+
 ## [1.3.1] - 2026-06-17
 
 Quote composer UI consistency & mobile polish. Patch release, presentation-only, no behavioural or schema changes.
