@@ -53,6 +53,9 @@ export function QuoteView({ quote }: QuoteViewProps) {
     (item) => !item.optional && item.type === "recurring"
   );
   const optional = quote.lineItems.filter((item) => item.optional);
+  // On-demand items ("interventi a chiamata"): priced as a starting base but
+  // never part of the total — presented as a separate annex below the total.
+  const onDemand = quote.lineItems.filter((item) => item.type === "on_demand");
 
   const calc = useMemo(
     () => calculateQuote(quote, selectedIds),
@@ -87,6 +90,7 @@ export function QuoteView({ quote }: QuoteViewProps) {
   const showItems = mandatoryOneTime.length > 0;
   const showRecurring = mandatoryRecurring.length > 0;
   const showOptional = !isLumpSum && optional.length > 0;
+  const showOnDemand = onDemand.length > 0;
   const showPhases = (meta.phases?.length ?? 0) > 0;
   const showTerms = (meta.terms?.length ?? 0) > 0;
   const showTechStack = (meta.techStack?.length ?? 0) > 0;
@@ -97,6 +101,7 @@ export function QuoteView({ quote }: QuoteViewProps) {
   const nItems = sectionNo(showItems);
   const nRecurring = sectionNo(showRecurring);
   const nOptional = sectionNo(showOptional);
+  const nOnDemand = sectionNo(showOnDemand);
   const nPhases = sectionNo(showPhases);
   const nTerms = sectionNo(showTerms);
   const nTechStack = sectionNo(showTechStack);
@@ -331,6 +336,34 @@ export function QuoteView({ quote }: QuoteViewProps) {
               importi superiori a €77,47.
             </p>
           </Reveal>
+        )}
+
+        {/* interventi a chiamata — prezzi di partenza, mai inclusi nel totale */}
+        {showOnDemand && (
+          <div className="mt-16">
+            <Reveal>
+              <SectionTitle n={nOnDemand}>Interventi a chiamata</SectionTitle>
+              <p className="font-hanken text-[14.5px] text-soft -mt-3 mb-[22px] max-w-[560px]">
+                Lavoro evolutivo su richiesta, valutato di volta in volta. I
+                prezzi sono una base di partenza e <strong>non sono inclusi nel
+                totale</strong>: paghi solo ciò che attivi, quando lo attivi.
+              </p>
+            </Reveal>
+            <Reveal delay={60}>
+              <div className="flex flex-col gap-[2px]">
+                {onDemand.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className={
+                      i < onDemand.length - 1 ? "border-b border-border" : ""
+                    }
+                  >
+                    <ItemLine item={item} />
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
         )}
 
         {/* 03 — tempi */}

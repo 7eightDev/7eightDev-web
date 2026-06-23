@@ -12,7 +12,7 @@ export const lineItemInputSchema = z.object({
   quantity: z.number().int().positive("La quantità deve essere ≥ 1").default(1),
   unit: z.string().optional(),
   optional: z.boolean(),
-  type: z.literal(["one_time", "recurring"]),
+  type: z.literal(["one_time", "recurring", "on_demand"]),
   interval: z.literal(["monthly", "yearly"]).optional(),
 });
 

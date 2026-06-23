@@ -28,11 +28,17 @@ export function buildLineItem(
     unitPrice: moneyFromUnits(input.priceUnits),
     quantity: input.quantity,
     unit: input.unit || undefined,
-    optional: input.optional,
+    // On-demand items are never part of a total nor client-selectable, so the
+    // optional flag is meaningless for them: force it false to keep the invariant.
+    optional: input.type === "on_demand" ? false : input.optional,
   };
-  return input.type === "recurring"
-    ? { ...base, type: "recurring", interval: input.interval ?? "monthly" }
-    : { ...base, type: "one_time" };
+  if (input.type === "recurring") {
+    return { ...base, type: "recurring", interval: input.interval ?? "monthly" };
+  }
+  if (input.type === "on_demand") {
+    return { ...base, type: "on_demand" };
+  }
+  return { ...base, type: "one_time" };
 }
 
 /** Maps composer discount input (percent 0–100 / euros) to the domain Discount. */

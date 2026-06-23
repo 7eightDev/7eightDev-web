@@ -35,7 +35,7 @@ interface LineItemDraft {
   priceUnits: number;
   quantity: number;
   optional: boolean;
-  type: "one_time" | "recurring";
+  type: "one_time" | "recurring" | "on_demand";
   interval?: "monthly" | "yearly";
 }
 
@@ -633,29 +633,55 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                           placeholder="Descrizione per il cliente"
                           onChange={(e) => updateItem(item.key, { description: e.target.value })} />
                         <div className="flex items-center gap-3 flex-wrap">
-                          <label
-                            title={isLumpSum ? "Disattivato in modalità prezzo unico: tutto è incluso." : undefined}
-                            className={cn(
-                              "flex items-center gap-2 font-hanken text-[12px] text-soft bg-surface/50 px-2 py-1 rounded-md border border-border/50",
-                              isLumpSum ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                            )}>
-                            <input type="checkbox" checked={isLumpSum ? false : item.optional}
-                              disabled={isLumpSum}
-                              className="w-3.5 h-3.5 accent-accent"
-                              onChange={(e) => updateItem(item.key, { optional: e.target.checked })} />
-                            Opzionale
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer font-hanken text-[12px] text-soft bg-surface/50 px-2 py-1 rounded-md border border-border/50">
-                            <input type="checkbox" checked={item.type === "recurring"}
-                              className="w-3.5 h-3.5 accent-accent"
-                              onChange={(e) =>
-                                updateItem(item.key, {
-                                  type: e.target.checked ? "recurring" : "one_time",
-                                  interval: e.target.checked ? (item.interval ?? "monthly") : undefined,
-                                })
-                              } />
-                            Ricorrente
-                          </label>
+                          {(() => {
+                            // On-demand items are never part of the total nor
+                            // selectable, so "Opzionale" is meaningless for them.
+                            const optionalDisabled = isLumpSum || item.type === "on_demand";
+                            return (
+                              <label
+                                title={
+                                  isLumpSum
+                                    ? "Disattivato in modalità prezzo unico: tutto è incluso."
+                                    : item.type === "on_demand"
+                                      ? "Non applicabile: gli interventi a chiamata sono fuori dal totale."
+                                      : undefined
+                                }
+                                className={cn(
+                                  "flex items-center gap-2 font-hanken text-[12px] text-soft bg-surface/50 px-2 py-1 rounded-md border border-border/50",
+                                  optionalDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                                )}>
+                                <input type="checkbox" checked={optionalDisabled ? false : item.optional}
+                                  disabled={optionalDisabled}
+                                  className="w-3.5 h-3.5 accent-accent"
+                                  onChange={(e) => updateItem(item.key, { optional: e.target.checked })} />
+                                Opzionale
+                              </label>
+                            );
+                          })()}
+                          <div className="flex items-center gap-1 bg-surface/50 px-1 py-1 rounded-md border border-border/50">
+                            {([
+                              { v: "one_time", label: "Una tantum" },
+                              { v: "recurring", label: "Ricorrente" },
+                              { v: "on_demand", label: "A chiamata" },
+                            ] as const).map((t) => (
+                              <button key={t.v} type="button"
+                                onClick={() =>
+                                  updateItem(item.key, {
+                                    type: t.v,
+                                    interval: t.v === "recurring" ? (item.interval ?? "monthly") : undefined,
+                                    optional: t.v === "on_demand" ? false : item.optional,
+                                  })
+                                }
+                                className={cn(
+                                  "font-mono text-[11px] px-2 py-1 rounded cursor-pointer transition-all",
+                                  item.type === t.v
+                                    ? "bg-accent text-[#0a0b0d]"
+                                    : "text-soft hover:text-foreground"
+                                )}>
+                                {t.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}

@@ -87,6 +87,41 @@ describe("calculateQuote", () => {
   });
 });
 
+describe("calculateQuote with on-demand items", () => {
+  const withOnDemand: Quote = {
+    ...quote,
+    lineItems: [
+      ...lineItems,
+      {
+        id: "intervento",
+        type: "on_demand",
+        title: "Intervento a chiamata",
+        description: "Modifica evolutiva su richiesta",
+        unitPrice: moneyFromUnits(50),
+        optional: false,
+      },
+    ],
+  };
+
+  it("never adds on-demand items to the one-time total", () => {
+    const calc = calculateQuote(withOnDemand);
+    // Same 300_000 base as the canonical quote: the €50 on-demand item is ignored.
+    expect(calc.oneTimeSubtotal.amountCents).toBe(300_000);
+    expect(calc.oneTimeTotal.amountCents).toBe(366_000);
+  });
+
+  it("never adds on-demand items to recurring charges", () => {
+    const calc = calculateQuote(withOnDemand);
+    expect(calc.monthlyRecurring.amountCents).toBe(0);
+    expect(calc.yearlyRecurring.amountCents).toBe(0);
+  });
+
+  it("ignores an on-demand id passed as a selected optional", () => {
+    const calc = calculateQuote(withOnDemand, ["intervento"]);
+    expect(calc.oneTimeSubtotal.amountCents).toBe(300_000);
+  });
+});
+
 describe("calculateQuote with quantity", () => {
   const withQty: Quote = {
     ...quote,

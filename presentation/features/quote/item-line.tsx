@@ -29,6 +29,8 @@ export function ItemLine({
         ? " /mese"
         : " /anno"
       : "";
+  // On-demand items show a "starting from" base price, not a committed figure.
+  const pricePrefix = item.type === "on_demand" ? "da " : "";
 
   const content = (
     <>
@@ -73,6 +75,9 @@ export function ItemLine({
               {qty}
               {item.unit ? ` ${item.unit}` : "×"} · {formatMoney(item.unitPrice)}
             </div>
+          )}
+          {pricePrefix && (
+            <span className="text-muted text-[12px]">{pricePrefix}</span>
           )}
           {formatMoney(total)}
           {recurringSuffix && (

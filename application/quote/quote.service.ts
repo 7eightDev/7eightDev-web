@@ -46,6 +46,10 @@ export function calculateQuote(
   const selected = new Set(selectedOptionalIds);
   const included = quote.lineItems.filter((item) => isIncluded(item, selected));
 
+  // Totals are derived strictly from "one_time" and "recurring" items below.
+  // "on_demand" items (interventi a chiamata) are deliberately never summed:
+  // they are a rate annex for future work, not part of this quote's total.
+
   const totals = (items: LineItem[]): Money[] => items.map(lineTotal);
 
   const oneTimeSubtotal = sum(

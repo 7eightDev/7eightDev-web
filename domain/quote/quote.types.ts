@@ -46,7 +46,15 @@ export type LineItem =
   | (BaseLineItem & {
       readonly type: "recurring";
       readonly interval: RecurringInterval;
-    });
+    })
+  /**
+   * On-demand work ("interventi a chiamata"): priced as a starting base
+   * (rendered "da €X") but NEVER part of any total — it is a rate annex for
+   * future, on-request work, not a commitment in this quote. Excluded from the
+   * one-time subtotal and from recurring charges by construction, and never
+   * client-selectable, so `optional` is always false.
+   */
+  | (BaseLineItem & { readonly type: "on_demand" });
 
 /* ----------------------------- Quote ------------------------------ */
 
