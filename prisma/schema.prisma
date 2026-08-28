@@ -68,26 +68,98 @@ model CatalogItem {
 }
 
 model Quote {
-  id         String      @id @db.Uuid
-  number     String      @unique
-  status     QuoteStatus @default(draft)
-  client     Json
-  project    String
-  intro      String
-  issuedAt   DateTime
-  validUntil DateTime
+  id           String       @id @db.Uuid
+  number       String       @unique
+  status       QuoteStatus  @default(draft)
+  client       Json
+  project      String
+  intro        String
+  issuedAt     DateTime
+  validUntil   DateTime
   // Default `vat` keeps existing rows (created under VAT assumptions) correct on
   // backfill; the composer always sends the regime explicitly (default occasional).
   fiscalRegime FiscalRegime @default(vat)
-  vatRate    Float
-  lineItems  Json
-  metadata   Json
-  acceptance Json?
+  vatRate      Float
+  lineItems    Json
+  metadata     Json
+  acceptance   Json?
   // Set when the quote is archived (hidden from the default admin list).
   // Orthogonal to `status`; null means active.
-  archivedAt DateTime?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  archivedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@map("quotes")
+}
+
+enum LeadSource {
+  google_maps
+  outscraper
+  serpapi
+}
+
+enum LeadStatus {
+  new
+  analyzed
+  qualified
+  discarded
+}
+
+enum LeadGenerationJobStatus {
+  pending
+  running
+  completed
+  failed
+}
+
+model Lead {
+  id          String     @id
+  companyName String
+  category    String?
+  website     String?
+  phone       String?
+  email       String?
+  address     String?
+  city        String?
+  source      LeadSource
+  status      LeadStatus
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  analyses LeadAnalysis[]
+
+  @@map("leads")
+}
+
+model LeadAnalysis {
+  id               String   @id
+  leadId           String
+  strategy         String
+  performanceScore Float?
+  lcp              Float?
+  fcp              Float?
+  cls              Float?
+  tbt              Float?
+  analyzedAt       DateTime
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@map("lead_analyses")
+}
+
+model LeadGenerationJob {
+  id          String                  @id
+  query       String
+  location    String
+  status      LeadGenerationJobStatus
+  totalFound  Int                     @default(0)
+  analyzed    Int                     @default(0)
+  qualified   Int                     @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  error       String?
+  createdAt   DateTime                @default(now())
+
+  @@map("lead_generation_jobs")
 }
