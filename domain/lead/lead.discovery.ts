@@ -1,7 +1,7 @@
 export interface LeadSearchInput {
   readonly query: string;
   readonly location: string;
-  readonly quantity: number;
+  readonly quantity?: number;
 }
 
 export interface DiscoveredLead {

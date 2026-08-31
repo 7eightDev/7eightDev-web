@@ -3,7 +3,10 @@ import type {
   LeadDiscoveryPort,
   LeadSearchInput
 } from '@/domain/lead/lead.discovery';
-import type { PageSpeedPort, PageSpeedResult } from '@/domain/lead/lead.pagespeed';
+import type {
+  PageSpeedPort,
+  PageSpeedResult
+} from '@/domain/lead/lead.pagespeed';
 import type { LeadRepository } from '@/domain/lead/lead.repository';
 import { calculateLeadQualification } from '@/domain/lead/lead.score';
 import type {
@@ -14,7 +17,7 @@ import type {
   LeadStatus
 } from '@/domain/lead/lead.types';
 
-interface RunLeadGenerationPipelineDeps {
+export interface RunLeadGenerationPipelineDeps {
   readonly discovery: LeadDiscoveryPort;
   readonly pageSpeed: PageSpeedPort;
   readonly repository: LeadRepository;
@@ -30,7 +33,11 @@ export type RunLeadGenerationPipelineResult =
       readonly leads: Lead[];
       readonly errors: LeadPipelineError[];
     }
-  | { readonly ok: false; readonly job: LeadGenerationJob; readonly error: string };
+  | {
+      readonly ok: false;
+      readonly job: LeadGenerationJob;
+      readonly error: string;
+    };
 
 export interface LeadPipelineError {
   readonly companyName: string;
@@ -226,7 +233,10 @@ function websiteKey(website: string | undefined) {
     const pathname = url.pathname.replace(/\/$/, '');
     return `${url.hostname.replace(/^www\./, '').toLowerCase()}${pathname}`;
   } catch {
-    return website.trim().replace(/^https?:\/\//, '').replace(/^www\./, '');
+    return website
+      .trim()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '');
   }
 }
 
