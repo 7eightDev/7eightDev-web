@@ -284,20 +284,13 @@ updatedAt
 Source iniziale:
 
 ```ts
-type LeadSource =
-  | "google_maps"
-  | "outscraper"
-  | "serpapi";
+type LeadSource = 'google_maps' | 'outscraper' | 'serpapi';
 ```
 
 Status iniziale:
 
 ```ts
-type LeadStatus =
-  | "new"
-  | "analyzed"
-  | "qualified"
-  | "discarded";
+type LeadStatus = 'new' | 'analyzed' | 'qualified' | 'discarded';
 ```
 
 `qualified` NON significa cliente.
@@ -329,7 +322,7 @@ analyzedAt
 Strategy:
 
 ```ts
-"mobile" | "desktop"
+'mobile' | 'desktop';
 ```
 
 Per la V1 la qualificazione parte dal Performance Score.
@@ -361,11 +354,7 @@ createdAt
 Status:
 
 ```ts
-type LeadGenerationJobStatus =
-  | "pending"
-  | "running"
-  | "completed"
-  | "failed";
+type LeadGenerationJobStatus = 'pending' | 'running' | 'completed' | 'failed';
 ```
 
 Esempio:
@@ -417,9 +406,7 @@ calculateLeadQualification(
 con:
 
 ```ts
-type LeadQualification =
-  | "qualified"
-  | "not_qualified";
+type LeadQualification = 'qualified' | 'not_qualified';
 ```
 
 Questa logica deve essere progettata per poter essere estesa.
@@ -1033,10 +1020,10 @@ TASK 4 — PageSpeed
 ✅ COMPLETATO
 
 TASK 5 — Pipeline
-🟡 IN CORSO
+✅ COMPLETATO
 
 TASK 6 — Jobs
-⚪ NON INIZIATO
+🟡 IN CORSO
 
 TASK 7 — Admin UI
 ⚪ NON INIZIATO
