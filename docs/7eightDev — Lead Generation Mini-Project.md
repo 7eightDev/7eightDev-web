@@ -739,8 +739,8 @@ Attività:
 [x] lint
 [x] typecheck
 [x] build
-[ ] commit
-[ ] merge
+[x] commit
+[x] merge
 ```
 
 ---
@@ -780,16 +780,16 @@ Update Lead
 Attività:
 
 ```text
-[ ] application use case
-[ ] dependency injection
-[ ] orchestrazione
-[ ] gestione errori per singolo lead
-[ ] aggiornamento contatori Job
-[ ] test use case
-[ ] test error scenarios
-[ ] suite
-[ ] lint
-[ ] typecheck
+[x] application use case
+[x] dependency injection
+[x] orchestrazione
+[x] gestione errori per singolo lead
+[x] aggiornamento contatori Job
+[x] test use case
+[x] test error scenarios
+[x] suite
+[x] lint
+[x] typecheck
 [ ] build
 [ ] commit
 [ ] merge
@@ -1030,10 +1030,10 @@ TASK 3 — Discovery
 ✅ COMPLETATO
 
 TASK 4 — PageSpeed
-🟡 IN CORSO
+✅ COMPLETATO
 
 TASK 5 — Pipeline
-⚪ NON INIZIATO
+🟡 IN CORSO
 
 TASK 6 — Jobs
 ⚪ NON INIZIATO
@@ -1067,7 +1067,7 @@ feat/lead-generation
 Branch operativo:
 
 ```text
-feat/lead-generation-pagespeed
+feat/lead-generation-pipeline
 ```
 
 `main` NON deve essere modificato fino al completamento dell'intero progetto.
@@ -1125,13 +1125,13 @@ L'obiettivo non è soltanto "far funzionare lo scraper", ma costruire una funzio
 Stato attuale:
 
 ```text
-feat/lead-generation-pagespeed
+feat/lead-generation-pipeline
 ```
 
 Il prossimo passo è:
 
 ```text
-completare Task 4 — PageSpeed
+completare Task 5 — Pipeline
 ```
 
 Prima di procedere verificare:
@@ -1158,7 +1158,7 @@ merge in feat/lead-generation
 ↓
 verifica branch
 ↓
-inizio Task 5
+inizio Task 6
 ```
 
 **NON fare il merge in `main`.**

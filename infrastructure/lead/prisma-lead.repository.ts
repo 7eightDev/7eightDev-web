@@ -79,12 +79,20 @@ export class PrismaLeadRepository implements LeadRepository {
         leadId: analysis.leadId,
         strategy: analysis.strategy,
         performanceScore: analysis.performanceScore,
+        lcp: analysis.lcp,
+        fcp: analysis.fcp,
+        cls: analysis.cls,
+        tbt: analysis.tbt,
         analyzedAt: new Date(analysis.analyzedAt)
       },
       update: {
         leadId: analysis.leadId,
         strategy: analysis.strategy,
         performanceScore: analysis.performanceScore,
+        lcp: analysis.lcp,
+        fcp: analysis.fcp,
+        cls: analysis.cls,
+        tbt: analysis.tbt,
         analyzedAt: new Date(analysis.analyzedAt)
       }
     });
@@ -108,8 +116,8 @@ export class PrismaLeadRepository implements LeadRepository {
       analyzed: row.analyzed,
       qualified: row.qualified,
       startedAt: row.startedAt ? row.startedAt.toISOString() : undefined,
-      completedAt: undefined,
-      error: undefined,
+      completedAt: row.completedAt ? row.completedAt.toISOString() : undefined,
+      error: row.error ?? undefined,
       createdAt: row.createdAt.toISOString()
     };
   }
