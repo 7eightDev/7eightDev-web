@@ -722,23 +722,23 @@ Integrare Google PageSpeed Insights API.
 Attività:
 
 ```text
-[ ] definire PageSpeedPort
-[ ] definire input/output
-[ ] implementare Google adapter
-[ ] parsing response
-[ ] Performance Score
-[ ] LCP
-[ ] FCP
-[ ] CLS
-[ ] TBT
-[ ] mobile strategy
-[ ] timeout
-[ ] error handling
-[ ] eventuale retry
-[ ] test
-[ ] lint
-[ ] typecheck
-[ ] build
+[x] definire PageSpeedPort
+[x] definire input/output
+[x] implementare Google adapter
+[x] parsing response
+[x] Performance Score
+[x] LCP
+[x] FCP
+[x] CLS
+[x] TBT
+[x] mobile strategy
+[x] timeout
+[x] error handling
+[x] eventuale retry
+[x] test
+[x] lint
+[x] typecheck
+[x] build
 [ ] commit
 [ ] merge
 ```
@@ -1021,16 +1021,16 @@ Aggiornare questa sezione dopo ogni task.
 
 ```text
 TASK 1 — Domain
-🟡 IN CORSO
+✅ COMPLETATO
 
 TASK 2 — Persistence
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 TASK 3 — Discovery
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 TASK 4 — PageSpeed
-⚪ NON INIZIATO
+🟡 IN CORSO
 
 TASK 5 — Pipeline
 ⚪ NON INIZIATO
@@ -1067,7 +1067,7 @@ feat/lead-generation
 Branch operativo:
 
 ```text
-feat/lead-generation-domain
+feat/lead-generation-pagespeed
 ```
 
 `main` NON deve essere modificato fino al completamento dell'intero progetto.
@@ -1125,13 +1125,13 @@ L'obiettivo non è soltanto "far funzionare lo scraper", ma costruire una funzio
 Stato attuale:
 
 ```text
-feat/lead-generation-domain
+feat/lead-generation-pagespeed
 ```
 
 Il prossimo passo è:
 
 ```text
-completare Task 1 — Domain
+completare Task 4 — PageSpeed
 ```
 
 Prima di procedere verificare:
@@ -1158,7 +1158,7 @@ merge in feat/lead-generation
 ↓
 verifica branch
 ↓
-inizio Task 2
+inizio Task 5
 ```
 
 **NON fare il merge in `main`.**
