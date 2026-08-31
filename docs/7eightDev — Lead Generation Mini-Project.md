@@ -1054,7 +1054,7 @@ feat/lead-generation
 Branch operativo:
 
 ```text
-feat/lead-generation-pipeline
+feat/lead-generation-jobs
 ```
 
 `main` NON deve essere modificato fino al completamento dell'intero progetto.
