@@ -1,7 +1,9 @@
 import type { CatalogRepository } from "@/domain/catalog/catalog.repository";
+import type { PageSpeedPort } from "@/domain/lead/lead.pagespeed";
 import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
+import { GooglePageSpeedInsights } from "@/infrastructure/lead/pagespeed/google-pagespeed-insights";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
 import { PrismaQuoteRepository } from "@/infrastructure/quote/prisma-quote.repository";
 import {
@@ -24,6 +26,11 @@ export const catalogRepository: CatalogRepository =
  * falls back to a no-op so the app still runs in dev/CI without a key.
  */
 export const quoteNotifier: QuoteNotificationPort = buildQuoteNotifier();
+
+/** PageSpeed analysis for lead qualification. */
+export const pageSpeedAnalyzer: PageSpeedPort = new GooglePageSpeedInsights({
+  apiKey: process.env.GOOGLE_PAGESPEED_API_KEY,
+});
 
 /**
  * Reads the Resend email configuration from the environment, or returns null
