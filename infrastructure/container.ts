@@ -1,9 +1,11 @@
 import type { CatalogRepository } from "@/domain/catalog/catalog.repository";
+import type { LeadDiscoveryPort } from "@/domain/lead/lead.discovery";
 import type { LeadRepository } from "@/domain/lead/lead.repository";
 import type { PageSpeedPort } from "@/domain/lead/lead.pagespeed";
 import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
+import { OutscraperLeadDiscovery } from "@/infrastructure/lead/discovery/outscraper-lead-discovery";
 import { PrismaLeadRepository } from "@/infrastructure/lead/prisma-lead.repository";
 import { GooglePageSpeedInsights } from "@/infrastructure/lead/pagespeed/google-pagespeed-insights";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
@@ -25,6 +27,17 @@ export const catalogRepository: CatalogRepository =
 
 /** Lead discovery and qualification persistence. */
 export const leadRepository: LeadRepository = new PrismaLeadRepository();
+
+/**
+ * Lead discovery. The concrete Outscraper HTTP client is not implemented yet,
+ * so this binds a stub that returns no results. The pipeline still runs and
+ * completes the job; the real HTTP client will be wired in a dedicated task.
+ */
+export const leadDiscovery: LeadDiscoveryPort = new OutscraperLeadDiscovery({
+  async search() {
+    return [];
+  },
+});
 
 /**
  * Outbound quote notifications. Uses Resend when fully configured, otherwise
