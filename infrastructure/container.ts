@@ -1,8 +1,10 @@
 import type { CatalogRepository } from "@/domain/catalog/catalog.repository";
+import type { LeadRepository } from "@/domain/lead/lead.repository";
 import type { PageSpeedPort } from "@/domain/lead/lead.pagespeed";
 import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
+import { PrismaLeadRepository } from "@/infrastructure/lead/prisma-lead.repository";
 import { GooglePageSpeedInsights } from "@/infrastructure/lead/pagespeed/google-pagespeed-insights";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
 import { PrismaQuoteRepository } from "@/infrastructure/quote/prisma-quote.repository";
@@ -20,6 +22,9 @@ export const quoteRepository: QuoteRepository = new PrismaQuoteRepository();
 /** Service Catalog persistence (reference data composed into quotes). */
 export const catalogRepository: CatalogRepository =
   new PrismaCatalogRepository();
+
+/** Lead discovery and qualification persistence. */
+export const leadRepository: LeadRepository = new PrismaLeadRepository();
 
 /**
  * Outbound quote notifications. Uses Resend when fully configured, otherwise
