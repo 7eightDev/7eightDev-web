@@ -14,5 +14,6 @@ export interface LeadRepository {
   saveAnalysis(analysis: LeadAnalysis): Promise<void>;
 
   findJobById(id: string): Promise<LeadGenerationJob | null>;
+  findAllJobs(): Promise<LeadGenerationJob[]>;
   saveJob(job: LeadGenerationJob): Promise<void>;
 }

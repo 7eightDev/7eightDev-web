@@ -40,6 +40,10 @@ export class InMemoryLeadRepository implements LeadRepository {
     return this.jobs.get(id) ?? null;
   }
 
+  async findAllJobs(): Promise<LeadGenerationJob[]> {
+    return [...this.jobs.values()];
+  }
+
   async saveJob(job: LeadGenerationJob): Promise<void> {
     this.jobs.set(job.id, job);
   }

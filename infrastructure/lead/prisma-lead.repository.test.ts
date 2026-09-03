@@ -22,6 +22,7 @@ jest.mock('@/infrastructure/db/prisma', () => ({
     },
     leadGenerationJob: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       upsert: jest.fn()
     }
   }
@@ -298,6 +299,75 @@ describe('PrismaLeadRepository', () => {
       error: undefined,
       createdAt: '2026-08-28T09:55:00.000Z'
     });
+  });
+  it('finds all jobs', async () => {
+    const repository = new PrismaLeadRepository();
+
+    const rows = [
+      {
+        id: 'job-1',
+        query: 'web agencies',
+        location: 'Padova',
+        status: LeadGenerationJobStatus.completed,
+        totalFound: 10,
+        analyzed: 5,
+        qualified: 2,
+        startedAt: new Date('2026-08-28T10:00:00.000Z'),
+        completedAt: new Date('2026-08-28T10:30:00.000Z'),
+        error: null,
+        createdAt: new Date('2026-08-28T09:55:00.000Z')
+      },
+      {
+        id: 'job-2',
+        query: 'dentists',
+        location: 'Milano',
+        status: LeadGenerationJobStatus.pending,
+        totalFound: 0,
+        analyzed: 0,
+        qualified: 0,
+        startedAt: null,
+        completedAt: null,
+        error: null,
+        createdAt: new Date('2026-08-29T10:00:00.000Z')
+      }
+    ];
+
+    jest.mocked(prisma.leadGenerationJob.findMany).mockResolvedValue(rows);
+
+    const result = await repository.findAllJobs();
+
+    expect(prisma.leadGenerationJob.findMany).toHaveBeenCalledWith({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    expect(result).toEqual([
+      {
+        id: 'job-1',
+        query: 'web agencies',
+        location: 'Padova',
+        status: 'completed',
+        totalFound: 10,
+        analyzed: 5,
+        qualified: 2,
+        startedAt: '2026-08-28T10:00:00.000Z',
+        completedAt: '2026-08-28T10:30:00.000Z',
+        error: undefined,
+        createdAt: '2026-08-28T09:55:00.000Z'
+      },
+      {
+        id: 'job-2',
+        query: 'dentists',
+        location: 'Milano',
+        status: 'pending',
+        totalFound: 0,
+        analyzed: 0,
+        qualified: 0,
+        startedAt: undefined,
+        completedAt: undefined,
+        error: undefined,
+        createdAt: '2026-08-29T10:00:00.000Z'
+      }
+    ]);
   });
   it('saves a job using upsert', async () => {
     const repository = new PrismaLeadRepository();

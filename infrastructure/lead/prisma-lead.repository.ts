@@ -7,10 +7,12 @@ import type {
 import { prisma } from '@/infrastructure/db/prisma';
 import {
   LeadAnalysisRow,
+  type LeadGenerationJobRow,
   type LeadRow,
   leadToRow,
   rowToLead,
-  rowToLeadAnalysis
+  rowToLeadAnalysis,
+  rowToLeadGenerationJob
 } from '@/infrastructure/lead/lead.mapper';
 
 export class PrismaLeadRepository implements LeadRepository {
@@ -107,19 +109,15 @@ export class PrismaLeadRepository implements LeadRepository {
       return null;
     }
 
-    return {
-      id: row.id,
-      query: row.query,
-      location: row.location,
-      status: row.status,
-      totalFound: row.totalFound,
-      analyzed: row.analyzed,
-      qualified: row.qualified,
-      startedAt: row.startedAt ? row.startedAt.toISOString() : undefined,
-      completedAt: row.completedAt ? row.completedAt.toISOString() : undefined,
-      error: row.error ?? undefined,
-      createdAt: row.createdAt.toISOString()
-    };
+    return rowToLeadGenerationJob(row as LeadGenerationJobRow);
+  }
+
+  async findAllJobs(): Promise<LeadGenerationJob[]> {
+    const rows = await prisma.leadGenerationJob.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return rows.map((row) => rowToLeadGenerationJob(row as LeadGenerationJobRow));
   }
 
   async saveJob(job: LeadGenerationJob): Promise<void> {
