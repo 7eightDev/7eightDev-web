@@ -45,6 +45,9 @@ function makeRepository(existingLeads: Lead[] = []) {
     async findJobById(id) {
       return jobs.find((job) => job.id === id) ?? null;
     },
+    async findAllJobs() {
+      return [...jobs];
+    },
     async saveJob(job) {
       jobs.push(job);
     }

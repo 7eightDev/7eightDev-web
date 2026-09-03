@@ -26,6 +26,7 @@ export function AdminHeader({ showEmailLink = false }: AdminHeaderProps) {
   const navItems: NavItem[] = [
     { href: "/admin/quotes", label: "Preventivi" },
     { href: "/admin/catalog", label: "Catalogo" },
+    { href: "/admin/leads", label: "Lead" },
     ...(showEmailLink ? [{ href: "/admin/email", label: "Email" }] : []),
   ];
 

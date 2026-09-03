@@ -96,4 +96,12 @@ describe('InMemoryLeadRepository', () => {
 
     await expect(repository.findJobById('missing')).resolves.toBeNull();
   });
+
+  it('returns all jobs', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.saveJob(job);
+
+    await expect(repository.findAllJobs()).resolves.toEqual([job]);
+  });
 });
