@@ -116,9 +116,9 @@ Server Component:
 ### Stato
 
 ```
-[ ] 3a — pagina lista
-[ ] 3b — pagina form ricerca
-[ ] 3c — pagina dettaglio
+[x] 3a — pagina lista
+[x] 3b — pagina form ricerca
+[x] 3c — pagina dettaglio
 ```
 
 ---
@@ -147,12 +147,12 @@ Server Component:
 ### Stato
 
 ```
-[ ] lead-score-badge.tsx
-[ ] lead-job-status.tsx
-[ ] lead-row-actions.tsx
-[ ] lead-table.tsx
-[ ] lead-search-form.tsx
-[ ] lead-detail.tsx
+[x] lead-score-badge.tsx
+[x] lead-job-status.tsx
+[x] lead-row-actions.tsx
+[x] lead-table.tsx
+[x] lead-search-form.tsx
+[x] lead-detail.tsx
 ```
 
 ---
@@ -172,7 +172,7 @@ Posizionato dopo "Catalogo" e prima dell'eventuale "Email".
 ### Stato
 
 ```
-[ ] completato
+[x] completato
 ```
 
 ---
@@ -197,10 +197,10 @@ npm run build
 ### Stato
 
 ```
-[ ] lint verde
-[ ] typecheck verde
-[ ] test verde
-[ ] build verde
+[x] lint verde
+[x] typecheck verde
+[x] test verde
+[x] build verde
 ```
 
 ---
@@ -250,16 +250,16 @@ STEP 2 — Server actions
 ✅ COMPLETATO
 
 STEP 3 — Route pages
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 STEP 4 — Componenti presentation
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 STEP 5 — Nav admin update
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 STEP 7 — Quality gate
-⚪ NON INIZIATO
+✅ COMPLETATO
 ```
 
 ---
