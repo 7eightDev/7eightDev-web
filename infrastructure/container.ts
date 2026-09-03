@@ -5,8 +5,7 @@ import type { PageSpeedPort } from "@/domain/lead/lead.pagespeed";
 import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
-import { OutscraperLeadDiscovery } from "@/infrastructure/lead/discovery/outscraper-lead-discovery";
-import { OutscraperHttpClient } from "@/infrastructure/lead/discovery/outscraper-http-client";
+import { GooglePlacesLeadDiscovery } from "@/infrastructure/lead/discovery/google-places-lead-discovery";
 import { PrismaLeadRepository } from "@/infrastructure/lead/prisma-lead.repository";
 import { GooglePageSpeedInsights } from "@/infrastructure/lead/pagespeed/google-pagespeed-insights";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
@@ -30,14 +29,17 @@ export const catalogRepository: CatalogRepository =
 export const leadRepository: LeadRepository = new PrismaLeadRepository();
 
 /**
- * Lead discovery. The concrete Outscraper HTTP client calls the Outscraper
- * Google Maps search API; results are normalized by OutscraperLeadDiscovery.
- * Requires OUTSCRAPER_API_KEY in the environment to be fully functional.
+ * Lead discovery. Uses the Google Places Text Search API to find businesses
+ * in a niche/location and extract their website (analyzed by PageSpeed) plus
+ * contact data. Requires GOOGLE_PLACES_API_KEY in the environment.
+ *
+ * The Outscraper adapter remains available in the codebase but is not wired
+ * here; switch back by replacing this binding.
  */
-export const leadDiscovery: LeadDiscoveryPort = new OutscraperLeadDiscovery(
-  new OutscraperHttpClient({
-    apiKey: process.env.OUTSCRAPER_API_KEY,
-  }),
+export const leadDiscovery: LeadDiscoveryPort = new GooglePlacesLeadDiscovery(
+  {
+    apiKey: process.env.GOOGLE_PLACES_API_KEY,
+  },
 );
 
 /**

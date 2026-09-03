@@ -1116,50 +1116,56 @@ L'obiettivo non è soltanto "far funzionare lo scraper", ma costruire una funzio
 Stato attuale:
 
 ```text
-feat/lead-generation-outscraper
+feat/lead-generation
 ```
 
-Il prossimo passo era:
+Il provider di discovery scelto per la V1 è **Google Places API (Text Search New)**.
+
+✅ COMPLETATO — `GooglePlacesLeadDiscovery`
+(`infrastructure/lead/discovery/google-places-lead-discovery.ts`) con:
 
 ```text
-implementare il client HTTP Outscraper
-```
-
-✅ COMPLETATO. È implementato `OutscraperHttpClient`
-(`infrastructure/lead/discovery/outscraper-http-client.ts`) con:
-
-```text
-chiamata API (fetch nativo, come GooglePageSpeedInsights)
-X-API-KEY header
-endpoint search-v3
-query = "<query> <location>"
-limit
-parsing { data: [...] }
-normalizzazione site→website, full_address→address, type/category→category
-mapping condiviso OutscraperClient/OutscraperResult
-OutscraperDiscoveryError tipizzato
+POST https://places.googleapis.com/v1/places:searchText
+X-Goog-Api-Key      (GOOGLE_PLACES_API_KEY)
+X-Goog-FieldMask    (displayName, formattedAddress, nationalPhoneNumber,
+                     websiteUri, addressComponents)
+textQuery = "<query> <location>"
+pageSize + paginazione (nextPageToken, maxPages)
+mapping displayName→companyName, websiteUri→website,
+        nationalPhoneNumber→phone, formattedAddress→address,
+        addressComponents(locality)→city
+email = undefined (Google Places non fornisce email)
+GooglePlacesDiscoveryError tipizzato
 timeout + retry configurabili
 test (fetchFn mock)
 ```
 
+Nota importante: Google Places **non fornisce l'email**. Il discovery recupera
+nome, telefono, sito e indirizzo — sufficiente per la qualificazione via
+PageSpeed e per contattare il lead (TASK 9). Basta abilitare il billing Google
+($200/mese di credito; niente carta dedicata).
+
 Il container DI ora lega:
 
 ```text
-leadDiscovery → OutscraperLeadDiscovery(OutscraperHttpClient)
+leadDiscovery → GooglePlacesLeadDiscovery
 ```
 
-(lo stub che ritornava `[]` è stato rimosso).
+L'adapter **Outscraper** (ed `OutscraperHttpClient`, con email) resta nel
+codice ma **non è collegato** di default: richiede una carta di credito.
+Per riattivarlo basta cambiare il binding nel container.
 
-Aggiunta env:
+Aggiunte env (`.env.example`):
 
 ```text
-OUTSCRAPER_API_KEY
+GOOGLE_PLACES_API_KEY   ← attivo (V1)
+OUTSCRAPER_API_KEY      ← opzionale / alternativa
 ```
 
 Verifica eseguita e verde:
 
 ```text
-npm test -- --runInBand        → 172/172 pass
+npm test -- --runInBand        → 185/185 pass
 npm run lint                   → OK
 npx tsc --noEmit               → OK
 npm run build                  → OK
