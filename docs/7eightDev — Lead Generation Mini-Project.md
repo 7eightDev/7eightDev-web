@@ -1026,7 +1026,7 @@ TASK 6 — Jobs
 ✅ COMPLETATO
 
 TASK 7 — Admin UI
-🟡 IN CORSO
+✅ COMPLETATO
 
 TASK 8 — Export
 ⚪ NON INIZIATO
@@ -1054,8 +1054,12 @@ feat/lead-generation
 Branch operativo:
 
 ```text
-feat/lead-generation-admin
+feat/lead-generation-outscraper
 ```
+
+Il branch operativo nasce da `feat/lead-generation` (task per il client HTTP
+Outscraper). `feat/lead-generation` contiene tutti i task 1-7 e NON deve essere
+modificato fino al completamento dell'intero progetto.
 
 `main` NON deve essere modificato fino al completamento dell'intero progetto.
 
@@ -1112,31 +1116,56 @@ L'obiettivo non è soltanto "far funzionare lo scraper", ma costruire una funzio
 Stato attuale:
 
 ```text
-feat/lead-generation-pipeline
+feat/lead-generation-outscraper
 ```
 
-Il prossimo passo è:
+Il prossimo passo era:
 
 ```text
-completare Task 5 — Pipeline
+implementare il client HTTP Outscraper
 ```
 
-Prima di procedere verificare:
+✅ COMPLETATO. È implementato `OutscraperHttpClient`
+(`infrastructure/lead/discovery/outscraper-http-client.ts`) con:
 
-```bash
-npm test -- --runInBand
-npm run lint
-npx tsc --noEmit
-npm run build
+```text
+chiamata API (fetch nativo, come GooglePageSpeedInsights)
+X-API-KEY header
+endpoint search-v3
+query = "<query> <location>"
+limit
+parsing { data: [...] }
+normalizzazione site→website, full_address→address, type/category→category
+mapping condiviso OutscraperClient/OutscraperResult
+OutscraperDiscoveryError tipizzato
+timeout + retry configurabili
+test (fetchFn mock)
 ```
 
-Poi:
+Il container DI ora lega:
 
-```bash
-git status
+```text
+leadDiscovery → OutscraperLeadDiscovery(OutscraperHttpClient)
 ```
 
-Se tutto è verde:
+(lo stub che ritornava `[]` è stato rimosso).
+
+Aggiunta env:
+
+```text
+OUTSCRAPER_API_KEY
+```
+
+Verifica eseguita e verde:
+
+```text
+npm test -- --runInBand        → 172/172 pass
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
+Prossimi passi:
 
 ```text
 commit
@@ -1145,7 +1174,7 @@ merge in feat/lead-generation
 ↓
 verifica branch
 ↓
-inizio Task 6
+inizio task successivo (Export)
 ```
 
 **NON fare il merge in `main`.**
