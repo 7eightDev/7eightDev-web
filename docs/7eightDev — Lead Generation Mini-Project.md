@@ -1119,33 +1119,53 @@ Stato attuale:
 feat/lead-generation-outscraper
 ```
 
-Il prossimo passo è:
+Il prossimo passo era:
 
 ```text
 implementare il client HTTP Outscraper
 ```
 
-La pipeline funziona ma nel DI container `leadDiscovery` è ancora legato a un
-adapter con un client stub che ritorna `[]` (tutte le ricerche producono 0
-lead). Il client HTTP reale di Outscraper (chiamata API, parsing, gestione
-errori, retry) deve essere implementato e collegato al posto dello stub.
+✅ COMPLETATO. È implementato `OutscraperHttpClient`
+(`infrastructure/lead/discovery/outscraper-http-client.ts`) con:
 
-Prima di procedere verificare:
-
-```bash
-npm test -- --runInBand
-npm run lint
-npx tsc --noEmit
-npm run build
+```text
+chiamata API (fetch nativo, come GooglePageSpeedInsights)
+X-API-KEY header
+endpoint search-v3
+query = "<query> <location>"
+limit
+parsing { data: [...] }
+normalizzazione site→website, full_address→address, type/category→category
+mapping condiviso OutscraperClient/OutscraperResult
+OutscraperDiscoveryError tipizzato
+timeout + retry configurabili
+test (fetchFn mock)
 ```
 
-Poi:
+Il container DI ora lega:
 
-```bash
-git status
+```text
+leadDiscovery → OutscraperLeadDiscovery(OutscraperHttpClient)
 ```
 
-Se tutto è verde:
+(lo stub che ritornava `[]` è stato rimosso).
+
+Aggiunta env:
+
+```text
+OUTSCRAPER_API_KEY
+```
+
+Verifica eseguita e verde:
+
+```text
+npm test -- --runInBand        → 172/172 pass
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
+Prossimi passi:
 
 ```text
 commit

@@ -3,20 +3,9 @@ import type {
   LeadSearchInput,
   LeadDiscoveryPort
 } from '@/domain/lead/lead.discovery';
-
-interface OutscraperResult {
-  readonly name: string;
-  readonly category?: string;
-  readonly website?: string;
-  readonly phone?: string;
-  readonly email?: string;
-  readonly address?: string;
-  readonly city?: string;
-}
-
-interface OutscraperClient {
-  search(input: LeadSearchInput): Promise<OutscraperResult[]>;
-}
+import type {
+  OutscraperClient
+} from '@/infrastructure/lead/discovery/outscraper-http-client';
 
 export class OutscraperLeadDiscovery implements LeadDiscoveryPort {
   constructor(private readonly client: OutscraperClient) {}

@@ -6,6 +6,7 @@ import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.po
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
 import { OutscraperLeadDiscovery } from "@/infrastructure/lead/discovery/outscraper-lead-discovery";
+import { OutscraperHttpClient } from "@/infrastructure/lead/discovery/outscraper-http-client";
 import { PrismaLeadRepository } from "@/infrastructure/lead/prisma-lead.repository";
 import { GooglePageSpeedInsights } from "@/infrastructure/lead/pagespeed/google-pagespeed-insights";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
@@ -29,15 +30,15 @@ export const catalogRepository: CatalogRepository =
 export const leadRepository: LeadRepository = new PrismaLeadRepository();
 
 /**
- * Lead discovery. The concrete Outscraper HTTP client is not implemented yet,
- * so this binds a stub that returns no results. The pipeline still runs and
- * completes the job; the real HTTP client will be wired in a dedicated task.
+ * Lead discovery. The concrete Outscraper HTTP client calls the Outscraper
+ * Google Maps search API; results are normalized by OutscraperLeadDiscovery.
+ * Requires OUTSCRAPER_API_KEY in the environment to be fully functional.
  */
-export const leadDiscovery: LeadDiscoveryPort = new OutscraperLeadDiscovery({
-  async search() {
-    return [];
-  },
-});
+export const leadDiscovery: LeadDiscoveryPort = new OutscraperLeadDiscovery(
+  new OutscraperHttpClient({
+    apiKey: process.env.OUTSCRAPER_API_KEY,
+  }),
+);
 
 /**
  * Outbound quote notifications. Uses Resend when fully configured, otherwise

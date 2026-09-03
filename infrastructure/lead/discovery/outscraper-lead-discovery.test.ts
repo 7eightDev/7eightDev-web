@@ -2,21 +2,8 @@ import type {
   DiscoveredLead,
   LeadSearchInput
 } from '@/domain/lead/lead.discovery';
+import type { OutscraperClient } from '@/infrastructure/lead/discovery/outscraper-http-client';
 import { OutscraperLeadDiscovery } from '@/infrastructure/lead/discovery/outscraper-lead-discovery';
-
-interface OutscraperClient {
-  search(input: LeadSearchInput): Promise<
-    {
-      name: string;
-      category?: string;
-      website?: string;
-      phone?: string;
-      email?: string;
-      address?: string;
-      city?: string;
-    }[]
-  >;
-}
 
 describe('OutscraperLeadDiscovery', () => {
   it('maps an Outscraper result to DiscoveredLead', async () => {
