@@ -1026,7 +1026,7 @@ TASK 6 — Jobs
 ✅ COMPLETATO
 
 TASK 7 — Admin UI
-🟡 IN CORSO
+✅ COMPLETATO
 
 TASK 8 — Export
 ⚪ NON INIZIATO
@@ -1054,8 +1054,12 @@ feat/lead-generation
 Branch operativo:
 
 ```text
-feat/lead-generation-admin
+feat/lead-generation-outscraper
 ```
+
+Il branch operativo nasce da `feat/lead-generation` (task per il client HTTP
+Outscraper). `feat/lead-generation` contiene tutti i task 1-7 e NON deve essere
+modificato fino al completamento dell'intero progetto.
 
 `main` NON deve essere modificato fino al completamento dell'intero progetto.
 
@@ -1112,14 +1116,19 @@ L'obiettivo non è soltanto "far funzionare lo scraper", ma costruire una funzio
 Stato attuale:
 
 ```text
-feat/lead-generation-pipeline
+feat/lead-generation-outscraper
 ```
 
 Il prossimo passo è:
 
 ```text
-completare Task 5 — Pipeline
+implementare il client HTTP Outscraper
 ```
+
+La pipeline funziona ma nel DI container `leadDiscovery` è ancora legato a un
+adapter con un client stub che ritorna `[]` (tutte le ricerche producono 0
+lead). Il client HTTP reale di Outscraper (chiamata API, parsing, gestione
+errori, retry) deve essere implementato e collegato al posto dello stub.
 
 Prima di procedere verificare:
 
@@ -1145,7 +1154,7 @@ merge in feat/lead-generation
 ↓
 verifica branch
 ↓
-inizio Task 6
+inizio task successivo (Export)
 ```
 
 **NON fare il merge in `main`.**
