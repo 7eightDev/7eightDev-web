@@ -9,6 +9,9 @@ import type {
   LeadSource
 } from '@/domain/lead/lead.types';
 import { runLeadGenerationPipeline } from '@/application/lead/run-lead-generation-pipeline';
+import { createLogger } from '@/infrastructure/logging/logger';
+
+const log = createLogger('startRunLeadJob');
 
 export interface StartRunLeadJobDeps {
   readonly discovery: LeadDiscoveryPort;
@@ -65,10 +68,14 @@ export async function startRunLeadJob(
       source: deps.source
     },
     input
-  ).catch(() => {
-    // The pipeline already handles per-lead errors and job failure internally;
-    // a top-level catch prevents any residual rejection from crashing the
-    // process while leaving the job stuck.
+  ).catch((error) => {
+    // Log the residual error for tracking; the pipeline already handles
+    // per-lead errors and job failure internally, but a top-level catch
+    // prevents any unhandled rejection from crashing the process.
+    log.error('Unhandled pipeline error', {
+      jobId: job.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
   });
 
   return { ok: true, jobId: job.id };
