@@ -233,6 +233,7 @@ export class PrismaLeadRepository implements LeadRepository {
         id: job.id,
         query: job.query,
         location: job.location,
+        quantity: job.quantity ?? null,
         status: job.status,
         totalFound: job.totalFound,
         analyzed: job.analyzed,
@@ -245,6 +246,7 @@ export class PrismaLeadRepository implements LeadRepository {
       update: {
         query: job.query,
         location: job.location,
+        quantity: job.quantity ?? null,
         status: job.status,
         totalFound: job.totalFound,
         analyzed: job.analyzed,
