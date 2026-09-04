@@ -28,6 +28,14 @@ export interface StartRunLeadJobResult {
 }
 
 /**
+ * Reuses an existing job id when re-running a search, so the sidebar shows a
+ * single card per search instead of accumulating duplicates.
+ */
+export interface StartRunLeadJobOptions {
+  readonly jobId?: string;
+}
+
+/**
  * Creates a lead-generation job and kicks off its pipeline WITHOUT awaiting
  * completion, so the calling request returns immediately. The job is persisted
  * as 'running' first; the pipeline (runLeadGenerationPipeline) drives it to
@@ -35,16 +43,18 @@ export interface StartRunLeadJobResult {
  */
 export async function startRunLeadJob(
   deps: StartRunLeadJobDeps,
-  input: LeadSearchInput
+  input: LeadSearchInput,
+  options: StartRunLeadJobOptions = {}
 ): Promise<StartRunLeadJobResult> {
   const now = deps.now ?? (() => new Date());
   const generateId = deps.generateId ?? (() => crypto.randomUUID());
 
   const createdAt = now().toISOString();
   const job: LeadGenerationJob = {
-    id: generateId(),
+    id: options.jobId ?? generateId(),
     query: input.query,
     location: input.location,
+    quantity: input.quantity,
     status: 'running',
     totalFound: 0,
     analyzed: 0,

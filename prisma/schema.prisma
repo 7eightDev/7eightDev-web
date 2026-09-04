@@ -160,6 +160,9 @@ model LeadGenerationJob {
   id          String                  @id
   query       String
   location    String
+  // How many leads were requested for this search (nil = adapter default).
+  // Persisted so a job can be re-run with the same options.
+  quantity    Int?
   status      LeadGenerationJobStatus
   totalFound  Int                     @default(0)
   analyzed    Int                     @default(0)

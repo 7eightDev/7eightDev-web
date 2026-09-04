@@ -3,11 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { startRunLeadJob } from "@/application/lead/start-run-lead-job";
+import { rerunLeadGenerationJob } from "@/application/lead/rerun-lead-generation-job";
 import { createQuoteFromLead } from "@/application/lead/create-quote-from-lead";
 import { createQuote } from "@/application/quote/create-quote";
 import {
   startLeadGenerationSchema,
   leadIdSchema,
+  jobIdSchema,
 } from "@/application/lead/lead.schemas";
 import {
   catalogRepository,
@@ -48,6 +50,42 @@ export async function startLeadGenerationAction(
     },
     parsed.data
   );
+  revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
+/**
+ * Server action: re-run an existing search reusing the same job, so the
+ * sidebar keeps a single card per search. No-op if the job is still running.
+ */
+export async function rerunLeadGenerationAction(
+  jobId: string
+): Promise<LeadActionResult> {
+  const parsed = jobIdSchema.safeParse(jobId);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  if (!leadGenerationRateLimiter.allow("lead-gen")) {
+    return {
+      ok: false,
+      error: "Troppe richieste. Riprova tra qualche secondo.",
+    };
+  }
+
+  const result = await rerunLeadGenerationJob(
+    {
+      discovery: leadDiscovery,
+      pageSpeed: pageSpeedAnalyzer,
+      repository: leadRepository,
+      source: "google_maps",
+    },
+    parsed.data
+  );
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+
   revalidatePath("/admin/leads");
   return { ok: true };
 }

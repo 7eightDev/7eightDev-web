@@ -37,6 +37,7 @@ export interface LeadGenerationJobRow {
   id: string;
   query: string;
   location: string;
+  quantity: number | null;
   status: LeadGenerationJob['status'];
   totalFound: number;
   analyzed: number;
@@ -120,6 +121,7 @@ export function rowToLeadGenerationJob(
     id: row.id,
     query: row.query,
     location: row.location,
+    quantity: row.quantity ?? undefined,
     status: row.status,
     totalFound: row.totalFound,
     analyzed: row.analyzed,
@@ -138,6 +140,7 @@ export function leadGenerationJobToRow(
     id: job.id,
     query: job.query,
     location: job.location,
+    quantity: job.quantity ?? null,
     status: job.status,
     totalFound: job.totalFound,
     analyzed: job.analyzed,

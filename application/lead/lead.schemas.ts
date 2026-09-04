@@ -25,6 +25,8 @@ export type StartLeadGenerationInput = z.infer<
 
 export const leadIdSchema = z.string().uuid("Id lead non valido");
 
+export const jobIdSchema = z.string().uuid("Id job non valido");
+
 export const websiteUrlSchema = z
   .string()
   .max(2048, "L'URL non può superare 2048 caratteri")

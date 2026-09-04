@@ -53,6 +53,7 @@ export interface LeadGenerationJob {
 
   readonly query: string;
   readonly location: string;
+  readonly quantity?: number;
 
   readonly status: LeadGenerationJobStatus;
 

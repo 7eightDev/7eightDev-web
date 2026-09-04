@@ -44,6 +44,7 @@ const job: LeadGenerationJob = {
   id: 'job-1',
   query: 'dentist',
   location: 'Padova',
+  quantity: 10,
   status: 'completed',
   totalFound: 20,
   analyzed: 18,

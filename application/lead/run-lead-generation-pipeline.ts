@@ -62,6 +62,7 @@ export async function runLeadGenerationPipeline(
     id: deps.jobId ?? generateId(),
     query: input.query,
     location: input.location,
+    quantity: input.quantity,
     status: 'running',
     totalFound: 0,
     analyzed: 0,
