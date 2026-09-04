@@ -32,8 +32,13 @@ export function LeadSearchForm() {
         location,
         quantity: quantity ? Number(quantity) : undefined,
       });
-      // On success the action redirects; we only land here on failure.
-      if (result && !result.ok) setError(result.error ?? "Errore.");
+      // On success the action returns without redirecting (the job runs in the
+      // background); we go to the list where polling tracks the job progress.
+      if (result && !result.ok) {
+        setError(result.error ?? "Errore.");
+      } else {
+        router.push("/admin/leads");
+      }
     });
   };
 

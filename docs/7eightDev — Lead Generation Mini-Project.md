@@ -1119,6 +1119,46 @@ Stato attuale:
 feat/lead-generation
 ```
 
+✅ COMPLETATO — TASK 6 — JOB ASINCRONO + POLLING + RECOVERY
+
+Le ricerche "in corso" restavano tali per sempre perché la pipeline girava in
+modo **sincrono dentro la request HTTP** del server action: superato il timeout
+del server (es. Vercel 60s) il processo veniva ucciso e il job non arrivava mai
+a `completed`/`failed`.
+
+Fix — tre livelli:
+
+```text
+application/lead/start-run-lead-job.ts                 ← nuovo use case
+application/lead/admin.actions.ts                      ← launch non bloccante
+presentation/features/admin/leads/live-job-refresher.ts ← polling router.refresh()
+presentation/features/admin/leads/lead-search-form.tsx  ← naviga alla lista dopo il lancio
+domain/lead/lead.job.ts (resolveJobStatus / isJobStale) ← recovery job bloccati
+app/(private)/admin/leads/page.tsx                      ← applica recovery + attiva polling
+```
+
+1. **Async**: `startLeadGenerationAction` crea il job `running`, lo avvia in
+   background (fire-and-forget) e ritorna subito → la request non è più
+   bloccante.
+2. **Polling**: `LiveJobRefresher` (client) fa `router.refresh()` ogni 4s
+   finché esiste un job `pending`/`running`, così status e lista lead si
+   aggiornano da soli.
+3. **Recovery**: `resolveJobStatus` (dominio puro, 8 test) marca `failed` i job
+   `pending`/`running` più vecchi di 10 minuti (worker ucciso da
+   timeout/crash) → smettono di riferire e vengono esposti come falliti.
+
+```text
+npm test -- --runInBand        → 247/247 pass (239 + 8 nuovi)
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
+Nota: su deployment serverless senza processi persistenti il lavoro vero gira
+comunque dentro la request (fire-and-forget) e può ancora morire su dataset
+lunghissimi; il recovery garantisce comunque che il job non resti "in corso"
+per sempre. Una coda/worker dedicato è il passo successivo (hardening).
+
 ✅ COMPLETATO — TASK 7 — RICERCA LIVE con debounce
 
 La ricerca testuale richiedeva Invio (nessun debounce) — comportamento poco

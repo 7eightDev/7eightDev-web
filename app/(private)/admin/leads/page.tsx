@@ -2,7 +2,9 @@ import Link from "next/link";
 import { leadRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { Button } from "@/presentation/components/ui/button";
+import { resolveJobStatus } from "@/domain/lead/lead.job";
 import { LeadJobStatus } from "@/presentation/features/admin/leads/lead-job-status";
+import { LiveJobRefresher } from "@/presentation/features/admin/leads/live-job-refresher";
 import { LeadFilterBar } from "@/presentation/features/admin/leads/lead-filter-bar";
 import {
   filterLeads,
@@ -38,7 +40,14 @@ export default async function LeadsPage({
   };
 
   const leads = await leadRepository.findAll();
-  const jobs = await leadRepository.findAllJobs();
+  const rawJobs = await leadRepository.findAllJobs();
+  // Recover jobs whose worker died (serverless timeout/crash): a non-terminal
+  // job older than the threshold is surfaced as failed instead of polling
+  // forever. `resolveJobStatus` is the read-time safety net for this.
+  const jobs = rawJobs.map((job) => resolveJobStatus(job));
+  const hasActiveJob = jobs.some(
+    (job) => job.status === "pending" || job.status === "running"
+  );
 
   const rows: LeadTableRow[] = await Promise.all(
     leads.map(async (lead) => {
@@ -55,6 +64,7 @@ export default async function LeadsPage({
 
   return (
     <Container className="max-w-[1100px] py-12">
+      <LiveJobRefresher active={hasActiveJob} />
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground">
           Lead
