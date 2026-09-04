@@ -42,16 +42,22 @@ export default async function LeadsPage({
   const rawPage = parseInt(param("page") ?? "1", 10);
   const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
 
+  const rawJobs = await leadRepository.findAllJobs();
+  const jobs = rawJobs.map((job) => resolveJobStatus(job));
+  const requestedJobId = param("job");
+  const activeJob = requestedJobId
+    ? jobs.find((job) => job.id === requestedJobId)
+    : undefined;
+  const jobId = activeJob ? activeJob.id : undefined;
+
   const { leads, total } = await leadRepository.findPaginated({
     page,
     pageSize: PAGE_SIZE,
     status: filters.status,
     source: filters.source,
+    jobId,
     q: filters.q || undefined,
   });
-
-  const rawJobs = await leadRepository.findAllJobs();
-  const jobs = rawJobs.map((job) => resolveJobStatus(job));
   const hasActiveJob = jobs.some(
     (job) => job.status === "pending" || job.status === "running"
   );
@@ -74,6 +80,41 @@ export default async function LeadsPage({
   const visibleRows = sortLeads(filterLeads(rows, filters), filters.sort);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const listQuery = (overrides: Record<string, string>) =>
+    new URLSearchParams({
+      ...(filters.status !== "all" && { status: filters.status }),
+      ...(filters.score !== "all" && { score: filters.score }),
+      ...(filters.source !== "all" && { source: filters.source }),
+      ...(filters.q && { q: filters.q }),
+      ...(filters.sort !== "date-desc" && { sort: filters.sort }),
+      ...(jobId && { job: jobId }),
+      ...overrides
+    }).toString();
+
+  const pageHref = (pageNumber: number) =>
+    `/admin/leads?${listQuery({ page: String(pageNumber) })}`;
+
+  const resetJobHref =
+    jobId
+      ? (() => {
+          const qs = new URLSearchParams({
+            ...(filters.status !== "all" && { status: filters.status }),
+            ...(filters.score !== "all" && { score: filters.score }),
+            ...(filters.source !== "all" && { source: filters.source }),
+            ...(filters.q && { q: filters.q }),
+            ...(filters.sort !== "date-desc" && { sort: filters.sort })
+          });
+          return qs.toString() ? `/admin/leads?${qs.toString()}` : "/admin/leads";
+        })()
+      : undefined;
+
+  const hasActiveFilters =
+    filters.status !== "all" ||
+    filters.score !== "all" ||
+    filters.source !== "all" ||
+    filters.q !== "" ||
+    jobId !== undefined;
 
   return (
     <Container className="max-w-[1100px] py-12">
@@ -106,14 +147,18 @@ export default async function LeadsPage({
           </h2>
           <div className="flex flex-col gap-3">
             {jobs.map((job) => (
-              <LeadJobStatus key={job.id} job={job} />
+              <LeadJobStatus
+                key={job.id}
+                job={job}
+                active={job.id === requestedJobId}
+              />
             ))}
           </div>
         </aside>
       )}
 
       <div className="lg:order-2 min-w-0">
-      {total === 0 && rows.length === 0 ? (
+      {total === 0 && rows.length === 0 && !jobId ? (
         <div className="p-10 rounded-2xl bg-surface border border-border text-center">
           <p className="font-hanken text-soft mb-4">
             Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
@@ -124,6 +169,25 @@ export default async function LeadsPage({
         </div>
       ) : (
         <section className="flex flex-col gap-3">
+          {activeJob && resetJobHref && (
+            <div className="flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/[0.06] px-3 py-2">
+              <span className="font-hanken text-[12.5px] text-muted">
+                Filtro di ricerca:{" "}
+                <span className="text-foreground font-medium">{activeJob.query}</span>
+                {activeJob.location && (
+                  <span className="font-mono text-[11px]"> · {activeJob.location}</span>
+                )}
+              </span>
+              <Link
+                href={resetJobHref}
+                className="font-mono text-[12px] px-2 py-1 rounded-md text-muted hover:text-foreground transition-colors"
+                aria-label="Rimuovi filtro di ricerca"
+              >
+                ×
+              </Link>
+            </div>
+          )}
+
           <LeadFilterBar
             status={filters.status}
             score={filters.score}
@@ -133,7 +197,7 @@ export default async function LeadsPage({
           />
 
           <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-            {filters.q || filters.status !== "all" || filters.score !== "all" || filters.source !== "all"
+            {hasActiveFilters
               ? `${visibleRows.length} ${visibleRows.length === 1 ? "lead" : "lead"} su ${total}`
               : `Tutti i lead · ${total}`}
           </h2>
@@ -156,16 +220,7 @@ export default async function LeadsPage({
                     asChild={page > 1}
                   >
                     {page > 1 ? (
-                      <Link
-                        href={`/admin/leads?${new URLSearchParams({
-                          ...(filters.status !== "all" && { status: filters.status }),
-                          ...(filters.score !== "all" && { score: filters.score }),
-                          ...(filters.source !== "all" && { source: filters.source }),
-                          ...(filters.q && { q: filters.q }),
-                          ...(filters.sort !== "date-desc" && { sort: filters.sort }),
-                          page: String(page - 1),
-                        }).toString()}`}
-                      >
+                      <Link href={pageHref(page - 1)}>
                         ← Precedente
                       </Link>
                     ) : (
@@ -182,16 +237,7 @@ export default async function LeadsPage({
                     asChild={page < totalPages}
                   >
                     {page < totalPages ? (
-                      <Link
-                        href={`/admin/leads?${new URLSearchParams({
-                          ...(filters.status !== "all" && { status: filters.status }),
-                          ...(filters.score !== "all" && { score: filters.score }),
-                          ...(filters.source !== "all" && { source: filters.source }),
-                          ...(filters.q && { q: filters.q }),
-                          ...(filters.sort !== "date-desc" && { sort: filters.sort }),
-                          page: String(page + 1),
-                        }).toString()}`}
-                      >
+                      <Link href={pageHref(page + 1)}>
                         Successiva →
                       </Link>
                     ) : (

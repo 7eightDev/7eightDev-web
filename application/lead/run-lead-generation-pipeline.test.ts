@@ -51,8 +51,12 @@ function makeRepository(existingLeads: Lead[] = []) {
     async saveJob(job) {
       jobs.push(job);
     },
-    async findPaginated() {
-      return { leads: [...leads.values()], total: leads.size };
+    async findPaginated({ jobId }: { jobId?: string }) {
+      const all = [...leads.values()];
+      const filtered = jobId
+        ? all.filter((lead) => lead.jobId === jobId)
+        : all;
+      return { leads: filtered, total: filtered.length };
     },
     async findLatestAnalysesByLeadIds(leadIds) {
       const idSet = new Set(leadIds);
@@ -367,5 +371,74 @@ describe('runLeadGenerationPipeline', () => {
       }
     });
     expect(repository.jobs).toHaveLength(2);
+  });
+
+  it('reuses a provided jobId instead of generating a new job', async () => {
+    const repository = makeRepository();
+    let seq = 0;
+    const generateId = jest.fn(() => `generated-${++seq}`);
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme', website: 'https://acme.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 20,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        repository,
+        now: NOW,
+        generateId,
+        jobId: 'job-42'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.job.id).toBe('job-42');
+    expect(repository.jobs.every((job) => job.id === 'job-42')).toBe(true);
+    expect(generateId).toHaveBeenCalled();
+    expect(result.leads[0]).toMatchObject({
+      jobId: 'job-42'
+    });
+    expect(
+      await repository.findPaginated({ page: 1, pageSize: 50, jobId: 'job-42' })
+    ).toEqual({ leads: result.leads, total: result.leads.length });
+  });
+
+  it('associates every persisted lead with the job id', async () => {
+    const repository = makeRepository();
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme', website: 'https://acme.example' },
+          { companyName: 'Beta', website: 'https://beta.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 30,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        repository,
+        now: NOW,
+        generateId: makeIds(),
+        jobId: 'job-7'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 2 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.leads).toHaveLength(2);
+      expect(result.leads.every((lead) => lead.jobId === 'job-7')).toBe(true);
+    }
   });
 });

@@ -114,6 +114,7 @@ enum LeadGenerationJobStatus {
 
 model Lead {
   id          String     @id
+  jobId       String?
   companyName String
   category    String?
   website     String?
@@ -128,8 +129,10 @@ model Lead {
   updatedAt   DateTime   @updatedAt
 
   analyses LeadAnalysis[]
+  job      LeadGenerationJob? @relation(fields: [jobId], references: [id], onDelete: SetNull)
 
   @@unique([websiteKey])
+  @@index([jobId])
   @@map("leads")
 }
 
@@ -162,6 +165,8 @@ model LeadGenerationJob {
   completedAt DateTime?
   error       String?
   createdAt   DateTime                @default(now())
+
+  leads Lead[]
 
   @@map("lead_generation_jobs")
 }

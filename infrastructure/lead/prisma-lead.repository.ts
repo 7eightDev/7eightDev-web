@@ -24,6 +24,7 @@ export class PrismaLeadRepository implements LeadRepository {
     const row = leadToRow(lead);
 
     const data = {
+      jobId: row.jobId,
       companyName: row.companyName,
       category: row.category,
       website: row.website,
@@ -67,6 +68,7 @@ export class PrismaLeadRepository implements LeadRepository {
     pageSize,
     status,
     source,
+    jobId,
     q
   }: LeadPageParams): Promise<LeadPage> {
     const where: Record<string, unknown> = {};
@@ -76,6 +78,9 @@ export class PrismaLeadRepository implements LeadRepository {
     }
     if (source && source !== 'all') {
       where.source = source;
+    }
+    if (jobId) {
+      where.jobId = jobId;
     }
     if (q) {
       const term = q.toLowerCase();

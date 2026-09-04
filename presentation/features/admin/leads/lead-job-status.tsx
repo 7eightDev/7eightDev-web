@@ -1,8 +1,10 @@
+import Link from "next/link";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import { cn } from "@/presentation/lib/utils";
 
 interface LeadJobStatusProps {
   job: LeadGenerationJob;
+  active?: boolean;
 }
 
 const JOB_STYLE: Record<LeadGenerationJob["status"], string> = {
@@ -22,11 +24,22 @@ const JOB_LABEL: Record<LeadGenerationJob["status"], string> = {
 /**
  * Card describing a single lead-generation job: query, location, lifecycle
  * status and progress counters. Matches the admin list card weight (surface
- * card, mono labels, soft border).
+ * card, mono labels, soft border). Clicking the card narrows the leads list
+ * to the leads this job produced (?job=<id>); `active` highlights the
+ * currently applied job filter.
  */
-export function LeadJobStatus({ job }: LeadJobStatusProps) {
+export function LeadJobStatus({ job, active = false }: LeadJobStatusProps) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface px-4 py-3.5">
+    <Link
+      href={`/admin/leads?job=${job.id}`}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group flex flex-col gap-2 rounded-xl border bg-surface px-4 py-3.5 transition-colors hover:border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
+        active
+          ? "border-accent bg-accent/[0.05]"
+          : "border-border"
+      )}
+    >
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="min-w-0 flex items-center gap-2 flex-wrap">
           <span className="font-space text-[14px] font-semibold text-foreground truncate">
@@ -61,6 +74,6 @@ export function LeadJobStatus({ job }: LeadJobStatusProps) {
           {job.error}
         </p>
       )}
-    </div>
+    </Link>
   );
 }

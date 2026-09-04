@@ -6,6 +6,7 @@ import type {
 
 export interface LeadRow {
   id: string;
+  jobId: string | null;
   companyName: string;
   category: string | null;
   website: string | null;
@@ -48,6 +49,7 @@ export interface LeadGenerationJobRow {
 export function rowToLead(row: LeadRow): Lead {
   return {
     id: row.id,
+    jobId: row.jobId ?? undefined,
     companyName: row.companyName,
     category: row.category ?? undefined,
     website: row.website ?? undefined,
@@ -65,6 +67,7 @@ export function rowToLead(row: LeadRow): Lead {
 export function leadToRow(lead: Lead): LeadRow {
   return {
     id: lead.id,
+    jobId: lead.jobId ?? null,
     companyName: lead.companyName,
     category: lead.category ?? null,
     website: lead.website ?? null,

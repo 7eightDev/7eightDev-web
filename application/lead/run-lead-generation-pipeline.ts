@@ -27,6 +27,7 @@ export interface RunLeadGenerationPipelineDeps {
   readonly now?: () => Date;
   readonly generateId?: () => string;
   readonly source?: LeadSource;
+  readonly jobId?: string;
 }
 
 export type RunLeadGenerationPipelineResult =
@@ -58,7 +59,7 @@ export async function runLeadGenerationPipeline(
 
   const createdAt = now().toISOString();
   let job: LeadGenerationJob = {
-    id: generateId(),
+    id: deps.jobId ?? generateId(),
     query: input.query,
     location: input.location,
     status: 'running',
@@ -117,6 +118,7 @@ export async function runLeadGenerationPipeline(
       generateId,
       now,
       source,
+      jobId: job.id,
       status: 'new'
     });
 
@@ -206,12 +208,14 @@ function buildLead(input: {
   generateId: () => string;
   now: () => Date;
   source: LeadSource;
+  jobId: string;
   status: LeadStatus;
 }): Lead {
   const timestamp = input.now().toISOString();
 
   return {
     id: input.generateId(),
+    jobId: input.jobId,
     companyName: input.discoveredLead.companyName,
     category: input.discoveredLead.category,
     website: input.discoveredLead.website,

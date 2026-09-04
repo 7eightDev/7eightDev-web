@@ -65,7 +65,8 @@ export async function startRunLeadJob(
       repository: deps.repository,
       now,
       generateId,
-      source: deps.source
+      source: deps.source,
+      jobId: job.id
     },
     input
   ).catch((error) => {

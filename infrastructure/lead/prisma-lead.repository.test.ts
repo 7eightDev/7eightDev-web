@@ -55,6 +55,7 @@ describe('PrismaLeadRepository', () => {
       where: { id: 'lead-1' },
       create: {
         id: 'lead-1',
+        jobId: null,
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
@@ -69,6 +70,7 @@ describe('PrismaLeadRepository', () => {
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
       update: {
+        jobId: null,
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
@@ -84,10 +86,49 @@ describe('PrismaLeadRepository', () => {
       }
     });
   });
+  it('persists the jobId on save when present', async () => {
+    const repository = new PrismaLeadRepository();
+
+    const lead: Lead = {
+      id: 'lead-1',
+      jobId: 'job-9',
+      companyName: 'Acme',
+      website: 'https://example.com',
+      source: 'google_maps',
+      status: 'new',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    };
+
+    await repository.save(lead);
+
+    const expected = {
+      jobId: 'job-9',
+      companyName: 'Acme',
+      category: null,
+      website: 'https://example.com',
+      websiteKey: 'example.com',
+      phone: null,
+      email: null,
+      address: null,
+      city: null,
+      source: 'google_maps',
+      status: 'new',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z')
+    };
+
+    expect(prisma.lead.upsert).toHaveBeenCalledWith({
+      where: { id: 'lead-1' },
+      create: { id: 'lead-1', ...expected },
+      update: expected
+    });
+  });
   it('finds a lead by id', async () => {
     const repository = new PrismaLeadRepository();
     const row: LeadModel = {
       id: 'lead-1',
+      jobId: null,
       companyName: 'Acme',
       category: 'Web Agency',
       website: 'https://example.com',
@@ -127,6 +168,7 @@ describe('PrismaLeadRepository', () => {
     const rows: LeadModel[] = [
       {
         id: 'lead-1',
+        jobId: null,
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
@@ -142,6 +184,7 @@ describe('PrismaLeadRepository', () => {
       },
       {
         id: 'lead-2',
+        jobId: null,
         companyName: 'Beta',
         category: 'Software',
         website: 'https://beta.com',
@@ -429,6 +472,7 @@ describe('PrismaLeadRepository', () => {
     const rows: LeadModel[] = [
       {
         id: 'lead-1',
+        jobId: 'job-1',
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
@@ -447,16 +491,18 @@ describe('PrismaLeadRepository', () => {
     jest.mocked(prisma.lead.findMany).mockResolvedValue(rows);
     jest.mocked(prisma.lead.count).mockResolvedValue(1);
 
-    const result = await repository.findPaginated({
+const result = await repository.findPaginated({
       page: 1,
       pageSize: 20,
       status: 'new',
+      jobId: 'job-1',
       q: 'acme'
     });
 
     expect(prisma.lead.count).toHaveBeenCalledWith({
       where: {
         status: 'new',
+        jobId: 'job-1',
         OR: [
           { companyName: { contains: 'acme', mode: 'insensitive' } },
           { city: { contains: 'acme', mode: 'insensitive' } },
@@ -471,6 +517,7 @@ describe('PrismaLeadRepository', () => {
     expect(prisma.lead.findMany).toHaveBeenCalledWith({
       where: {
         status: 'new',
+        jobId: 'job-1',
         OR: [
           { companyName: { contains: 'acme', mode: 'insensitive' } },
           { city: { contains: 'acme', mode: 'insensitive' } },
@@ -489,6 +536,7 @@ describe('PrismaLeadRepository', () => {
       leads: [
         {
           id: 'lead-1',
+          jobId: 'job-1',
           companyName: 'Acme',
           category: 'Web Agency',
           website: 'https://example.com',

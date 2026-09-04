@@ -9,6 +9,7 @@ export interface LeadPageParams {
   readonly pageSize: number;
   readonly status?: string;
   readonly source?: string;
+  readonly jobId?: string;
   readonly q?: string;
 }
 
