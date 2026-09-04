@@ -104,4 +104,21 @@ describe('InMemoryLeadRepository', () => {
 
     await expect(repository.findAllJobs()).resolves.toEqual([job]);
   });
+
+  it('filters paginated leads by jobId', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.save({ ...lead, id: 'lead-1', jobId: 'job-1' });
+    await repository.save({ ...lead, id: 'lead-2', jobId: 'job-2' });
+    await repository.save({ ...lead, id: 'lead-3' });
+
+    const page = await repository.findPaginated({
+      page: 1,
+      pageSize: 10,
+      jobId: 'job-1'
+    });
+
+    expect(page.leads.map((l) => l.id)).toEqual(['lead-1']);
+    expect(page.total).toBe(1);
+  });
 });

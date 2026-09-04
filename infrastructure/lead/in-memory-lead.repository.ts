@@ -27,6 +27,7 @@ export class InMemoryLeadRepository implements LeadRepository {
     pageSize,
     status,
     source,
+    jobId,
     q
   }: LeadPageParams): Promise<LeadPage> {
     let filtered = [...this.leads.values()];
@@ -36,6 +37,9 @@ export class InMemoryLeadRepository implements LeadRepository {
     }
     if (source && source !== 'all') {
       filtered = filtered.filter((l) => l.source === source);
+    }
+    if (jobId) {
+      filtered = filtered.filter((l) => l.jobId === jobId);
     }
     if (q) {
       const term = q.toLowerCase();

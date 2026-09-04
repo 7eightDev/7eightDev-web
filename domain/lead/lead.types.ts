@@ -4,6 +4,7 @@ export type LeadStatus = 'new' | 'analyzed' | 'qualified' | 'discarded';
 
 export interface Lead {
   readonly id: string;
+  readonly jobId?: string;
 
   readonly companyName: string;
   readonly category?: string;

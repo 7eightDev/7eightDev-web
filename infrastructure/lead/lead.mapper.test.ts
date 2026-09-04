@@ -14,6 +14,7 @@ import {
 
 const lead: Lead = {
   id: 'lead-1',
+  jobId: 'job-1',
   companyName: 'Acme',
   category: 'dentist',
   website: 'https://example.com',
@@ -78,11 +79,25 @@ describe('Lead mapper', () => {
 
     const row = leadToRow(minimal);
 
+    expect(row.jobId).toBeNull();
     expect(row.category).toBeNull();
     expect(row.website).toBeNull();
     expect(row.phone).toBeNull();
     expect(row.email).toBeNull();
     expect(row.address).toBeNull();
     expect(row.city).toBeNull();
+  });
+
+  it('maps a lead without a job to an undefined jobId', () => {
+    const noJob: Lead = {
+      id: 'lead-3',
+      companyName: 'No Job',
+      source: 'serpapi',
+      status: 'new',
+      createdAt: '2026-08-28T10:00:00.000Z',
+      updatedAt: '2026-08-28T10:00:00.000Z'
+    };
+
+    expect(rowToLead(leadToRow(noJob)).jobId).toBeUndefined();
   });
 });
