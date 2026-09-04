@@ -15,6 +15,7 @@ jest.mock('@/infrastructure/db/prisma', () => ({
       findUnique: jest.fn(),
       findMany: jest.fn(),
       count: jest.fn(),
+      groupBy: jest.fn(),
       delete: jest.fn()
     },
     leadAnalysis: {
@@ -635,5 +636,36 @@ const result = await repository.findPaginated({
     jest.mocked(prisma.lead.findUnique).mockResolvedValue(null);
     const result = await repository.existsByWebsiteKey('missing.it');
     expect(result).toBe(false);
+  });
+  it('counts leads per job id via groupBy', async () => {
+    const repository = new PrismaLeadRepository();
+
+    jest.mocked(prisma.lead.groupBy).mockResolvedValue([
+      { jobId: 'job-1', _count: { _all: 3 } },
+      { jobId: 'job-2', _count: { _all: 1 } }
+    ] as never);
+
+    const result = await repository.countLeadsByJobIds(['job-1', 'job-2']);
+
+    expect(prisma.lead.groupBy).toHaveBeenCalledWith({
+      by: ['jobId'],
+      where: { jobId: { in: ['job-1', 'job-2'] } },
+      _count: { _all: true }
+    });
+    expect(result).toEqual(
+      new Map([
+        ['job-1', 3],
+        ['job-2', 1]
+      ])
+    );
+  });
+  it('returns an empty map for countLeadsByJobIds with empty input', async () => {
+    const repository = new PrismaLeadRepository();
+    jest.mocked(prisma.lead.groupBy).mockClear();
+
+    const result = await repository.countLeadsByJobIds([]);
+
+    expect(result).toEqual(new Map());
+    expect(prisma.lead.groupBy).not.toHaveBeenCalled();
   });
 });

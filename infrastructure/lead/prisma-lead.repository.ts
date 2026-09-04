@@ -110,6 +110,20 @@ export class PrismaLeadRepository implements LeadRepository {
     };
   }
 
+  async countLeadsByJobIds(jobIds: string[]): Promise<Map<string, number>> {
+    if (jobIds.length === 0) return new Map();
+
+    const rows = await prisma.lead.groupBy({
+      by: ['jobId'],
+      where: { jobId: { in: jobIds } },
+      _count: { _all: true }
+    });
+
+    return new Map(
+      rows.map((row) => [row.jobId as string, row._count._all])
+    );
+  }
+
   async delete(id: string): Promise<void> {
     await prisma.lead.delete({
       where: { id }
