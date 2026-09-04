@@ -88,18 +88,16 @@ export async function runLeadGenerationPipeline(
   };
   await deps.repository.saveJob(job);
 
-  const existingWebsiteKeys = new Set(
-    (await deps.repository.findAll())
-      .map((lead) => websiteKey(lead.website))
-      .filter((key): key is string => key !== null)
-  );
   const batchWebsiteKeys = new Set<string>();
   const persistedLeads: Lead[] = [];
   const errors: LeadPipelineError[] = [];
 
   for (const discoveredLead of discoveredLeads) {
     const key = websiteKey(discoveredLead.website);
-    if (key && (existingWebsiteKeys.has(key) || batchWebsiteKeys.has(key))) {
+    if (key && batchWebsiteKeys.has(key)) {
+      continue;
+    }
+    if (key && await deps.repository.existsByWebsiteKey(key)) {
       continue;
     }
     if (key) batchWebsiteKeys.add(key);
