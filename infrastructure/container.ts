@@ -15,6 +15,9 @@ import {
   type ResendQuoteNotificationConfig,
 } from "@/infrastructure/quote/resend-quote-notification.adapter";
 import { RateLimiter } from "@/infrastructure/shared/rate-limiter";
+import { createLogger } from "@/infrastructure/logging/logger";
+
+const log = createLogger("container");
 
 /**
  * Composition root: single place where ports are bound to adapters.
@@ -90,8 +93,8 @@ function buildQuoteNotifier(): QuoteNotificationPort {
     return new ResendQuoteNotificationAdapter(config);
   }
 
-  console.warn(
-    "[container] Configurazione email incompleta (RESEND_API_KEY / QUOTE_FROM_EMAIL / " +
+  log.warn(
+    "Configurazione email incompleta (RESEND_API_KEY / QUOTE_FROM_EMAIL / " +
       "QUOTE_REPLY_TO / APP_BASE_URL) — uso NullQuoteNotificationAdapter."
   );
   return new NullQuoteNotificationAdapter();
