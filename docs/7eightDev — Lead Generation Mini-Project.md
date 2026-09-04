@@ -1119,6 +1119,39 @@ Stato attuale:
 feat/lead-generation
 ```
 
+✅ COMPLETATO — TASK 7 — FILTRI lista /admin/leads
+
+Filtri e ordinamento sulla lista lead, seguendo il pattern già stabilito dai
+preventivi (logica pura URL-driven + barra client + server component).
+
+```text
+presentation/features/admin/leads/lead-filters.ts    ← logica pura (filter/sort/parser)
+presentation/features/admin/leads/lead-filter-bar.tsx ← client bar (URL params)
+application/lead/lead-filters.test.ts                 ← 34 test
+app/(private)/admin/leads/page.tsx                    ← legge searchParams, applica filtri
+```
+
+Filtri disponibili:
+
+```text
+status   → tutti / nuovi / analizzati / qualificati / scartati
+score    → tutti / ≥90 / 50–89 / <50 / senza analisi
+source   → tutte / Google Maps / Outscraper / SerpAPI
+q        → ricerca testuale (azienda, città, categoria, sito, tel, email)
+sort     → più recenti / meno recenti / A→Z / Z→A / score basso / score alto
+```
+
+Lo stato vive nell'URL (`?status=&score=&source=&q=&sort=`) quindi la pagina
+resta Server Component e la vista è condivisibile/bookmarkabile. Ordinamento e
+filtri compongono; i lead senza score finiscono in coda in qualunque ordine.
+
+```text
+npm test -- --runInBand        → 239/239 pass (205 + 34 nuovi)
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
 ✅ COMPLETATO — TASK 9 — Quote Integration
 
 Integrazione Lead → Quote: da un lead **qualificato** si crea una **bozza
