@@ -1167,6 +1167,36 @@ npx tsc --noEmit               → OK
 npm run build                  → OK
 ```
 
+✅ FIX — debug ricerca "meccanico / Varese" (analisi non visibili)
+
+Diagnosi: la ricerca andava a buon fine (`job completed`, `totalFound=10`)
+ma con `analyzed=0` e `qualified=0`. Nel DB c'erano solo 26 lead da test
+precedenti (`source=outscraper`, tutti `discarded`). Due cause:
+
+1. **Lead senza website scartati** — la pipeline scartava (`discarded`) ogni
+   lead privo di sito web (`run-lead-generation-pipeline.ts`). Per nicchie
+   come i meccanici, molte attività locali non hanno un sito su Google
+   Places → zero analisi.
+2. **Source errato** — l'admin action non passava `source`, quindi il default
+   `'outscraper'` veniva salvato anche se il provider era Google Places.
+
+Fix applicato:
+
+```text
+run-lead-generation-pipeline.ts  → lead senza website = status 'new' (non discard)
+application/lead/admin.actions.ts → source: "google_maps" quando parte dalla UI
+```
+
+Ora i lead senza sito restano visibili come `new` (contattabili), e i nuovi
+lead Google Places sono taggati correttamente `google_maps`.
+
+```text
+npm test -- --runInBand        → 205/205 pass
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
 Prossimo task: da definire (mini-progetto lead generation completo).
 
 **NON fare il merge in `main`.**

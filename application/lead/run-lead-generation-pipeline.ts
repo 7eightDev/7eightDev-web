@@ -104,12 +104,14 @@ export async function runLeadGenerationPipeline(
     }
     if (key) batchWebsiteKeys.add(key);
 
+    // Leads always start as 'new': those without a website stay visible so the
+    // admin can contact them (e.g. by phone) instead of silently discarding them.
     const lead = buildLead({
       discoveredLead,
       generateId,
       now,
       source,
-      status: discoveredLead.website ? 'new' : 'discarded'
+      status: 'new'
     });
 
     await deps.repository.save(lead);
