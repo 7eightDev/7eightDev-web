@@ -79,14 +79,28 @@ export async function startRunLeadJob(
       jobId: job.id
     },
     input
-  ).catch((error) => {
-    // Log the residual error for tracking; the pipeline already handles
-    // per-lead errors and job failure internally, but a top-level catch
-    // prevents any unhandled rejection from crashing the process.
-    log.error('Unhandled pipeline error', {
-      jobId: job.id,
-      error: error instanceof Error ? error.message : String(error)
-    });
+  ).catch(async (error) => {
+    // The pipeline already handles per-lead errors and job failure
+    // internally, but anything escaping it (e.g. a repository write failure)
+    // would otherwise leave the job stuck 'running' forever. Persist the
+    // failure so the card does not poll an eternally non-terminal job.
+    const message = error instanceof Error ? error.message : String(error);
+    log.error('Unhandled pipeline error', { jobId: job.id, error: message });
+
+    try {
+      const current = (await deps.repository.findJobById(job.id)) ?? job;
+      await deps.repository.saveJob({
+        ...current,
+        status: 'failed',
+        error: `Pipeline interrotta: ${message}`,
+        completedAt: current.completedAt ?? now().toISOString()
+      });
+    } catch (saveError) {
+      log.error('Unable to persist job failure', {
+        jobId: job.id,
+        error: saveError instanceof Error ? saveError.message : String(saveError)
+      });
+    }
   });
 
   return { ok: true, jobId: job.id };

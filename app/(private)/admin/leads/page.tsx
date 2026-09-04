@@ -3,6 +3,7 @@ import { leadRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { Button } from "@/presentation/components/ui/button";
 import { resolveJobStatus } from "@/domain/lead/lead.job";
+import { reconcileStaleJobs } from "@/application/lead/reconcile-stale-jobs";
 import { LeadJobStatus } from "@/presentation/features/admin/leads/lead-job-status";
 import { LiveJobRefresher } from "@/presentation/features/admin/leads/live-job-refresher";
 import { LeadFilterBar } from "@/presentation/features/admin/leads/lead-filter-bar";
@@ -42,8 +43,12 @@ export default async function LeadsPage({
   const rawPage = parseInt(param("page") ?? "1", 10);
   const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
 
-  const rawJobs = await leadRepository.findAllJobs();
-  const jobs = rawJobs.map((job) => resolveJobStatus(job));
+  // Persist the failed status for jobs whose worker died, so the sidebar does
+  // not show an endless 'in corso' for a row that will never complete.
+  await reconcileStaleJobs({ repository: leadRepository });
+  const jobs = (await leadRepository.findAllJobs()).map((job) =>
+    resolveJobStatus(job)
+  );
   const requestedJobId = param("job");
   const activeJob = requestedJobId
     ? jobs.find((job) => job.id === requestedJobId)
