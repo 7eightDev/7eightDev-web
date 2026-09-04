@@ -6,7 +6,7 @@ import type { LeadGenerationJob } from '@/domain/lead/lead.types';
  * was killed (serverless timeout, crash) and the job will never complete on
  * its own.
  */
-export const JOB_STALE_AFTER_MS = 10 * 60 * 1000; // 10 min
+export const JOB_STALE_AFTER_MS = 20 * 60 * 1000; // 20 min
 
 const TERMINAL: LeadGenerationJob['status'][] = ['completed', 'failed'];
 
