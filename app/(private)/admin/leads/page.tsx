@@ -3,6 +3,15 @@ import { leadRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { Button } from "@/presentation/components/ui/button";
 import { LeadJobStatus } from "@/presentation/features/admin/leads/lead-job-status";
+import { LeadFilterBar } from "@/presentation/features/admin/leads/lead-filter-bar";
+import {
+  filterLeads,
+  sortLeads,
+  parseLeadStatusFilter,
+  parseScoreFilter,
+  parseSourceFilter,
+  parseSortOption,
+} from "@/presentation/features/admin/leads/lead-filters";
 import {
   LeadTable,
   type LeadTableRow,
@@ -10,7 +19,24 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function LeadsPage() {
+export default async function LeadsPage({
+  searchParams,
+}: {
+  // Next.js 16: searchParams is async. Filters are read from the URL so this
+  // stays a Server Component and the filtered view is shareable/bookmarkable.
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const param = (key: string) =>
+    Array.isArray(params[key]) ? params[key][0] : params[key];
+  const filters = {
+    status: parseLeadStatusFilter(param("status")),
+    score: parseScoreFilter(param("score")),
+    source: parseSourceFilter(param("source")),
+    q: (param("q") ?? "").trim(),
+    sort: parseSortOption(param("sort")),
+  };
+
   const leads = await leadRepository.findAll();
   const jobs = await leadRepository.findAllJobs();
 
@@ -24,6 +50,8 @@ export default async function LeadsPage() {
       };
     })
   );
+
+  const visibleRows = sortLeads(filterLeads(rows, filters), filters.sort);
 
   return (
     <Container className="max-w-[1100px] py-12">
@@ -71,10 +99,29 @@ export default async function LeadsPage() {
         </div>
       ) : (
         <section className="flex flex-col gap-3">
+          <LeadFilterBar
+            status={filters.status}
+            score={filters.score}
+            source={filters.source}
+            q={filters.q}
+            sort={filters.sort}
+          />
+
           <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-            Tutti i lead · {rows.length}
+            {filters.q || filters.status !== "all" || filters.score !== "all" || filters.source !== "all"
+              ? `${visibleRows.length} ${visibleRows.length === 1 ? "lead" : "lead"} su ${rows.length}`
+              : `Tutti i lead · ${rows.length}`}
           </h2>
-          <LeadTable rows={rows} />
+
+          {visibleRows.length === 0 ? (
+            <div className="p-10 rounded-2xl bg-surface border border-border text-center">
+              <p className="font-hanken text-soft">
+                Nessun lead corrisponde ai filtri selezionati.
+              </p>
+            </div>
+          ) : (
+            <LeadTable rows={visibleRows} />
+          )}
         </section>
       )}
     </Container>
