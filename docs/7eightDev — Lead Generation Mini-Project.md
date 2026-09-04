@@ -1119,34 +1119,54 @@ Stato attuale:
 feat/lead-generation
 ```
 
-✅ COMPLETATO — TASK 8 — Export (CSV)
+✅ COMPLETATO — TASK 9 — Quote Integration
 
-Implementato export lead qualificati in CSV:
+Integrazione Lead → Quote: da un lead **qualificato** si crea una **bozza
+preventivo** pre-compilata, riusando Catalog e use case quote esistenti.
 
 ```text
-application/lead/export-leads.ts        ← use case
-application/lead/export-leads.test.ts   ← test (6 test)
-app/(private)/admin/leads/export/route.ts ← GET handler (scarica CSV)
-app/(private)/admin/leads/page.tsx       ← pulsanti "Esporta CSV" + "+ Nuova ricerca" (shadcn Button)
+application/lead/create-quote-from-lead.ts        ← use case (prepara input)
+application/lead/create-quote-from-lead.test.ts   ← test (13 test)
+application/lead/admin.actions.ts                 ← createQuoteFromLeadAction
+presentation/features/admin/leads/lead-create-quote-button.tsx ← shadcn Button
+presentation/features/admin/leads/lead-detail.tsx ← pulsante (solo qualificati)
 ```
 
-- CSV con 14 colonne (company, category, website, phone, email, address, city, performance, lcp, fcp, cls, tbt, qualification, source).
-- Solo lead con `status: qualified`.
-- Analisi più recente del lead.
-- Escape RFC 4180 (virgolette, virgole, newline).
-- CRLF line endings (compatibile Excel).
-- Route `/admin/leads/export` protetta da Clerk proxy.
-- `Button` shadcn/ui per i pulsanti nella pagina leads.
+Flusso:
+
+```text
+Lead qualificato (score < 50)
+ ↓
+Admin clicca "Crea preventivo" (detail page)
+ ↓
+createQuoteFromLeadAction(leadId)
+ ├─ createQuoteFromLead → CreateQuoteInput pre-compilato
+ │    ├─ client: companyName/company/email del lead
+ │    ├─ project: "<azienda> — Sito Web"
+ │    ├─ validUntil: +30 giorni
+ │    └─ lineItems: servizi Catalog compatibili (mappatura hardcoded V1)
+ │         - sempre: seo-performance (Core Web Vitals)
+ │         - se score < 30: + audit (performance e sicurezza)
+ ↓
+createQuote() → draft PREV-YYYY-NNN
+ ↓
+redirect → /admin/quotes/<id>/edit (composer per revisione)
+```
+
+Vincoli (V1): pagina dettaglio mostra il pulsante solo se
+`status === "qualified"`; il use case rifiuta lead non qualificati,
+senza analisi, con performance ≥ 50 o senza score. Non invia nulla al
+cliente — il preventivo resta `draft` e l'admin lo revisiona.
 
 Verifica eseguita e verde:
 
 ```text
-npm test -- --runInBand        → 191/191 pass
+npm test -- --runInBand        → 204/204 pass
 npm run lint                   → OK
 npx tsc --noEmit               → OK
 npm run build                  → OK
 ```
 
-Prossimo task: **TASK 9 — Quote Integration**.
+Prossimo task: da definire (mini-progetto lead generation completo).
 
 **NON fare il merge in `main`.**

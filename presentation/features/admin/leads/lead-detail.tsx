@@ -1,6 +1,7 @@
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
+import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
 import { cn } from "@/presentation/lib/utils";
 
 interface LeadDetailProps {
@@ -64,21 +65,26 @@ export function LeadDetail({ lead, analyses }: LeadDetailProps) {
     <div className="flex flex-col gap-6 max-w-[680px]">
       <section className="p-4 sm:p-6 rounded-2xl bg-surface border border-border">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-          <h2 className="font-space text-lg font-semibold text-foreground m-0">
-            {lead.companyName}
-          </h2>
-          <span
-            className={cn(
-              "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
-              lead.status === "qualified"
-                ? "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]"
-                : lead.status === "discarded"
-                  ? "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]"
-                  : "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]"
-            )}
-          >
-            {QUALIFICATION_LABEL[lead.status]}
-          </span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="font-space text-lg font-semibold text-foreground m-0">
+              {lead.companyName}
+            </h2>
+            <span
+              className={cn(
+                "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
+                lead.status === "qualified"
+                  ? "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]"
+                  : lead.status === "discarded"
+                    ? "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]"
+                    : "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]"
+              )}
+            >
+              {QUALIFICATION_LABEL[lead.status]}
+            </span>
+          </div>
+          {lead.status === "qualified" && (
+            <LeadCreateQuoteButton leadId={lead.id} />
+          )}
         </div>
 
         <div className="flex flex-col">
