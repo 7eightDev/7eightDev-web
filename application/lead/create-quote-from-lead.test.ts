@@ -94,6 +94,7 @@ function makeLeadRepo(lead: Lead | null, analyses: LeadAnalysis[] = []) {
     async findAllJobs() { return []; },
     async saveJob() {},
     async findPaginated() { return { leads: lead ? [lead] : [], total: lead ? 1 : 0 }; },
+    async existsByWebsiteKey() { return false; },
   } satisfies LeadRepository;
 }
 

@@ -95,6 +95,13 @@ export class InMemoryLeadRepository implements LeadRepository {
     return [...byLead.values()];
   }
 
+  async existsByWebsiteKey(key: string): Promise<boolean> {
+    for (const lead of this.leads.values()) {
+      if (inMemoryWebsiteKey(lead.website) === key) return true;
+    }
+    return false;
+  }
+
   async saveAnalysis(analysis: LeadAnalysis): Promise<void> {
     this.analyses.set(analysis.id, analysis);
   }
@@ -109,5 +116,19 @@ export class InMemoryLeadRepository implements LeadRepository {
 
   async saveJob(job: LeadGenerationJob): Promise<void> {
     this.jobs.set(job.id, job);
+  }
+}
+
+function inMemoryWebsiteKey(website: string | undefined): string | null {
+  if (!website) return null;
+  try {
+    const url = new URL(website);
+    const pathname = url.pathname.replace(/\/$/, '');
+    return `${url.hostname.replace(/^www\./, '').toLowerCase()}${pathname}`;
+  } catch {
+    return website
+      .trim()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '');
   }
 }

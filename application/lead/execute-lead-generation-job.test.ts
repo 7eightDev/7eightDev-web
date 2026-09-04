@@ -37,11 +37,15 @@ describe('ExecuteLeadGenerationJob', () => {
     mockLeadRepository = {
       save: jest.fn(),
       findAll: jest.fn().mockResolvedValue([]),
+      findPaginated: jest.fn().mockResolvedValue({ leads: [], total: 0 }),
       findById: jest.fn(),
       saveAnalysis: jest.fn(),
       findAnalysesByLeadId: jest.fn().mockResolvedValue([]),
+      findLatestAnalysesByLeadIds: jest.fn().mockResolvedValue([]),
+      existsByWebsiteKey: jest.fn().mockResolvedValue(false),
       delete: jest.fn(),
       findJobById: jest.fn(),
+      findAllJobs: jest.fn(),
       saveJob: jest.fn()
     } as unknown as jest.Mocked<LeadRepository>;
 

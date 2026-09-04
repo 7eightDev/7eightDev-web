@@ -28,6 +28,8 @@ export interface LeadRepository {
   findLatestAnalysesByLeadIds(leadIds: string[]): Promise<LeadAnalysis[]>;
   saveAnalysis(analysis: LeadAnalysis): Promise<void>;
 
+  existsByWebsiteKey(websiteKey: string): Promise<boolean>;
+
   findJobById(id: string): Promise<LeadGenerationJob | null>;
   findAllJobs(): Promise<LeadGenerationJob[]>;
   saveJob(job: LeadGenerationJob): Promise<void>;

@@ -27,6 +27,7 @@ export class PrismaLeadRepository implements LeadRepository {
       companyName: row.companyName,
       category: row.category,
       website: row.website,
+      websiteKey: websiteKey(lead.website),
       phone: row.phone,
       email: row.email,
       address: row.address,
@@ -126,7 +127,7 @@ export class PrismaLeadRepository implements LeadRepository {
     >`
       SELECT DISTINCT ON ("leadId")
         "id", "leadId", "strategy", "performanceScore", "lcp", "fcp", "cls", "tbt", "analyzedAt"
-      FROM "LeadAnalysis"
+      FROM "lead_analyses"
       WHERE "leadId" = ANY(${leadIds})
       ORDER BY "leadId", "analyzedAt" DESC
     `;
@@ -173,6 +174,14 @@ export class PrismaLeadRepository implements LeadRepository {
         analyzedAt: new Date(analysis.analyzedAt)
       }
     });
+  }
+
+  async existsByWebsiteKey(key: string): Promise<boolean> {
+    const row = await prisma.lead.findUnique({
+      where: { websiteKey: key },
+      select: { id: true }
+    });
+    return row !== null;
   }
 
   async findJobById(id: string): Promise<LeadGenerationJob | null> {
@@ -226,5 +235,19 @@ export class PrismaLeadRepository implements LeadRepository {
         createdAt: new Date(job.createdAt)
       }
     });
+  }
+}
+
+function websiteKey(website: string | undefined): string | null {
+  if (!website) return null;
+  try {
+    const url = new URL(website);
+    const pathname = url.pathname.replace(/\/$/, '');
+    return `${url.hostname.replace(/^www\./, '').toLowerCase()}${pathname}`;
+  } catch {
+    return website
+      .trim()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '');
   }
 }

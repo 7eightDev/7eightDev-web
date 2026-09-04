@@ -65,6 +65,21 @@ function makeRepository(existingLeads: Lead[] = []) {
         }
       }
       return [...byLead.values()];
+    },
+    async existsByWebsiteKey(key) {
+      for (const lead of leads.values()) {
+        if (lead.website) {
+          try {
+            const url = new URL(lead.website);
+            const k = `${url.hostname.replace(/^www\./, '').toLowerCase()}${url.pathname.replace(/\/$/, '')}`;
+            if (k === key) return true;
+          } catch {
+            const k = lead.website.trim().replace(/^https?:\/\//, '').replace(/^www\./, '');
+            if (k === key) return true;
+          }
+        }
+      }
+      return false;
     }
   };
 

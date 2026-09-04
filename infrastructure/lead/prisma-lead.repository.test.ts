@@ -58,6 +58,7 @@ describe('PrismaLeadRepository', () => {
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
+        websiteKey: 'example.com',
         phone: '+39 123456789',
         email: 'hello@example.com',
         address: 'Via Roma 1',
@@ -71,6 +72,7 @@ describe('PrismaLeadRepository', () => {
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
+        websiteKey: 'example.com',
         phone: '+39 123456789',
         email: 'hello@example.com',
         address: 'Via Roma 1',
@@ -89,6 +91,7 @@ describe('PrismaLeadRepository', () => {
       companyName: 'Acme',
       category: 'Web Agency',
       website: 'https://example.com',
+      websiteKey: 'example.com',
       phone: '+39 123456789',
       email: 'hello@example.com',
       address: 'Via Roma 1',
@@ -127,6 +130,7 @@ describe('PrismaLeadRepository', () => {
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
+        websiteKey: 'example.com',
         phone: '+39 123456789',
         email: 'hello@example.com',
         address: 'Via Roma 1',
@@ -141,6 +145,7 @@ describe('PrismaLeadRepository', () => {
         companyName: 'Beta',
         category: 'Software',
         website: 'https://beta.com',
+        websiteKey: 'beta.com',
         phone: '+39 987654321',
         email: 'info@beta.com',
         address: 'Via Milano 2',
@@ -427,6 +432,7 @@ describe('PrismaLeadRepository', () => {
         companyName: 'Acme',
         category: 'Web Agency',
         website: 'https://example.com',
+        websiteKey: 'example.com',
         phone: null,
         email: null,
         address: null,
@@ -565,5 +571,21 @@ describe('PrismaLeadRepository', () => {
     const repository = new PrismaLeadRepository();
     const result = await repository.findLatestAnalysesByLeadIds([]);
     expect(result).toEqual([]);
+  });
+  it('checks existsByWebsiteKey returns true when lead exists', async () => {
+    const repository = new PrismaLeadRepository();
+    jest.mocked(prisma.lead.findUnique).mockResolvedValue({ id: 'lead-1' } as never);
+    const result = await repository.existsByWebsiteKey('acme.it');
+    expect(result).toBe(true);
+    expect(prisma.lead.findUnique).toHaveBeenCalledWith({
+      where: { websiteKey: 'acme.it' },
+      select: { id: true }
+    });
+  });
+  it('checks existsByWebsiteKey returns false when lead not found', async () => {
+    const repository = new PrismaLeadRepository();
+    jest.mocked(prisma.lead.findUnique).mockResolvedValue(null);
+    const result = await repository.existsByWebsiteKey('missing.it');
+    expect(result).toBe(false);
   });
 });
