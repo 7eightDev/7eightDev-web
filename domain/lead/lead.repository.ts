@@ -31,6 +31,12 @@ export interface LeadRepository {
   saveAnalysis(analysis: LeadAnalysis): Promise<void>;
 
   existsByWebsiteKey(websiteKey: string): Promise<boolean>;
+  findByWebsiteKey(websiteKey: string): Promise<Lead | null>;
+  existsLeadByCompanyInJob(
+    jobId: string,
+    companyName: string,
+    city: string | undefined
+  ): Promise<boolean>;
 
   findJobById(id: string): Promise<LeadGenerationJob | null>;
   findAllJobs(): Promise<LeadGenerationJob[]>;

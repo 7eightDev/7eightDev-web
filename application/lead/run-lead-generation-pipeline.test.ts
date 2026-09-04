@@ -80,16 +80,23 @@ function makeRepository(existingLeads: Lead[] = []) {
       return [...byLead.values()];
     },
     async existsByWebsiteKey(key) {
+      return (await repository.findByWebsiteKey(key)) !== null;
+    },
+    async findByWebsiteKey(key) {
       for (const lead of leads.values()) {
-        if (lead.website) {
-          try {
-            const url = new URL(lead.website);
-            const k = `${url.hostname.replace(/^www\./, '').toLowerCase()}${url.pathname.replace(/\/$/, '')}`;
-            if (k === key) return true;
-          } catch {
-            const k = lead.website.trim().replace(/^https?:\/\//, '').replace(/^www\./, '');
-            if (k === key) return true;
-          }
+        const k = websiteKeyOf(lead.website);
+        if (k === key) return lead;
+      }
+      return null;
+    },
+    async existsLeadByCompanyInJob(jobId, companyName, city) {
+      for (const lead of leads.values()) {
+        if (
+          lead.jobId === jobId &&
+          lead.companyName.toLowerCase() === companyName.toLowerCase() &&
+          (lead.city ?? undefined) === (city ?? undefined)
+        ) {
+          return true;
         }
       }
       return false;
@@ -97,6 +104,20 @@ function makeRepository(existingLeads: Lead[] = []) {
   };
 
   return repository;
+}
+
+function websiteKeyOf(website: string | undefined): string | null {
+  if (!website) return null;
+  try {
+    const url = new URL(website);
+    const pathname = url.pathname.replace(/\/$/, '');
+    return `${url.hostname.replace(/^www\./, '').toLowerCase()}${pathname}`;
+  } catch {
+    return website
+      .trim()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '');
+  }
 }
 
 function makeDiscovery(
@@ -296,6 +317,147 @@ describe('runLeadGenerationPipeline', () => {
       expect(result.leads[0].companyName).toBe('New Lead');
     }
     expect(pageSpeed.analyze).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-scores an existing website lead when the same job is re-run', async () => {
+    const existingLead: Lead = {
+      id: 'existing-lead',
+      jobId: 'job-1',
+      companyName: 'Acme Studio',
+      website: 'https://acme.example',
+      source: 'outscraper',
+      status: 'analyzed',
+      createdAt: '2026-08-30T10:00:00.000Z',
+      updatedAt: '2026-08-30T10:00:00.000Z'
+    };
+    const repository = makeRepository([existingLead]);
+    const pageSpeed = makePageSpeed({
+      performanceScore: 49,
+      lcp: null,
+      fcp: null,
+      cls: null,
+      tbt: null
+    });
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme Studio', website: 'https://acme.example' }
+        ]),
+        pageSpeed,
+        repository,
+        now: NOW,
+        generateId: jest.fn(() => 'analysis-same-site'),
+        jobId: 'job-1'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(pageSpeed.analyze).toHaveBeenCalledTimes(1);
+    expect(result.leads).toHaveLength(1);
+    expect(result.leads[0].id).toBe('existing-lead');
+    expect(result.leads[0].status).toBe('qualified');
+    expect(result.job).toMatchObject({
+      totalFound: 1,
+      analyzed: 1,
+      qualified: 1
+    });
+    expect((await repository.findById('existing-lead'))?.status).toBe(
+      'qualified'
+    );
+  });
+
+  it('does not duplicate a lead without website already captured in this job', async () => {
+    const existingLead: Lead = {
+      id: 'existing-lead',
+      jobId: 'job-1',
+      companyName: 'Più Meccanico',
+      city: 'Varese',
+      source: 'outscraper',
+      status: 'new',
+      createdAt: '2026-08-30T10:00:00.000Z',
+      updatedAt: '2026-08-30T10:00:00.000Z'
+    };
+    const repository = makeRepository([existingLead]);
+    const pageSpeed = makePageSpeed({
+      performanceScore: 80,
+      lcp: null,
+      fcp: null,
+      cls: null,
+      tbt: null
+    });
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Più Meccanico', city: 'Varese' }
+        ]),
+        pageSpeed,
+        repository,
+        now: NOW,
+        generateId: jest.fn(),
+        jobId: 'job-1'
+      },
+      { query: 'meccanico', location: 'Varese', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.leads).toHaveLength(0);
+    expect(pageSpeed.analyze).not.toHaveBeenCalled();
+    expect(result.job.analyzed).toBe(0);
+    // No second copy created for the job.
+    expect((await repository.countLeadsByJobIds(['job-1'])).get('job-1')).toBe(
+      1
+    );
+  });
+
+  it('does not touch a website lead that belongs to another job', async () => {
+    const otherLead: Lead = {
+      id: 'other-lead',
+      jobId: 'job-9',
+      companyName: 'Altro Studio',
+      website: 'https://acme.example',
+      source: 'outscraper',
+      status: 'analyzed',
+      createdAt: '2026-08-29T10:00:00.000Z',
+      updatedAt: '2026-08-29T10:00:00.000Z'
+    };
+    const repository = makeRepository([otherLead]);
+    const pageSpeed = makePageSpeed({
+      performanceScore: 49,
+      lcp: null,
+      fcp: null,
+      cls: null,
+      tbt: null
+    });
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Altro Studio', website: 'https://acme.example' }
+        ]),
+        pageSpeed,
+        repository,
+        now: NOW,
+        generateId: jest.fn(() => 'analysis-never'),
+        jobId: 'job-1'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(pageSpeed.analyze).not.toHaveBeenCalled();
+    expect(result.leads).toHaveLength(0);
+    const stored = await repository.findById('other-lead');
+    expect(stored?.jobId).toBe('job-9');
+    expect(stored?.status).toBe('analyzed');
   });
 
   it('continues the pipeline when a single PageSpeed analysis fails', async () => {

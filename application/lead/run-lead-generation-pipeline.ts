@@ -107,10 +107,54 @@ export async function runLeadGenerationPipeline(
     if (key && batchWebsiteKeys.has(key)) {
       continue;
     }
-    if (key && await deps.repository.existsByWebsiteKey(key)) {
+    if (key) batchWebsiteKeys.add(key);
+
+    if (key) {
+      const existing = await deps.repository.findByWebsiteKey(key);
+      if (existing) {
+        if (existing.jobId !== job.id) {
+          log.debug('Lead exists under another job, skipped', {
+            jobId: job.id,
+            company: discoveredLead.companyName
+          });
+          continue;
+        }
+        // A re-run of THIS job re-scores its own websites instead of silently
+        // skipping them, keeping the counter coherent with a fresh research.
+        const refreshed = await analyzeLead({
+          deps,
+          job,
+          lead: refreshLeadData(existing, discoveredLead),
+          discoveredLead,
+          generateId,
+          now
+        });
+        job = refreshed.job;
+        if (refreshed.error) {
+          errors.push({
+            companyName: discoveredLead.companyName,
+            website: discoveredLead.website,
+            error: refreshed.error
+          });
+        }
+        persistedLeads.push(refreshed.lead);
+        continue;
+      }
+    } else if (
+      await deps.repository.existsLeadByCompanyInJob(
+        job.id,
+        discoveredLead.companyName,
+        discoveredLead.city
+      )
+    ) {
+      // Lead without a website is deduplicated against THIS job only: a fresh
+      // research must not create another copy of the same business.
+      log.debug('Lead without website already captured, skipped', {
+        jobId: job.id,
+        company: discoveredLead.companyName
+      });
       continue;
     }
-    if (key) batchWebsiteKeys.add(key);
 
     // Leads always start as 'new': those without a website stay visible so the
     // admin can contact them (e.g. by phone) instead of silently discarding them.
@@ -130,62 +174,23 @@ export async function runLeadGenerationPipeline(
       continue;
     }
 
-    try {
-      const pageSpeedResult = await deps.pageSpeed.analyze({
-        url: discoveredLead.website,
-        strategy: 'mobile'
-      });
-      const analysis = buildAnalysis({
-        generateId,
-        leadId: lead.id,
-        now,
-        pageSpeedResult
-      });
-      const status = leadStatusFromPageSpeed(pageSpeedResult);
-      const analyzedLead = {
-        ...lead,
-        status,
-        updatedAt: now().toISOString()
-      };
-
-      await deps.repository.saveAnalysis(analysis);
-      await deps.repository.save(analyzedLead);
-
-      log.debug('Lead analyzed', {
-        jobId: job.id,
-        company: discoveredLead.companyName,
-        score: pageSpeedResult.performanceScore,
-        status
-      });
-
-      job = {
-        ...job,
-        analyzed: job.analyzed + 1,
-        qualified: status === 'qualified' ? job.qualified + 1 : job.qualified
-      };
-      await deps.repository.saveJob(job);
-      persistedLeads.push(analyzedLead);
-    } catch (error) {
-      log.warn('Lead analysis failed', {
-        jobId: job.id,
-        company: discoveredLead.companyName,
-        website: discoveredLead.website,
-        error: errorMessage(error)
-      });
-      const discardedLead = {
-        ...lead,
-        status: 'discarded' as const,
-        analysisError: errorMessage(error),
-        updatedAt: now().toISOString()
-      };
-      await deps.repository.save(discardedLead);
+    const refreshed = await analyzeLead({
+      deps,
+      job,
+      lead,
+      discoveredLead,
+      generateId,
+      now
+    });
+    job = refreshed.job;
+    if (refreshed.error) {
       errors.push({
         companyName: discoveredLead.companyName,
         website: discoveredLead.website,
-        error: errorMessage(error)
+        error: refreshed.error
       });
-      persistedLeads.push(discardedLead);
     }
+    persistedLeads.push(refreshed.lead);
   }
 
   job = {
@@ -248,6 +253,84 @@ function buildAnalysis(input: {
     cls: input.pageSpeedResult.cls ?? undefined,
     tbt: input.pageSpeedResult.tbt ?? undefined,
     analyzedAt: input.now().toISOString()
+  };
+}
+
+/** Re-scores a lead that already belongs to this job without creating a copy. */
+async function analyzeLead(input: {
+  deps: RunLeadGenerationPipelineDeps;
+  job: LeadGenerationJob;
+  lead: Lead;
+  discoveredLead: DiscoveredLead;
+  generateId: () => string;
+  now: () => Date;
+}): Promise<{ job: LeadGenerationJob; lead: Lead; error?: string }> {
+  try {
+    const pageSpeedResult = await input.deps.pageSpeed.analyze({
+      url: input.lead.website!,
+      strategy: 'mobile'
+    });
+    const analysis = buildAnalysis({
+      generateId: input.generateId,
+      leadId: input.lead.id,
+      now: input.now,
+      pageSpeedResult
+    });
+    const status = leadStatusFromPageSpeed(pageSpeedResult);
+    const analyzedLead = {
+      ...input.lead,
+      status,
+      updatedAt: input.now().toISOString()
+    };
+
+    await input.deps.repository.saveAnalysis(analysis);
+    await input.deps.repository.save(analyzedLead);
+
+    log.debug('Lead analyzed', {
+      jobId: input.job.id,
+      company: input.discoveredLead.companyName,
+      score: pageSpeedResult.performanceScore,
+      status
+    });
+
+    return {
+      job: {
+        ...input.job,
+        analyzed: input.job.analyzed + 1,
+        qualified: status === 'qualified' ? input.job.qualified + 1 : input.job.qualified
+      },
+      lead: analyzedLead
+    };
+  } catch (error) {
+    log.warn('Lead analysis failed', {
+      jobId: input.job.id,
+      company: input.discoveredLead.companyName,
+      website: input.lead.website,
+      error: errorMessage(error)
+    });
+    const discardedLead = {
+      ...input.lead,
+      status: 'discarded' as const,
+      analysisError: errorMessage(error),
+      updatedAt: input.now().toISOString()
+    };
+    await input.deps.repository.save(discardedLead);
+    return { job: input.job, lead: discardedLead, error: errorMessage(error) };
+  }
+}
+
+/** Refreshes mutable data from the latest research, keeping past captures. */
+function refreshLeadData(existing: Lead, discoveredLead: DiscoveredLead): Lead {
+  return {
+    ...existing,
+    companyName: discoveredLead.companyName ?? existing.companyName,
+    category: discoveredLead.category ?? existing.category,
+    website:
+      discoveredLead.website ?? existing.website,
+    phone: discoveredLead.phone ?? existing.phone,
+    email: discoveredLead.email ?? existing.email,
+    address: discoveredLead.address ?? existing.address,
+    city: discoveredLead.city ?? existing.city
   };
 }
 

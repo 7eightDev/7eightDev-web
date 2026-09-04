@@ -204,6 +204,29 @@ export class PrismaLeadRepository implements LeadRepository {
     return row !== null;
   }
 
+  async findByWebsiteKey(key: string): Promise<Lead | null> {
+    const row = await prisma.lead.findUnique({
+      where: { websiteKey: key }
+    });
+    return row ? rowToLead(row as unknown as LeadRow) : null;
+  }
+
+  async existsLeadByCompanyInJob(
+    jobId: string,
+    companyName: string,
+    city: string | undefined
+  ): Promise<boolean> {
+    const row = await prisma.lead.findFirst({
+      where: {
+        jobId,
+        companyName: { equals: companyName, mode: 'insensitive' },
+        city: city ?? undefined
+      },
+      select: { id: true }
+    });
+    return row !== null;
+  }
+
   async findJobById(id: string): Promise<LeadGenerationJob | null> {
     const row = await prisma.leadGenerationJob.findUnique({
       where: { id }
