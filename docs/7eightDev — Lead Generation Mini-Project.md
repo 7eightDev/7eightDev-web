@@ -1032,7 +1032,7 @@ TASK 8 — Export
 ✅ COMPLETATO
 
 TASK 9 — Quote Integration
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 TASK 10 — Hardening
 ✅ COMPLETATO
