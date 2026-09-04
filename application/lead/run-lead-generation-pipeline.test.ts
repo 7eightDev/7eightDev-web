@@ -460,6 +460,95 @@ describe('runLeadGenerationPipeline', () => {
     expect(stored?.status).toBe('analyzed');
   });
 
+  it('persists live progress so analyzed climbs while the job is running', async () => {
+    const repository = makeRepository();
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme', website: 'https://acme.example' },
+          { companyName: 'Beta', website: 'https://beta.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 49,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 2 }
+    );
+
+    expect(result.ok).toBe(true);
+    const runningSnapshots = repository.jobs.filter(
+      (job) => job.status === 'running'
+    );
+    // Start (totalFound 0), discovery (totalFound 2), then a running snapshot
+    // with analyzed=1 and analyzed=2 after each analysis, before completion.
+    expect(runningSnapshots).toHaveLength(4);
+    expect(runningSnapshots.map((job) => job.analyzed)).toEqual([0, 0, 1, 2]);
+    expect(runningSnapshots.at(-1)).toMatchObject({
+      totalFound: 2,
+      analyzed: 2
+    });
+  });
+
+  it('keeps the previous status when a same-job re-score fails', async () => {
+    const existingLead: Lead = {
+      id: 'existing-lead',
+      jobId: 'job-1',
+      companyName: 'Acme Studio',
+      website: 'https://acme.example',
+      source: 'outscraper',
+      status: 'qualified',
+      createdAt: '2026-08-30T10:00:00.000Z',
+      updatedAt: '2026-08-30T10:00:00.000Z'
+    };
+    const repository = makeRepository([existingLead]);
+    const pageSpeed: PageSpeedPort = {
+      analyze: jest.fn().mockRejectedValue(new Error('PageSpeed unavailable'))
+    };
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme Studio', website: 'https://acme.example' }
+        ]),
+        pageSpeed,
+        repository,
+        now: NOW,
+        generateId: jest.fn(),
+        jobId: 'job-1'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(pageSpeed.analyze).toHaveBeenCalledTimes(1);
+    expect(result.leads).toHaveLength(1);
+    expect(result.leads[0]).toMatchObject({
+      id: 'existing-lead',
+      status: 'qualified',
+      analysisError: 'PageSpeed unavailable'
+    });
+    expect(result.job.analyzed).toBe(0);
+    expect(result.errors).toEqual([
+      {
+        companyName: 'Acme Studio',
+        website: 'https://acme.example',
+        error: 'PageSpeed unavailable'
+      }
+    ]);
+    const stored = await repository.findById('existing-lead');
+    expect(stored?.status).toBe('qualified');
+    expect(stored?.analysisError).toBe('PageSpeed unavailable');
+  });
+
   it('continues the pipeline when a single PageSpeed analysis fails', async () => {
     const repository = makeRepository();
     const pageSpeed: PageSpeedPort = {

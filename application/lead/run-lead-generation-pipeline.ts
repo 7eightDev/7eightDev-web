@@ -130,6 +130,9 @@ export async function runLeadGenerationPipeline(
           now
         });
         job = refreshed.job;
+        // Persist counters after every analysis so the card shows live
+        // progress instead of staying at "analyzed 0" for the whole run.
+        await deps.repository.saveJob(job);
         if (refreshed.error) {
           errors.push({
             companyName: discoveredLead.companyName,
@@ -183,6 +186,7 @@ export async function runLeadGenerationPipeline(
       now
     });
     job = refreshed.job;
+    await deps.repository.saveJob(job);
     if (refreshed.error) {
       errors.push({
         companyName: discoveredLead.companyName,
@@ -308,14 +312,16 @@ async function analyzeLead(input: {
       website: input.lead.website,
       error: errorMessage(error)
     });
-    const discardedLead = {
+    const keptStatus: LeadStatus =
+      input.lead.status === 'new' ? 'discarded' : input.lead.status;
+    const failedLead = {
       ...input.lead,
-      status: 'discarded' as const,
+      status: keptStatus,
       analysisError: errorMessage(error),
       updatedAt: input.now().toISOString()
     };
-    await input.deps.repository.save(discardedLead);
-    return { job: input.job, lead: discardedLead, error: errorMessage(error) };
+    await input.deps.repository.save(failedLead);
+    return { job: input.job, lead: failedLead, error: errorMessage(error) };
   }
 }
 
