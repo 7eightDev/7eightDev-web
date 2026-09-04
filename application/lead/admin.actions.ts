@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { runLeadGenerationPipeline } from "@/application/lead/run-lead-generation-pipeline";
+import { startRunLeadJob } from "@/application/lead/start-run-lead-job";
 import { createQuoteFromLead } from "@/application/lead/create-quote-from-lead";
 import { createQuote } from "@/application/quote/create-quote";
 import {
@@ -28,18 +28,17 @@ interface StartLeadGenerationInput {
 export async function startLeadGenerationAction(
   input: StartLeadGenerationInput
 ): Promise<LeadActionResult> {
-  const result = await runLeadGenerationPipeline(
+  await startRunLeadJob(
     {
       discovery: leadDiscovery,
       pageSpeed: pageSpeedAnalyzer,
       repository: leadRepository,
-      source: "google_maps"
+      source: "google_maps",
     },
     input
   );
-  if (!result.ok) return { ok: false, error: result.error };
   revalidatePath("/admin/leads");
-  redirect("/admin/leads");
+  return { ok: true };
 }
 
 /** Server action: permanently delete a single lead. */
