@@ -1,4 +1,5 @@
 import type { LeadSearchInput } from '@/domain/lead/lead.discovery';
+import { withRetry } from '@/infrastructure/shared/retry';
 
 export interface OutscraperResult {
   readonly name: string;
@@ -60,13 +61,17 @@ export class OutscraperHttpClient implements OutscraperClient {
     this.endpoint = config.endpoint ?? DEFAULT_ENDPOINT;
     this.fetchFn = config.fetchFn ?? fetch;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    this.maxRetries = config.maxRetries ?? 0;
+    this.maxRetries = config.maxRetries ?? 2;
   }
 
   async search(input: LeadSearchInput): Promise<OutscraperResult[]> {
     const requestUrl = this.buildRequestUrl(input);
 
-    return this.withRetry(() => this.fetchPlaces(requestUrl));
+    return withRetry(
+      () => this.fetchPlaces(requestUrl),
+      { maxRetries: this.maxRetries, baseDelayMs: 500, maxDelayMs: 10_000 },
+      (error) => error instanceof OutscraperDiscoveryError
+    );
   }
 
   private buildRequestUrl(input: LeadSearchInput) {
@@ -126,21 +131,6 @@ export class OutscraperHttpClient implements OutscraperClient {
     return headers;
   }
 
-  private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-    let attempt = 0;
-
-    while (true) {
-      try {
-        return await operation();
-      } catch (error) {
-        if (attempt >= this.maxRetries) {
-          throw error;
-        }
-
-        attempt += 1;
-      }
-    }
-  }
 }
 
 export function parseOutscraperResponse(response: unknown): OutscraperResult[] {

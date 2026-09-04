@@ -3,6 +3,7 @@ import type {
   LeadSearchInput,
   LeadDiscoveryPort
 } from '@/domain/lead/lead.discovery';
+import { withRetry } from '@/infrastructure/shared/retry';
 
 interface GooglePlacesLeadDiscoveryConfig {
   readonly apiKey?: string;
@@ -64,7 +65,7 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
     this.endpoint = config.endpoint ?? DEFAULT_ENDPOINT;
     this.fetchFn = config.fetchFn ?? fetch;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    this.maxRetries = config.maxRetries ?? 0;
+    this.maxRetries = config.maxRetries ?? 2;
     this.pageSize = config.pageSize ?? DEFAULT_PAGE_SIZE;
     this.maxPages = config.maxPages ?? DEFAULT_MAX_PAGES;
   }
@@ -87,7 +88,11 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
         ...(pageToken ? { pageToken } : {})
       };
 
-      const page = await this.withRetry(() => this.fetchPlaces(request));
+      const page = await withRetry(
+        () => this.fetchPlaces(request),
+        { maxRetries: this.maxRetries, baseDelayMs: 500, maxDelayMs: 10_000 },
+        (error) => error instanceof GooglePlacesDiscoveryError
+      );
 
       results.push(...page.places);
 
@@ -155,21 +160,6 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
     return headers;
   }
 
-  private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-    let attempt = 0;
-
-    while (true) {
-      try {
-        return await operation();
-      } catch (error) {
-        if (attempt >= this.maxRetries) {
-          throw error;
-        }
-
-        attempt += 1;
-      }
-    }
-  }
 }
 
 export function parseSearchResponse(response: unknown): {

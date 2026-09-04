@@ -155,7 +155,8 @@ describe('GooglePageSpeedInsights', () => {
 
     const pageSpeed = new GooglePageSpeedInsights({
       fetchFn,
-      timeoutMs: 25
+      timeoutMs: 25,
+      maxRetries: 0
     });
 
     const analysis = pageSpeed.analyze({
