@@ -32,7 +32,9 @@ interface LighthouseResponse {
 
 const DEFAULT_ENDPOINT =
   'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
-const DEFAULT_TIMEOUT_MS = 10_000;
+// PageSpeed analyzes the page in a headless browser, so slow sites (the ones we
+// care about — low score = qualified lead) can take well over a minute.
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 export class GooglePageSpeedInsights implements PageSpeedPort {
   private readonly endpoint: string;
