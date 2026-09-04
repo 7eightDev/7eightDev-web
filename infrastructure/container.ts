@@ -14,6 +14,7 @@ import {
   ResendQuoteNotificationAdapter,
   type ResendQuoteNotificationConfig,
 } from "@/infrastructure/quote/resend-quote-notification.adapter";
+import { RateLimiter } from "@/infrastructure/shared/rate-limiter";
 
 /**
  * Composition root: single place where ports are bound to adapters.
@@ -51,6 +52,17 @@ export const quoteNotifier: QuoteNotificationPort = buildQuoteNotifier();
 /** PageSpeed analysis for lead qualification. */
 export const pageSpeedAnalyzer: PageSpeedPort = new GooglePageSpeedInsights({
   apiKey: process.env.GOOGLE_PAGESPEED_API_KEY,
+});
+
+/** Rate limiters: per-instance in-memory (sufficient for B2B admin). */
+export const leadGenerationRateLimiter = new RateLimiter({
+  windowMs: 60_000,
+  maxRequests: 5,
+});
+
+export const exportRateLimiter = new RateLimiter({
+  windowMs: 60_000,
+  maxRequests: 10,
 });
 
 /**

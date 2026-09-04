@@ -15,6 +15,7 @@ import {
   leadRepository,
   pageSpeedAnalyzer,
   quoteRepository,
+  leadGenerationRateLimiter,
 } from "@/infrastructure/container";
 
 export interface LeadActionResult {
@@ -29,6 +30,13 @@ export async function startLeadGenerationAction(
   const parsed = startLeadGenerationSchema.safeParse(rawInput);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  if (!leadGenerationRateLimiter.allow("lead-gen")) {
+    return {
+      ok: false,
+      error: "Troppe richieste. Riprova tra qualche secondo.",
+    };
   }
 
   await startRunLeadJob(

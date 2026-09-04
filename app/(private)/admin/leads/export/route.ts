@@ -1,5 +1,5 @@
 import { exportQualifiedLeadsCsv } from "@/application/lead/export-leads";
-import { leadRepository } from "@/infrastructure/container";
+import { leadRepository, exportRateLimiter } from "@/infrastructure/container";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +8,13 @@ export const dynamic = "force-dynamic";
  * Auth is enforced by the Clerk proxy on the `(private)` area.
  */
 export async function GET(): Promise<Response> {
+  if (!exportRateLimiter.allow("export")) {
+    return new Response("Troppe richieste. Riprova tra qualche secondo.", {
+      status: 429,
+      headers: { "Retry-After": "60" },
+    });
+  }
+
   const csv = await exportQualifiedLeadsCsv(leadRepository);
 
   return new Response(csv, {
