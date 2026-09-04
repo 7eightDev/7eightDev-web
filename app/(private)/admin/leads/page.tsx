@@ -75,19 +75,21 @@ export default async function LeadsPage({
         </div>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 items-start">
       {jobs.length > 0 && (
-        <section className="mb-8 flex flex-col gap-3">
+        <aside className="lg:sticky lg:top-6 flex flex-col gap-3 lg:order-1">
           <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-            Ricerche recenti · {jobs.length}
+            Ricerche recenti
           </h2>
           <div className="flex flex-col gap-3">
             {jobs.map((job) => (
               <LeadJobStatus key={job.id} job={job} />
             ))}
           </div>
-        </section>
+        </aside>
       )}
 
+      <div className="lg:order-2 min-w-0">
       {rows.length === 0 ? (
         <div className="p-10 rounded-2xl bg-surface border border-border text-center">
           <p className="font-hanken text-soft mb-4">
@@ -124,6 +126,8 @@ export default async function LeadsPage({
           )}
         </section>
       )}
+      </div>
+      </div>
     </Container>
   );
 }

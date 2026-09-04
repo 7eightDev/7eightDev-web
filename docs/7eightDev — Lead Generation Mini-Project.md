@@ -1119,6 +1119,26 @@ Stato attuale:
 feat/lead-generation
 ```
 
+✅ COMPLETATO — TASK 7 — LAYOUT due colonne /admin/leads
+
+Le "Ricerche recenti" occupavano troppo spazio in verticale prima del primo
+risultato. La lista lead ora è divisa in due colonne (desktop): a sinistra una
+**sidebar sticky (300px)** con le ricerche recenti, a destra la **lista lead**
+con filtri. Su mobile le colonne si impilano (ricerche in alto).
+
+```text
+app/(private)/admin/leads/page.tsx   ← grid lg:grid-cols-[300px_1fr]
+```
+
+Sticky (`lg:top-6`) perché le ricerche restino visibili scorrendo la lista.
+
+```text
+npm test -- --runInBand        → 239/239 pass
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
 ✅ COMPLETATO — TASK 7 — FILTRI lista /admin/leads
 
 Filtri e ordinamento sulla lista lead, seguendo il pattern già stabilito dai
