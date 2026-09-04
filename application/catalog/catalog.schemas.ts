@@ -37,8 +37,8 @@ const billingInputSchema = z.discriminatedUnion("kind", [
 /** Form payload for creating/updating a catalog item (id passed separately). */
 export const catalogItemInputSchema = z.object({
   tier: z.enum(["web_assets", "enterprise"]),
-  title: z.string().min(2, "Titolo troppo corto"),
-  description: z.string().min(2, "Descrizione troppo corta"),
+  title: z.string().min(2, "Titolo troppo corto").max(200, "Titolo troppo lungo"),
+  description: z.string().min(2, "Descrizione troppo corta").max(2000, "Descrizione troppo lunga"),
   pricing: pricingInputSchema,
   billing: billingInputSchema,
   defaultOptional: z.boolean(),
