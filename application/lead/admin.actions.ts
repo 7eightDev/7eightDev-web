@@ -3,10 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { runLeadGenerationPipeline } from "@/application/lead/run-lead-generation-pipeline";
+import { createQuoteFromLead } from "@/application/lead/create-quote-from-lead";
+import { createQuote } from "@/application/quote/create-quote";
 import {
+  catalogRepository,
   leadDiscovery,
   leadRepository,
   pageSpeedAnalyzer,
+  quoteRepository,
 } from "@/infrastructure/container";
 
 export interface LeadActionResult {
@@ -44,4 +48,28 @@ export async function deleteLeadAction(
   await leadRepository.delete(id);
   revalidatePath("/admin/leads");
   return { ok: true };
+}
+
+/**
+ * Server action: create a draft quote pre-populated from a qualified lead.
+ * Composes the CreateQuoteInput from the lead + catalog, persists the draft via
+ * the quote create use case, then redirects to the composer to review it.
+ */
+export async function createQuoteFromLeadAction(
+  leadId: string
+): Promise<LeadActionResult> {
+  const prepared = await createQuoteFromLead(
+    { leadRepository, catalogRepository },
+    leadId
+  );
+  if (!prepared.ok) return { ok: false, error: prepared.error };
+
+  const result = await createQuote(
+    { repository: quoteRepository },
+    prepared.input
+  );
+  if (!result.ok) return { ok: false, error: result.error };
+
+  revalidatePath("/admin/quotes");
+  redirect(`/admin/quotes/${result.quote.id}/edit`);
 }
