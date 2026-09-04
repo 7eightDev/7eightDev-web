@@ -15,6 +15,23 @@ function jitter(ms: number): number {
   return ms * (0.5 + Math.random() * 0.5);
 }
 
+/** HTTP error carrying the status code for retry classification. */
+export class HttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    options?: ErrorOptions
+  ) {
+    super(message, options);
+    this.name = 'HttpError';
+  }
+}
+
+/** Returns true for HTTP 429 (rate limit) and 5xx (server error). */
+export function isRetryableHttpError(error: unknown): boolean {
+  return error instanceof HttpError && (error.status === 429 || error.status >= 500);
+}
+
 /**
  * Executes an async operation with exponential backoff + jitter.
  * Retries only on transient errors (network, timeout, 429/5xx).

@@ -1,5 +1,5 @@
 import type { LeadSearchInput } from '@/domain/lead/lead.discovery';
-import { withRetry } from '@/infrastructure/shared/retry';
+import { withRetry, HttpError } from '@/infrastructure/shared/retry';
 
 export interface OutscraperResult {
   readonly name: string;
@@ -70,7 +70,7 @@ export class OutscraperHttpClient implements OutscraperClient {
     return withRetry(
       () => this.fetchPlaces(requestUrl),
       { maxRetries: this.maxRetries, baseDelayMs: 500, maxDelayMs: 10_000 },
-      (error) => error instanceof OutscraperDiscoveryError
+      (error) => !(error instanceof HttpError && error.status >= 400 && error.status < 500 && error.status !== 429)
     );
   }
 
@@ -94,14 +94,15 @@ export class OutscraperHttpClient implements OutscraperClient {
       });
 
       if (!response.ok) {
-        throw new OutscraperDiscoveryError(
-          `Outscraper search failed with status ${response.status}`
+        throw new HttpError(
+          `Outscraper search failed with status ${response.status}`,
+          response.status
         );
       }
 
       return parseOutscraperResponse((await response.json()) as unknown);
     } catch (error) {
-      if (error instanceof OutscraperDiscoveryError) {
+      if (error instanceof HttpError) {
         throw error;
       }
 

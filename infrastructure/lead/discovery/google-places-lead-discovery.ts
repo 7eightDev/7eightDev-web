@@ -3,7 +3,7 @@ import type {
   LeadSearchInput,
   LeadDiscoveryPort
 } from '@/domain/lead/lead.discovery';
-import { withRetry } from '@/infrastructure/shared/retry';
+import { withRetry, HttpError } from '@/infrastructure/shared/retry';
 
 interface GooglePlacesLeadDiscoveryConfig {
   readonly apiKey?: string;
@@ -91,7 +91,7 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
       const page = await withRetry(
         () => this.fetchPlaces(request),
         { maxRetries: this.maxRetries, baseDelayMs: 500, maxDelayMs: 10_000 },
-        (error) => error instanceof GooglePlacesDiscoveryError
+        (error) => !(error instanceof HttpError && error.status >= 400 && error.status < 500 && error.status !== 429)
       );
 
       results.push(...page.places);
@@ -122,14 +122,15 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
       });
 
       if (!response.ok) {
-        throw new GooglePlacesDiscoveryError(
-          `Google Places search failed with status ${response.status}`
+        throw new HttpError(
+          `Google Places search failed with status ${response.status}`,
+          response.status
         );
       }
 
       return parseSearchResponse((await response.json()) as unknown);
     } catch (error) {
-      if (error instanceof GooglePlacesDiscoveryError) {
+      if (error instanceof HttpError) {
         throw error;
       }
 

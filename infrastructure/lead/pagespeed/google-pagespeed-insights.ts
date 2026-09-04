@@ -4,7 +4,7 @@ import {
   type PageSpeedPort,
   type PageSpeedResult
 } from '@/domain/lead/lead.pagespeed';
-import { withRetry } from '@/infrastructure/shared/retry';
+import { withRetry, HttpError } from '@/infrastructure/shared/retry';
 
 type FetchFn = typeof fetch;
 
@@ -57,9 +57,7 @@ export class GooglePageSpeedInsights implements PageSpeedPort {
     return withRetry(
       () => this.fetchAnalysis(requestUrl),
       { maxRetries: this.maxRetries, baseDelayMs: 1000, maxDelayMs: 30_000 },
-      (error) =>
-        error instanceof PageSpeedAnalysisError &&
-        !error.message.includes('invalid')
+      (error) => !(error instanceof HttpError && error.status >= 400 && error.status < 500 && error.status !== 429)
     );
   }
 
@@ -85,14 +83,15 @@ export class GooglePageSpeedInsights implements PageSpeedPort {
       });
 
       if (!response.ok) {
-        throw new PageSpeedAnalysisError(
-          `PageSpeed request failed with status ${response.status}`
+        throw new HttpError(
+          `PageSpeed request failed with status ${response.status}`,
+          response.status
         );
       }
 
       return parsePageSpeedResponse((await response.json()) as unknown);
     } catch (error) {
-      if (error instanceof PageSpeedAnalysisError) {
+      if (error instanceof HttpError) {
         throw error;
       }
 
