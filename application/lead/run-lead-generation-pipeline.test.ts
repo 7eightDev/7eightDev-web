@@ -58,6 +58,15 @@ function makeRepository(existingLeads: Lead[] = []) {
         : all;
       return { leads: filtered, total: filtered.length };
     },
+    async countLeadsByJobIds(jobIds) {
+      const counts = new Map<string, number>();
+      for (const lead of leads.values()) {
+        if (lead.jobId && jobIds.includes(lead.jobId)) {
+          counts.set(lead.jobId, (counts.get(lead.jobId) ?? 0) + 1);
+        }
+      }
+      return counts;
+    },
     async findLatestAnalysesByLeadIds(leadIds) {
       const idSet = new Set(leadIds);
       const byLead = new Map<string, LeadAnalysis>();

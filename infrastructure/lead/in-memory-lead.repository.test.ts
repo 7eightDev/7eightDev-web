@@ -121,4 +121,32 @@ describe('InMemoryLeadRepository', () => {
     expect(page.leads.map((l) => l.id)).toEqual(['lead-1']);
     expect(page.total).toBe(1);
   });
+
+  it('counts leads grouped by job ids', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.save({ ...lead, id: 'lead-1', jobId: 'job-1' });
+    await repository.save({ ...lead, id: 'lead-2', jobId: 'job-1' });
+    await repository.save({ ...lead, id: 'lead-3', jobId: 'job-2' });
+    await repository.save({ ...lead, id: 'lead-4' });
+
+    await expect(
+      repository.countLeadsByJobIds(['job-1', 'job-2', 'job-3'])
+    ).resolves.toEqual(
+      new Map([
+        ['job-1', 2],
+        ['job-2', 1]
+      ])
+    );
+  });
+
+  it('returns an empty map when no leads are linked to the given jobs', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.save(lead);
+
+    await expect(repository.countLeadsByJobIds(['job-1'])).resolves.toEqual(
+      new Map()
+    );
+  });
 });

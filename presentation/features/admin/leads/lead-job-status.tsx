@@ -5,6 +5,7 @@ import { cn } from "@/presentation/lib/utils";
 interface LeadJobStatusProps {
   job: LeadGenerationJob;
   active?: boolean;
+  foundCount?: number;
 }
 
 const JOB_STYLE: Record<LeadGenerationJob["status"], string> = {
@@ -28,7 +29,7 @@ const JOB_LABEL: Record<LeadGenerationJob["status"], string> = {
  * to the leads this job produced (?job=<id>); `active` highlights the
  * currently applied job filter.
  */
-export function LeadJobStatus({ job, active = false }: LeadJobStatusProps) {
+export function LeadJobStatus({ job, active = false, foundCount }: LeadJobStatusProps) {
   return (
     <Link
       href={`/admin/leads?job=${job.id}`}
@@ -60,7 +61,10 @@ export function LeadJobStatus({ job, active = false }: LeadJobStatusProps) {
       </div>
 
       <p className="font-mono text-[12.5px] text-muted">
-        Trovati <span className="text-foreground">{job.totalFound}</span>
+        Trovati{" "}
+        <span className="text-foreground">
+          {foundCount ?? job.totalFound}
+        </span>
         {" · "}Analizzati <span className="text-foreground">{job.analyzed}</span>
         {" · "}Qualificati{" "}
         <span className="text-foreground">{job.qualified}</span>

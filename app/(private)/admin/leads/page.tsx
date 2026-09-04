@@ -50,6 +50,10 @@ export default async function LeadsPage({
     : undefined;
   const jobId = activeJob ? activeJob.id : undefined;
 
+  const leadCountByJobId = await leadRepository.countLeadsByJobIds(
+    jobs.map((job) => job.id)
+  );
+
   const { leads, total } = await leadRepository.findPaginated({
     page,
     pageSize: PAGE_SIZE,
@@ -151,6 +155,7 @@ export default async function LeadsPage({
                 key={job.id}
                 job={job}
                 active={job.id === requestedJobId}
+                foundCount={leadCountByJobId.get(job.id)}
               />
             ))}
           </div>

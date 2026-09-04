@@ -46,7 +46,8 @@ describe('ExecuteLeadGenerationJob', () => {
       delete: jest.fn(),
       findJobById: jest.fn(),
       findAllJobs: jest.fn(),
-      saveJob: jest.fn()
+      saveJob: jest.fn(),
+      countLeadsByJobIds: jest.fn().mockResolvedValue(new Map())
     } as unknown as jest.Mocked<LeadRepository>;
 
     useCase = new ExecuteLeadGenerationJob(jobRepository, {

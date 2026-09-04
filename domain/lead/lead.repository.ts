@@ -22,6 +22,7 @@ export interface LeadRepository {
   findById(id: string): Promise<Lead | null>;
   findAll(): Promise<Lead[]>;
   findPaginated(params: LeadPageParams): Promise<LeadPage>;
+  countLeadsByJobIds(jobIds: string[]): Promise<Map<string, number>>;
   save(lead: Lead): Promise<void>;
   delete(id: string): Promise<void>;
 

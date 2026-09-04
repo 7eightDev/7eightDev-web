@@ -74,6 +74,17 @@ export class InMemoryLeadRepository implements LeadRepository {
     this.leads.set(lead.id, lead);
   }
 
+  async countLeadsByJobIds(jobIds: string[]): Promise<Map<string, number>> {
+    const set = new Set(jobIds);
+    const counts = new Map<string, number>();
+    for (const lead of this.leads.values()) {
+      if (lead.jobId && set.has(lead.jobId)) {
+        counts.set(lead.jobId, (counts.get(lead.jobId) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }
+
   async delete(id: string): Promise<void> {
     this.leads.delete(id);
   }
