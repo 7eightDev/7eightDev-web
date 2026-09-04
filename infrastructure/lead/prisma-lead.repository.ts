@@ -1,4 +1,8 @@
-import type { LeadRepository } from '@/domain/lead/lead.repository';
+import type {
+  LeadPage,
+  LeadPageParams,
+  LeadRepository
+} from '@/domain/lead/lead.repository';
 import type {
   Lead,
   LeadAnalysis,
@@ -57,6 +61,49 @@ export class PrismaLeadRepository implements LeadRepository {
     return rows.map(rowToLead);
   }
 
+  async findPaginated({
+    page,
+    pageSize,
+    status,
+    source,
+    q
+  }: LeadPageParams): Promise<LeadPage> {
+    const where: Record<string, unknown> = {};
+
+    if (status && status !== 'all') {
+      where.status = status;
+    }
+    if (source && source !== 'all') {
+      where.source = source;
+    }
+    if (q) {
+      const term = q.toLowerCase();
+      where.OR = [
+        { companyName: { contains: term, mode: 'insensitive' } },
+        { city: { contains: term, mode: 'insensitive' } },
+        { category: { contains: term, mode: 'insensitive' } },
+        { website: { contains: term, mode: 'insensitive' } },
+        { phone: { contains: term, mode: 'insensitive' } },
+        { email: { contains: term, mode: 'insensitive' } }
+      ];
+    }
+
+    const [total, rows] = await Promise.all([
+      prisma.lead.count({ where }),
+      prisma.lead.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize
+      })
+    ]);
+
+    return {
+      leads: rows.map((r) => rowToLead(r as unknown as LeadRow)),
+      total
+    };
+  }
+
   async delete(id: string): Promise<void> {
     await prisma.lead.delete({
       where: { id }
@@ -69,6 +116,34 @@ export class PrismaLeadRepository implements LeadRepository {
     });
 
     return rows.map((row) => rowToLeadAnalysis(row as LeadAnalysisRow));
+  }
+
+  async findLatestAnalysesByLeadIds(leadIds: string[]): Promise<LeadAnalysis[]> {
+    if (leadIds.length === 0) return [];
+
+    const rows = await prisma.$queryRaw<
+      { id: string; leadId: string; strategy: string; performanceScore: number | null; lcp: number | null; fcp: number | null; cls: number | null; tbt: number | null; analyzedAt: Date }[]
+    >`
+      SELECT DISTINCT ON ("leadId")
+        "id", "leadId", "strategy", "performanceScore", "lcp", "fcp", "cls", "tbt", "analyzedAt"
+      FROM "LeadAnalysis"
+      WHERE "leadId" = ANY(${leadIds})
+      ORDER BY "leadId", "analyzedAt" DESC
+    `;
+
+    return rows.map((row) =>
+      rowToLeadAnalysis({
+        id: row.id,
+        leadId: row.leadId,
+        strategy: row.strategy as 'mobile' | 'desktop',
+        performanceScore: row.performanceScore,
+        lcp: row.lcp,
+        fcp: row.fcp,
+        cls: row.cls,
+        tbt: row.tbt,
+        analyzedAt: row.analyzedAt
+      })
+    );
   }
 
   async saveAnalysis(analysis: LeadAnalysis): Promise<void> {

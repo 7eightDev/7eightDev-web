@@ -21,11 +21,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 50;
+
 export default async function LeadsPage({
   searchParams,
 }: {
-  // Next.js 16: searchParams is async. Filters are read from the URL so this
-  // stays a Server Component and the filtered view is shareable/bookmarkable.
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
@@ -39,28 +39,41 @@ export default async function LeadsPage({
     sort: parseSortOption(param("sort")),
   };
 
-  const leads = await leadRepository.findAll();
+  const rawPage = parseInt(param("page") ?? "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+
+  const { leads, total } = await leadRepository.findPaginated({
+    page,
+    pageSize: PAGE_SIZE,
+    status: filters.status,
+    source: filters.source,
+    q: filters.q || undefined,
+  });
+
   const rawJobs = await leadRepository.findAllJobs();
-  // Recover jobs whose worker died (serverless timeout/crash): a non-terminal
-  // job older than the threshold is surfaced as failed instead of polling
-  // forever. `resolveJobStatus` is the read-time safety net for this.
   const jobs = rawJobs.map((job) => resolveJobStatus(job));
   const hasActiveJob = jobs.some(
     (job) => job.status === "pending" || job.status === "running"
   );
 
-  const rows: LeadTableRow[] = await Promise.all(
-    leads.map(async (lead) => {
-      const analyses = await leadRepository.findAnalysesByLeadId(lead.id);
-      const latest = analyses[0];
-      return {
-        lead,
-        score: latest?.performanceScore ?? undefined,
-      };
-    })
+  const latestAnalyses = await leadRepository.findLatestAnalysesByLeadIds(
+    leads.map((l) => l.id)
+  );
+  const analysisByLeadId = new Map(
+    latestAnalyses.map((a) => [a.leadId, a])
   );
 
+  const rows: LeadTableRow[] = leads.map((lead) => {
+    const analysis = analysisByLeadId.get(lead.id);
+    return {
+      lead,
+      score: analysis?.performanceScore ?? undefined,
+    };
+  });
+
   const visibleRows = sortLeads(filterLeads(rows, filters), filters.sort);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <Container className="max-w-[1100px] py-12">
@@ -100,7 +113,7 @@ export default async function LeadsPage({
       )}
 
       <div className="lg:order-2 min-w-0">
-      {rows.length === 0 ? (
+      {total === 0 && rows.length === 0 ? (
         <div className="p-10 rounded-2xl bg-surface border border-border text-center">
           <p className="font-hanken text-soft mb-4">
             Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
@@ -121,8 +134,8 @@ export default async function LeadsPage({
 
           <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
             {filters.q || filters.status !== "all" || filters.score !== "all" || filters.source !== "all"
-              ? `${visibleRows.length} ${visibleRows.length === 1 ? "lead" : "lead"} su ${rows.length}`
-              : `Tutti i lead · ${rows.length}`}
+              ? `${visibleRows.length} ${visibleRows.length === 1 ? "lead" : "lead"} su ${total}`
+              : `Tutti i lead · ${total}`}
           </h2>
 
           {visibleRows.length === 0 ? (
@@ -132,7 +145,62 @@ export default async function LeadsPage({
               </p>
             </div>
           ) : (
-            <LeadTable rows={visibleRows} />
+            <>
+              <LeadTable rows={visibleRows} />
+              {totalPages > 1 && (
+                <nav className="flex items-center justify-center gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    asChild={page > 1}
+                  >
+                    {page > 1 ? (
+                      <Link
+                        href={`/admin/leads?${new URLSearchParams({
+                          ...(filters.status !== "all" && { status: filters.status }),
+                          ...(filters.score !== "all" && { score: filters.score }),
+                          ...(filters.source !== "all" && { source: filters.source }),
+                          ...(filters.q && { q: filters.q }),
+                          ...(filters.sort !== "date-desc" && { sort: filters.sort }),
+                          page: String(page - 1),
+                        }).toString()}`}
+                      >
+                        ← Precedente
+                      </Link>
+                    ) : (
+                      "← Precedente"
+                    )}
+                  </Button>
+                  <span className="font-mono text-xs text-muted px-3">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages}
+                    asChild={page < totalPages}
+                  >
+                    {page < totalPages ? (
+                      <Link
+                        href={`/admin/leads?${new URLSearchParams({
+                          ...(filters.status !== "all" && { status: filters.status }),
+                          ...(filters.score !== "all" && { score: filters.score }),
+                          ...(filters.source !== "all" && { source: filters.source }),
+                          ...(filters.q && { q: filters.q }),
+                          ...(filters.sort !== "date-desc" && { sort: filters.sort }),
+                          page: String(page + 1),
+                        }).toString()}`}
+                      >
+                        Successiva →
+                      </Link>
+                    ) : (
+                      "Successiva →"
+                    )}
+                  </Button>
+                </nav>
+              )}
+            </>
           )}
         </section>
       )}
