@@ -1197,6 +1197,31 @@ npx tsc --noEmit               → OK
 npm run build                  → OK
 ```
 
+✅ CONFIG — PageSpeed Insights funzionante
+
+L'analisi di performance richiede la `GOOGLE_PAGESPEED_API_KEY` (Google Cloud →
+PageSpeed Insights API). Senza key Google risponde 429 (rate limit anonimo);
+con key ma API non abilitata 403; con key ok ma siti lenti → timeout a 10s.
+
+Fix applicato:
+
+```text
+.env.local / .env.example        → GOOGLE_PAGESPEED_API_KEY (documentata)
+google-pagespeed-insights.ts     → timeout default 10s → 60s (siti lenti)
+```
+
+Con chiave valida il test live restituisce risultati reali, es. Top Tyres
+(score 58, LCP 4.0s, FCP 2.6s, CLS 0.018, TBT 1.1s — durata 40s). Il timeout a
+60s è necessario: i lead più interessanti (score < 50) sono tipicamente i siti
+più lenti da analizzare.
+
+```text
+npm test -- --runInBand        → 205/205 pass
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
 Prossimo task: da definire (mini-progetto lead generation completo).
 
 **NON fare il merge in `main`.**
