@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/presentation/lib/utils';
 import {
@@ -77,6 +77,35 @@ export function LeadFilterBar({
     [router, pathname, searchParams]
   );
 
+  const searchQ = useCallback(
+    (value: string) => {
+      const trimmed = value.trim();
+      push(trimmed ? { q: trimmed } : { q: '' });
+    },
+    [push]
+  );
+
+  // Debounced live search: filters apply as you type, no Enter needed.
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => {
+    return () => clearTimeout(timer.current);
+  }, []);
+  const setDraftQDebounced = (value: string) => {
+    isTyping.current = true;
+    setDraftQ(value);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      isTyping.current = false;
+      searchQ(value);
+    }, 350);
+  };
+
+  // Keep the field in sync with the URL on back/forward navigation.
+  const isTyping = useRef(false);
+  useEffect(() => {
+    if (!isTyping.current) setDraftQ(q);
+  }, [q]);
+
   const setStatus = (value: LeadStatusFilter) =>
     push(
       value === DEFAULT_LEAD_STATUS_FILTER
@@ -92,13 +121,12 @@ export function LeadFilterBar({
   const setSort = (value: SortOption) =>
     push(value === DEFAULT_SORT ? { sort: '' } : { sort: value });
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const value = draftQ.trim();
-    push(value ? { q: value } : { q: '' });
-  };
-
   const clearAll = () => push({ status: '', score: '', source: '', q: '', sort: '' });
+  const clearSearch = () => {
+    setDraftQ('');
+    clearTimeout(timer.current);
+    searchQ('');
+  };
 
   const hasActive =
     status !== DEFAULT_LEAD_STATUS_FILTER ||
@@ -138,16 +166,33 @@ export function LeadFilterBar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <form onSubmit={submitSearch} className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <input
             type="search"
             value={draftQ}
-            onChange={(e) => setDraftQ(e.target.value)}
+            onChange={(e) => setDraftQDebounced(e.target.value)}
             placeholder="Cerca azienda, città, sito…"
             aria-label="Cerca lead"
+            aria-describedby="lead-search-hint"
             className={cn(inputBase, 'min-w-[200px]')}
           />
-        </form>
+          {draftQ && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              aria-label="Cancella ricerca"
+              className="font-mono text-[12px] px-2 py-1 rounded-md text-muted hover:text-foreground underline underline-offset-4"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        <span
+          id="lead-search-hint"
+          className="hidden sm:inline font-mono text-[11px] text-muted"
+        >
+          cerca mentre digiti
+        </span>
 
         <label className="flex items-center gap-2">
           <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">

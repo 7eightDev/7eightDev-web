@@ -1119,6 +1119,27 @@ Stato attuale:
 feat/lead-generation
 ```
 
+✅ COMPLETATO — TASK 7 — RICERCA LIVE con debounce
+
+La ricerca testuale richiedeva Invio (nessun debounce) — comportamento poco
+intuitivo. Ora il campo filtra **mentre digiti** (debounce 350ms), mantenendo
+i filtri già attivi (status, score, source, sort). Pulsante × per cancellare.
+Sincronizza il campo con l'URL su back/forward.
+
+```text
+presentation/features/admin/leads/lead-filter-bar.tsx
+```
+
+Il caso d'uso riportato (status=qualified + q=Ravenna) filtra correttamente a
+1 record.
+
+```text
+npm test -- --runInBand        → 239/239 pass
+npm run lint                   → OK
+npx tsc --noEmit               → OK
+npm run build                  → OK
+```
+
 ✅ COMPLETATO — TASK 7 — LAYOUT due colonne /admin/leads
 
 Le "Ricerche recenti" occupavano troppo spazio in verticale prima del primo
