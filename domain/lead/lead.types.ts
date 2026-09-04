@@ -19,6 +19,10 @@ export interface Lead {
   readonly source: LeadSource;
   readonly status: LeadStatus;
 
+  // Set when the PageSpeed analysis failed (lead `discarded`); carries the
+  // reason shown in the admin detail view.
+  readonly analysisError?: string;
+
   readonly createdAt: string;
   readonly updatedAt: string;
 }

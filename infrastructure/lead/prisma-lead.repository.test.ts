@@ -67,6 +67,7 @@ describe('PrismaLeadRepository', () => {
         city: 'Padova',
         source: 'google_maps',
         status: 'new',
+        analysisError: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -82,6 +83,7 @@ describe('PrismaLeadRepository', () => {
         city: 'Padova',
         source: 'google_maps',
         status: 'new',
+        analysisError: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -115,6 +117,7 @@ describe('PrismaLeadRepository', () => {
       city: null,
       source: 'google_maps',
       status: 'new',
+      analysisError: null,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -140,6 +143,7 @@ describe('PrismaLeadRepository', () => {
       city: 'Padova',
       source: 'google_maps',
       status: 'new',
+      analysisError: null,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -180,6 +184,7 @@ describe('PrismaLeadRepository', () => {
         city: 'Padova',
         source: 'google_maps',
         status: 'new',
+        analysisError: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -196,6 +201,7 @@ describe('PrismaLeadRepository', () => {
         city: 'Vicenza',
         source: 'google_maps',
         status: 'new',
+        analysisError: null,
         createdAt: new Date('2026-01-02T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z')
       }
@@ -484,6 +490,7 @@ describe('PrismaLeadRepository', () => {
         city: 'Padova',
         source: 'google_maps',
         status: 'new',
+        analysisError: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }

@@ -125,6 +125,9 @@ model Lead {
   city        String?
   source      LeadSource
   status      LeadStatus
+  // Set when the PageSpeed analysis failed: keeps the reason the lead was
+  // marked `discarded` visible in the admin detail view (null = ok/not tried).
+  analysisError String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 

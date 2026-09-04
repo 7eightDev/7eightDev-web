@@ -105,9 +105,28 @@ export function LeadDetail({ lead, analyses }: LeadDetailProps) {
         </h2>
 
         {!latest ? (
-          <p className="font-hanken text-soft m-0">
-            Nessuna analisi disponibile per questo lead.
-          </p>
+          lead.status === "discarded" ? (
+            <p className="font-hanken text-soft m-0">
+              Analisi PageSpeed fallita: il lead è stato scartato.
+              {lead.analysisError && (
+                <>
+                  {" "}
+                  <span className="text-[var(--coral)] font-medium">
+                    {lead.analysisError}
+                  </span>
+                </>
+              )}
+            </p>
+          ) : lead.status === "new" && !lead.website ? (
+            <p className="font-hanken text-soft m-0">
+              Lead salvato senza indirizzo web: nessuna analisi PageSpeed
+              eseguita. Puoi contattarlo via telefono o email.
+            </p>
+          ) : (
+            <p className="font-hanken text-soft m-0">
+              Nessuna analisi disponibile per questo lead.
+            </p>
+          )
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">

@@ -35,6 +35,7 @@ export class PrismaLeadRepository implements LeadRepository {
       city: row.city,
       source: row.source,
       status: row.status,
+      analysisError: row.analysisError,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     };
