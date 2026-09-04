@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { leadRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
+import { Button } from "@/presentation/components/ui/button";
 import { LeadJobStatus } from "@/presentation/features/admin/leads/lead-job-status";
 import {
   LeadTable,
@@ -30,13 +31,20 @@ export default async function LeadsPage() {
         <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground">
           Lead
         </h1>
-        <Link
-          href="/admin/leads/new"
-          className="font-mono text-sm font-semibold rounded-full bg-accent text-[#0a0b0d] transition-all duration-150 hover:brightness-105 hover:-translate-y-px flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-[9px]"
-        >
-          <span className="sm:hidden text-lg">+</span>
-          <span className="hidden sm:inline">+ Nuova ricerca</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/leads/export">
+              <span className="hidden sm:inline">Esporta CSV</span>
+              <span className="sm:hidden text-lg">↓</span>
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/leads/new">
+              <span className="sm:hidden text-lg">+</span>
+              <span className="hidden sm:inline">+ Nuova ricerca</span>
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {jobs.length > 0 && (
@@ -57,12 +65,9 @@ export default async function LeadsPage() {
           <p className="font-hanken text-soft mb-4">
             Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
           </p>
-          <Link
-            href="/admin/leads/new"
-            className="font-mono text-sm font-semibold text-accent hover:underline"
-          >
-            + Nuova ricerca
-          </Link>
+          <Button variant="ghost" asChild>
+            <Link href="/admin/leads/new">+ Nuova ricerca</Link>
+          </Button>
         </div>
       ) : (
         <section className="flex flex-col gap-3">

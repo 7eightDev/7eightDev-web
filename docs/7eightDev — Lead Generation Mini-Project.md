@@ -1029,7 +1029,7 @@ TASK 7 — Admin UI
 ✅ COMPLETATO
 
 TASK 8 — Export
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 TASK 9 — Quote Integration
 ⚪ NON INIZIATO
@@ -1119,68 +1119,34 @@ Stato attuale:
 feat/lead-generation
 ```
 
-Il provider di discovery scelto per la V1 è **Google Places API (Text Search New)**.
+✅ COMPLETATO — TASK 8 — Export (CSV)
 
-✅ COMPLETATO — `GooglePlacesLeadDiscovery`
-(`infrastructure/lead/discovery/google-places-lead-discovery.ts`) con:
-
-```text
-POST https://places.googleapis.com/v1/places:searchText
-X-Goog-Api-Key      (GOOGLE_PLACES_API_KEY)
-X-Goog-FieldMask    (displayName, formattedAddress, nationalPhoneNumber,
-                     websiteUri, addressComponents)
-textQuery = "<query> <location>"
-pageSize + paginazione (nextPageToken, maxPages)
-mapping displayName→companyName, websiteUri→website,
-        nationalPhoneNumber→phone, formattedAddress→address,
-        addressComponents(locality)→city
-email = undefined (Google Places non fornisce email)
-GooglePlacesDiscoveryError tipizzato
-timeout + retry configurabili
-test (fetchFn mock)
-```
-
-Nota importante: Google Places **non fornisce l'email**. Il discovery recupera
-nome, telefono, sito e indirizzo — sufficiente per la qualificazione via
-PageSpeed e per contattare il lead (TASK 9). Basta abilitare il billing Google
-($200/mese di credito; niente carta dedicata).
-
-Il container DI ora lega:
+Implementato export lead qualificati in CSV:
 
 ```text
-leadDiscovery → GooglePlacesLeadDiscovery
+application/lead/export-leads.ts        ← use case
+application/lead/export-leads.test.ts   ← test (6 test)
+app/(private)/admin/leads/export/route.ts ← GET handler (scarica CSV)
+app/(private)/admin/leads/page.tsx       ← pulsanti "Esporta CSV" + "+ Nuova ricerca" (shadcn Button)
 ```
 
-L'adapter **Outscraper** (ed `OutscraperHttpClient`, con email) resta nel
-codice ma **non è collegato** di default: richiede una carta di credito.
-Per riattivarlo basta cambiare il binding nel container.
-
-Aggiunte env (`.env.example`):
-
-```text
-GOOGLE_PLACES_API_KEY   ← attivo (V1)
-OUTSCRAPER_API_KEY      ← opzionale / alternativa
-```
+- CSV con 14 colonne (company, category, website, phone, email, address, city, performance, lcp, fcp, cls, tbt, qualification, source).
+- Solo lead con `status: qualified`.
+- Analisi più recente del lead.
+- Escape RFC 4180 (virgolette, virgole, newline).
+- CRLF line endings (compatibile Excel).
+- Route `/admin/leads/export` protetta da Clerk proxy.
+- `Button` shadcn/ui per i pulsanti nella pagina leads.
 
 Verifica eseguita e verde:
 
 ```text
-npm test -- --runInBand        → 185/185 pass
+npm test -- --runInBand        → 191/191 pass
 npm run lint                   → OK
 npx tsc --noEmit               → OK
 npm run build                  → OK
 ```
 
-Prossimi passi:
-
-```text
-commit
-↓
-merge in feat/lead-generation
-↓
-verifica branch
-↓
-inizio task successivo (Export)
-```
+Prossimo task: **TASK 9 — Quote Integration**.
 
 **NON fare il merge in `main`.**
