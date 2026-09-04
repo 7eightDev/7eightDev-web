@@ -16,6 +16,9 @@ import type {
   LeadSource,
   LeadStatus
 } from '@/domain/lead/lead.types';
+import { createLogger } from '@/infrastructure/logging/logger';
+
+const log = createLogger('pipeline');
 
 export interface RunLeadGenerationPipelineDeps {
   readonly discovery: LeadDiscoveryPort;
@@ -68,10 +71,13 @@ export async function runLeadGenerationPipeline(
 
   await deps.repository.saveJob(job);
 
+  log.info('Job started', { jobId: job.id, query: input.query, location: input.location });
+
   let discoveredLeads: DiscoveredLead[];
   try {
     discoveredLeads = await deps.discovery.search(input);
   } catch (error) {
+    log.error('Discovery failed', { jobId: job.id, error: errorMessage(error) });
     job = {
       ...job,
       status: 'failed',
@@ -87,6 +93,8 @@ export async function runLeadGenerationPipeline(
     totalFound: discoveredLeads.length
   };
   await deps.repository.saveJob(job);
+
+  log.info('Discovery complete', { jobId: job.id, totalFound: discoveredLeads.length });
 
   const batchWebsiteKeys = new Set<string>();
   const persistedLeads: Lead[] = [];
@@ -140,6 +148,13 @@ export async function runLeadGenerationPipeline(
       await deps.repository.saveAnalysis(analysis);
       await deps.repository.save(analyzedLead);
 
+      log.debug('Lead analyzed', {
+        jobId: job.id,
+        company: discoveredLead.companyName,
+        score: pageSpeedResult.performanceScore,
+        status
+      });
+
       job = {
         ...job,
         analyzed: job.analyzed + 1,
@@ -148,6 +163,12 @@ export async function runLeadGenerationPipeline(
       await deps.repository.saveJob(job);
       persistedLeads.push(analyzedLead);
     } catch (error) {
+      log.warn('Lead analysis failed', {
+        jobId: job.id,
+        company: discoveredLead.companyName,
+        website: discoveredLead.website,
+        error: errorMessage(error)
+      });
       const discardedLead = {
         ...lead,
         status: 'discarded' as const,
@@ -169,6 +190,13 @@ export async function runLeadGenerationPipeline(
     completedAt: now().toISOString()
   };
   await deps.repository.saveJob(job);
+
+  log.info('Job completed', {
+    jobId: job.id,
+    analyzed: job.analyzed,
+    qualified: job.qualified,
+    errors: errors.length
+  });
 
   return { ok: true, job, leads: persistedLeads, errors };
 }

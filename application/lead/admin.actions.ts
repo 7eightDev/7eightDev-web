@@ -6,11 +6,16 @@ import { startRunLeadJob } from "@/application/lead/start-run-lead-job";
 import { createQuoteFromLead } from "@/application/lead/create-quote-from-lead";
 import { createQuote } from "@/application/quote/create-quote";
 import {
+  startLeadGenerationSchema,
+  leadIdSchema,
+} from "@/application/lead/lead.schemas";
+import {
   catalogRepository,
   leadDiscovery,
   leadRepository,
   pageSpeedAnalyzer,
   quoteRepository,
+  leadGenerationRateLimiter,
 } from "@/infrastructure/container";
 
 export interface LeadActionResult {
@@ -18,16 +23,22 @@ export interface LeadActionResult {
   readonly error?: string;
 }
 
-interface StartLeadGenerationInput {
-  readonly query: string;
-  readonly location: string;
-  readonly quantity?: number;
-}
-
 /** Server action: kick off a lead generation search (query + location + quantity). */
 export async function startLeadGenerationAction(
-  input: StartLeadGenerationInput
+  rawInput: unknown
 ): Promise<LeadActionResult> {
+  const parsed = startLeadGenerationSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  if (!leadGenerationRateLimiter.allow("lead-gen")) {
+    return {
+      ok: false,
+      error: "Troppe richieste. Riprova tra qualche secondo.",
+    };
+  }
+
   await startRunLeadJob(
     {
       discovery: leadDiscovery,
@@ -35,7 +46,7 @@ export async function startLeadGenerationAction(
       repository: leadRepository,
       source: "google_maps",
     },
-    input
+    parsed.data
   );
   revalidatePath("/admin/leads");
   return { ok: true };
@@ -45,7 +56,12 @@ export async function startLeadGenerationAction(
 export async function deleteLeadAction(
   id: string
 ): Promise<LeadActionResult> {
-  await leadRepository.delete(id);
+  const parsed = leadIdSchema.safeParse(id);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  await leadRepository.delete(parsed.data);
   revalidatePath("/admin/leads");
   return { ok: true };
 }
@@ -58,9 +74,14 @@ export async function deleteLeadAction(
 export async function createQuoteFromLeadAction(
   leadId: string
 ): Promise<LeadActionResult> {
+  const parsed = leadIdSchema.safeParse(leadId);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
   const prepared = await createQuoteFromLead(
     { leadRepository, catalogRepository },
-    leadId
+    parsed.data
   );
   if (!prepared.ok) return { ok: false, error: prepared.error };
 

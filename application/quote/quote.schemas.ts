@@ -4,8 +4,8 @@ import { z } from "zod";
 
 export const lineItemInputSchema = z.object({
   catalogRef: z.string().optional(),
-  title: z.string().min(2, "Titolo troppo corto"),
-  description: z.string(),
+  title: z.string().min(2, "Titolo troppo corto").max(200, "Titolo troppo lungo"),
+  description: z.string().max(2000, "Descrizione troppo lunga"),
   /** Net unit price in whole euros as typed in the form. */
   priceUnits: z.number().nonnegative("Il prezzo non può essere negativo"),
   /** Number of units; defaults to 1 when omitted. */
@@ -26,16 +26,16 @@ export const discountInputSchema = z.discriminatedUnion("kind", [
 ]);
 
 export const pairSchema = z.object({
-  a: z.string().min(1),
-  b: z.string().min(1),
+  a: z.string().min(1).max(200),
+  b: z.string().min(1).max(2000),
 });
 
 export const createQuoteInputSchema = z.object({
-  clientName: z.string().min(2, "Nome cliente obbligatorio"),
-  clientCompany: z.string().optional(),
-  clientEmail: z.email("Email non valida").optional().or(z.literal("")),
-  project: z.string().min(2, "Nome progetto obbligatorio"),
-  intro: z.string(),
+  clientName: z.string().min(2, "Nome cliente obbligatorio").max(200, "Nome troppo lungo"),
+  clientCompany: z.string().max(200, "Nome azienda troppo lungo").optional(),
+  clientEmail: z.email("Email non valida").max(320, "Email troppo lunga").optional().or(z.literal("")),
+  project: z.string().min(2, "Nome progetto obbligatorio").max(200, "Nome progetto troppo lungo"),
+  intro: z.string().max(5000, "Intro troppo lunga"),
   validUntil: z.iso.date("Data di scadenza non valida"),
   /**
    * Fiscal regime. Defaults to "vat" for omitted callers (legacy/tests) so
@@ -51,7 +51,7 @@ export const createQuoteInputSchema = z.object({
   terms: z.array(pairSchema),
   /** techStack: a = label, b = technology */
   techStack: z.array(pairSchema),
-  timelineNote: z.string().optional(),
+  timelineNote: z.string().max(2000, "Nota timeline troppo lunga").optional(),
   discount: discountInputSchema.optional(),
   /**
    * Presentation-only pricing mode. Defaults to "itemized" so legacy callers

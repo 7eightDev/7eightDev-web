@@ -246,7 +246,8 @@ describe('GooglePlacesLeadDiscovery', () => {
 
     const discovery = new GooglePlacesLeadDiscovery({
       fetchFn,
-      timeoutMs: 25
+      timeoutMs: 25,
+      maxRetries: 0
     });
 
     const search = discovery.search(input);

@@ -979,25 +979,25 @@ Rendere il sistema robusto per uso reale.
 Checklist:
 
 ```text
-[ ] validazione input
-[ ] rate limiting dove necessario
-[ ] gestione API limits
-[ ] timeout
-[ ] retry
-[ ] idempotenza
-[ ] deduplica
-[ ] logging
-[ ] error tracking
-[ ] sicurezza secrets
-[ ] validazione URL
-[ ] gestione domini non raggiungibili
-[ ] gestione API failure
-[ ] gestione job failure
-[ ] test edge cases
-[ ] test regressione
-[ ] lint
-[ ] typecheck
-[ ] build
+[x] validazione input
+[x] rate limiting dove necessario
+[x] gestione API limits
+[x] timeout
+[x] retry
+[x] idempotenza
+[x] deduplica
+[x] logging
+[x] error tracking
+[x] sicurezza secrets
+[x] validazione URL
+[x] gestione domini non raggiungibili
+[x] gestione API failure
+[x] gestione job failure
+[x] test edge cases
+[x] test regressione
+[x] lint
+[x] typecheck
+[x] build
 ```
 
 ---
@@ -1035,7 +1035,7 @@ TASK 9 — Quote Integration
 ⚪ NON INIZIATO
 
 TASK 10 — Hardening
-⚪ NON INIZIATO
+✅ COMPLETATO
 
 FINAL INTEGRATION → main
 ⚪ NON INIZIATO

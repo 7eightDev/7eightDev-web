@@ -176,7 +176,7 @@ describe('OutscraperHttpClient', () => {
         })
     );
 
-    const client = new OutscraperHttpClient({ fetchFn, timeoutMs: 25 });
+    const client = new OutscraperHttpClient({ fetchFn, timeoutMs: 25, maxRetries: 0 });
 
     const search = client.search(input);
     const expectation = expect(search).rejects.toThrow(

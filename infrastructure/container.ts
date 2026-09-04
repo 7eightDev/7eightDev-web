@@ -14,6 +14,10 @@ import {
   ResendQuoteNotificationAdapter,
   type ResendQuoteNotificationConfig,
 } from "@/infrastructure/quote/resend-quote-notification.adapter";
+import { RateLimiter } from "@/infrastructure/shared/rate-limiter";
+import { createLogger } from "@/infrastructure/logging/logger";
+
+const log = createLogger("container");
 
 /**
  * Composition root: single place where ports are bound to adapters.
@@ -53,6 +57,17 @@ export const pageSpeedAnalyzer: PageSpeedPort = new GooglePageSpeedInsights({
   apiKey: process.env.GOOGLE_PAGESPEED_API_KEY,
 });
 
+/** Rate limiters: per-instance in-memory (sufficient for B2B admin). */
+export const leadGenerationRateLimiter = new RateLimiter({
+  windowMs: 60_000,
+  maxRequests: 5,
+});
+
+export const exportRateLimiter = new RateLimiter({
+  windowMs: 60_000,
+  maxRequests: 10,
+});
+
 /**
  * Reads the Resend email configuration from the environment, or returns null
  * when it is incomplete. Exported so dev tooling (email preview/test) can build
@@ -78,8 +93,8 @@ function buildQuoteNotifier(): QuoteNotificationPort {
     return new ResendQuoteNotificationAdapter(config);
   }
 
-  console.warn(
-    "[container] Configurazione email incompleta (RESEND_API_KEY / QUOTE_FROM_EMAIL / " +
+  log.warn(
+    "Configurazione email incompleta (RESEND_API_KEY / QUOTE_FROM_EMAIL / " +
       "QUOTE_REPLY_TO / APP_BASE_URL) — uso NullQuoteNotificationAdapter."
   );
   return new NullQuoteNotificationAdapter();

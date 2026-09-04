@@ -4,6 +4,7 @@ import {
   type PageSpeedPort,
   type PageSpeedResult
 } from '@/domain/lead/lead.pagespeed';
+import { withRetry, HttpError } from '@/infrastructure/shared/retry';
 
 type FetchFn = typeof fetch;
 
@@ -46,14 +47,18 @@ export class GooglePageSpeedInsights implements PageSpeedPort {
     this.endpoint = config.endpoint ?? DEFAULT_ENDPOINT;
     this.fetchFn = config.fetchFn ?? fetch;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    this.maxRetries = config.maxRetries ?? 0;
+    this.maxRetries = config.maxRetries ?? 2;
   }
 
   async analyze(input: PageSpeedInput): Promise<PageSpeedResult> {
     const targetUrl = normalizeHttpUrl(input.url);
     const requestUrl = this.buildRequestUrl(targetUrl, input.strategy);
 
-    return this.withRetry(() => this.fetchAnalysis(requestUrl));
+    return withRetry(
+      () => this.fetchAnalysis(requestUrl),
+      { maxRetries: this.maxRetries, baseDelayMs: 1000, maxDelayMs: 30_000 },
+      (error) => !(error instanceof HttpError && error.status >= 400 && error.status < 500 && error.status !== 429)
+    );
   }
 
   private buildRequestUrl(url: string, strategy: PageSpeedInput['strategy']) {
@@ -78,14 +83,15 @@ export class GooglePageSpeedInsights implements PageSpeedPort {
       });
 
       if (!response.ok) {
-        throw new PageSpeedAnalysisError(
-          `PageSpeed request failed with status ${response.status}`
+        throw new HttpError(
+          `PageSpeed request failed with status ${response.status}`,
+          response.status
         );
       }
 
       return parsePageSpeedResponse((await response.json()) as unknown);
     } catch (error) {
-      if (error instanceof PageSpeedAnalysisError) {
+      if (error instanceof HttpError) {
         throw error;
       }
 
@@ -103,21 +109,6 @@ export class GooglePageSpeedInsights implements PageSpeedPort {
     }
   }
 
-  private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-    let attempt = 0;
-
-    while (true) {
-      try {
-        return await operation();
-      } catch (error) {
-        if (attempt >= this.maxRetries) {
-          throw error;
-        }
-
-        attempt += 1;
-      }
-    }
-  }
 }
 
 export function parsePageSpeedResponse(response: unknown): PageSpeedResult {
