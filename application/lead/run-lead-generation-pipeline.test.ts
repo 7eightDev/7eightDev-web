@@ -50,6 +50,21 @@ function makeRepository(existingLeads: Lead[] = []) {
     },
     async saveJob(job) {
       jobs.push(job);
+    },
+    async findPaginated() {
+      return { leads: [...leads.values()], total: leads.size };
+    },
+    async findLatestAnalysesByLeadIds(leadIds) {
+      const idSet = new Set(leadIds);
+      const byLead = new Map<string, LeadAnalysis>();
+      for (const a of analyses.values()) {
+        if (!idSet.has(a.leadId)) continue;
+        const existing = byLead.get(a.leadId);
+        if (!existing || a.analyzedAt > existing.analyzedAt) {
+          byLead.set(a.leadId, a);
+        }
+      }
+      return [...byLead.values()];
     }
   };
 

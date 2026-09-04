@@ -14,6 +14,7 @@ jest.mock('@/infrastructure/db/prisma', () => ({
       upsert: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
       delete: jest.fn()
     },
     leadAnalysis: {
@@ -24,7 +25,8 @@ jest.mock('@/infrastructure/db/prisma', () => ({
       findUnique: jest.fn(),
       findMany: jest.fn(),
       upsert: jest.fn()
-    }
+    },
+    $queryRaw: jest.fn()
   }
 }));
 
@@ -415,5 +417,153 @@ describe('PrismaLeadRepository', () => {
         createdAt: new Date('2026-08-28T10:00:00.000Z')
       }
     });
+  });
+  it('finds paginated leads with filters', async () => {
+    const repository = new PrismaLeadRepository();
+
+    const rows: LeadModel[] = [
+      {
+        id: 'lead-1',
+        companyName: 'Acme',
+        category: 'Web Agency',
+        website: 'https://example.com',
+        phone: null,
+        email: null,
+        address: null,
+        city: 'Padova',
+        source: 'google_maps',
+        status: 'new',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z')
+      }
+    ];
+
+    jest.mocked(prisma.lead.findMany).mockResolvedValue(rows);
+    jest.mocked(prisma.lead.count).mockResolvedValue(1);
+
+    const result = await repository.findPaginated({
+      page: 1,
+      pageSize: 20,
+      status: 'new',
+      q: 'acme'
+    });
+
+    expect(prisma.lead.count).toHaveBeenCalledWith({
+      where: {
+        status: 'new',
+        OR: [
+          { companyName: { contains: 'acme', mode: 'insensitive' } },
+          { city: { contains: 'acme', mode: 'insensitive' } },
+          { category: { contains: 'acme', mode: 'insensitive' } },
+          { website: { contains: 'acme', mode: 'insensitive' } },
+          { phone: { contains: 'acme', mode: 'insensitive' } },
+          { email: { contains: 'acme', mode: 'insensitive' } }
+        ]
+      }
+    });
+
+    expect(prisma.lead.findMany).toHaveBeenCalledWith({
+      where: {
+        status: 'new',
+        OR: [
+          { companyName: { contains: 'acme', mode: 'insensitive' } },
+          { city: { contains: 'acme', mode: 'insensitive' } },
+          { category: { contains: 'acme', mode: 'insensitive' } },
+          { website: { contains: 'acme', mode: 'insensitive' } },
+          { phone: { contains: 'acme', mode: 'insensitive' } },
+          { email: { contains: 'acme', mode: 'insensitive' } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: 0,
+      take: 20
+    });
+
+    expect(result).toEqual({
+      leads: [
+        {
+          id: 'lead-1',
+          companyName: 'Acme',
+          category: 'Web Agency',
+          website: 'https://example.com',
+          phone: undefined,
+          email: undefined,
+          address: undefined,
+          city: 'Padova',
+          source: 'google_maps',
+          status: 'new',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z'
+        }
+      ],
+      total: 1
+    });
+  });
+  it('finds latest analyses by lead ids', async () => {
+    const repository = new PrismaLeadRepository();
+
+    const rawRows = [
+      {
+        id: 'analysis-2',
+        leadId: 'lead-1',
+        strategy: 'mobile',
+        performanceScore: 65,
+        lcp: 3.2,
+        fcp: 1.8,
+        cls: 0.05,
+        tbt: 200,
+        analyzedAt: new Date('2026-08-29T10:00:00.000Z')
+      },
+      {
+        id: 'analysis-3',
+        leadId: 'lead-2',
+        strategy: 'desktop',
+        performanceScore: 88,
+        lcp: 1.5,
+        fcp: 0.8,
+        cls: 0.01,
+        tbt: 50,
+        analyzedAt: new Date('2026-08-30T12:00:00.000Z')
+      }
+    ];
+
+    jest
+      .mocked(prisma.$queryRaw)
+      .mockResolvedValue(rawRows);
+
+    const result = await repository.findLatestAnalysesByLeadIds([
+      'lead-1',
+      'lead-2'
+    ]);
+
+    expect(prisma.$queryRaw).toHaveBeenCalled();
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
+      id: 'analysis-2',
+      leadId: 'lead-1',
+      strategy: 'mobile',
+      performanceScore: 65,
+      lcp: 3.2,
+      fcp: 1.8,
+      cls: 0.05,
+      tbt: 200,
+      analyzedAt: '2026-08-29T10:00:00.000Z'
+    });
+    expect(result[1]).toEqual({
+      id: 'analysis-3',
+      leadId: 'lead-2',
+      strategy: 'desktop',
+      performanceScore: 88,
+      lcp: 1.5,
+      fcp: 0.8,
+      cls: 0.01,
+      tbt: 50,
+      analyzedAt: '2026-08-30T12:00:00.000Z'
+    });
+  });
+  it('returns empty array for findLatestAnalysesByLeadIds with empty input', async () => {
+    const repository = new PrismaLeadRepository();
+    const result = await repository.findLatestAnalysesByLeadIds([]);
+    expect(result).toEqual([]);
   });
 });

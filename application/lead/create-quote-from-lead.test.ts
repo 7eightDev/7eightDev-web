@@ -81,10 +81,19 @@ function makeLeadRepo(lead: Lead | null, analyses: LeadAnalysis[] = []) {
     async save() {},
     async delete() {},
     async findAnalysesByLeadId() { return analyses; },
+    async findLatestAnalysesByLeadIds() {
+      if (!lead) return [];
+      const latest = analyses.reduce<LeadAnalysis | undefined>(
+        (best, a) => (!best || a.analyzedAt > best.analyzedAt ? a : best),
+        undefined,
+      );
+      return latest ? [latest] : [];
+    },
     async saveAnalysis() {},
     async findJobById() { return null; },
     async findAllJobs() { return []; },
     async saveJob() {},
+    async findPaginated() { return { leads: lead ? [lead] : [], total: lead ? 1 : 0 }; },
   } satisfies LeadRepository;
 }
 
