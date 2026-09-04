@@ -33,6 +33,7 @@ export async function startLeadGenerationAction(
       discovery: leadDiscovery,
       pageSpeed: pageSpeedAnalyzer,
       repository: leadRepository,
+      source: "google_maps"
     },
     input
   );

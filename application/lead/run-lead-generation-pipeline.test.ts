@@ -169,6 +169,40 @@ describe('runLeadGenerationPipeline', () => {
     }
   });
 
+  it('keeps leads without a website as new (not discarded) and skips analysis', async () => {
+    const repository = makeRepository();
+    const pageSpeed = makePageSpeed({
+      performanceScore: 80,
+      lcp: null,
+      fcp: null,
+      cls: null,
+      tbt: null
+    });
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Più Meccanico', category: 'Garage' },
+          { companyName: 'Con Sito', website: 'https://with.example' }
+        ]),
+        pageSpeed,
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'meccanico', location: 'Varese', quantity: 2 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const noSite = result.leads.find((l) => l.companyName === 'Più Meccanico');
+    expect(noSite?.status).toBe('new');
+    expect(noSite?.source).toBe('outscraper');
+    // No PageSpeed call for the lead without a website.
+    expect(pageSpeed.analyze).toHaveBeenCalledTimes(1);
+  });
+
   it('deduplicates by website against existing leads and current batch', async () => {
     const existingLead: Lead = {
       id: 'existing-lead',
