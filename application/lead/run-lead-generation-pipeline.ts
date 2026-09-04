@@ -174,6 +174,7 @@ export async function runLeadGenerationPipeline(
       const discardedLead = {
         ...lead,
         status: 'discarded' as const,
+        analysisError: errorMessage(error),
         updatedAt: now().toISOString()
       };
       await deps.repository.save(discardedLead);

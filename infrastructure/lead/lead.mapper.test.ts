@@ -86,6 +86,17 @@ describe('Lead mapper', () => {
     expect(row.email).toBeNull();
     expect(row.address).toBeNull();
     expect(row.city).toBeNull();
+    expect(row.analysisError).toBeNull();
+  });
+
+  it('round-trips a discarded lead with its analysis error', () => {
+    const discarded: Lead = {
+      ...lead,
+      status: 'discarded',
+      analysisError: 'Lighthouse request failed with 500'
+    };
+
+    expect(rowToLead(leadToRow(discarded))).toEqual(discarded);
   });
 
   it('maps a lead without a job to an undefined jobId', () => {

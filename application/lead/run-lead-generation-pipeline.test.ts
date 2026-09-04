@@ -346,6 +346,8 @@ describe('runLeadGenerationPipeline', () => {
       'discarded',
       'qualified'
     ]);
+    expect((result.leads[0] as Lead).analysisError).toBe('PageSpeed unavailable');
+    expect((result.leads[1] as Lead).analysisError).toBeUndefined();
   });
 
   it('fails the job when discovery fails', async () => {
