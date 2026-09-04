@@ -117,6 +117,30 @@ export class InMemoryLeadRepository implements LeadRepository {
     return false;
   }
 
+  async findByWebsiteKey(key: string): Promise<Lead | null> {
+    for (const lead of this.leads.values()) {
+      if (inMemoryWebsiteKey(lead.website) === key) return lead;
+    }
+    return null;
+  }
+
+  async existsLeadByCompanyInJob(
+    jobId: string,
+    companyName: string,
+    city: string | undefined
+  ): Promise<boolean> {
+    for (const lead of this.leads.values()) {
+      if (
+        lead.jobId === jobId &&
+        lead.companyName.toLowerCase() === companyName.toLowerCase() &&
+        (lead.city ?? undefined) === (city ?? undefined)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   async saveAnalysis(analysis: LeadAnalysis): Promise<void> {
     this.analyses.set(analysis.id, analysis);
   }

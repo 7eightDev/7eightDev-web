@@ -43,6 +43,8 @@ describe('ExecuteLeadGenerationJob', () => {
       findAnalysesByLeadId: jest.fn().mockResolvedValue([]),
       findLatestAnalysesByLeadIds: jest.fn().mockResolvedValue([]),
       existsByWebsiteKey: jest.fn().mockResolvedValue(false),
+      findByWebsiteKey: jest.fn().mockResolvedValue(null),
+      existsLeadByCompanyInJob: jest.fn().mockResolvedValue(false),
       delete: jest.fn(),
       findJobById: jest.fn(),
       findAllJobs: jest.fn(),

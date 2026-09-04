@@ -13,6 +13,7 @@ jest.mock('@/infrastructure/db/prisma', () => ({
     lead: {
       upsert: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       count: jest.fn(),
       groupBy: jest.fn(),
@@ -647,6 +648,87 @@ const result = await repository.findPaginated({
     const repository = new PrismaLeadRepository();
     jest.mocked(prisma.lead.findUnique).mockResolvedValue(null);
     const result = await repository.existsByWebsiteKey('missing.it');
+    expect(result).toBe(false);
+  });
+  it('finds a lead by website key', async () => {
+    const repository = new PrismaLeadRepository();
+    const row: LeadModel = {
+      id: 'lead-1',
+      jobId: 'job-1',
+      companyName: 'Acme',
+      category: 'Web Agency',
+      website: 'https://acme.it',
+      websiteKey: 'acme.it',
+      phone: null,
+      email: null,
+      address: null,
+      city: null,
+      source: 'outscraper',
+      status: 'qualified',
+      analysisError: null,
+      createdAt: new Date('2026-08-28T10:00:00.000Z'),
+      updatedAt: new Date('2026-08-28T10:00:00.000Z')
+    };
+    jest.mocked(prisma.lead.findUnique).mockResolvedValue(row);
+
+    const result = await repository.findByWebsiteKey('acme.it');
+
+    expect(prisma.lead.findUnique).toHaveBeenCalledWith({
+      where: { websiteKey: 'acme.it' }
+    });
+    expect(result).toEqual({
+      id: 'lead-1',
+      jobId: 'job-1',
+      companyName: 'Acme',
+      category: 'Web Agency',
+      website: 'https://acme.it',
+      phone: undefined,
+      email: undefined,
+      address: undefined,
+      city: undefined,
+      source: 'outscraper',
+      status: 'qualified',
+      analysisError: undefined,
+      createdAt: '2026-08-28T10:00:00.000Z',
+      updatedAt: '2026-08-28T10:00:00.000Z'
+    });
+  });
+  it('returns null when no lead matches the website key', async () => {
+    const repository = new PrismaLeadRepository();
+    jest.mocked(prisma.lead.findUnique).mockResolvedValueOnce(null);
+    const result = await repository.findByWebsiteKey('missing.it');
+    expect(result).toBeNull();
+  });
+  it('checks whether a company without website exists within a job', async () => {
+    const repository = new PrismaLeadRepository();
+    jest
+      .mocked(prisma.lead.findFirst)
+      .mockResolvedValue({ id: 'lead-1' } as never);
+
+    const result = await repository.existsLeadByCompanyInJob(
+      'job-1',
+      'Più Meccanico',
+      'Varese'
+    );
+
+    expect(result).toBe(true);
+    expect(prisma.lead.findFirst).toHaveBeenCalledWith({
+      where: {
+        jobId: 'job-1',
+        companyName: { equals: 'Più Meccanico', mode: 'insensitive' },
+        city: 'Varese'
+      },
+      select: { id: true }
+    });
+  });
+  it('returns false when the company is not present in the job', async () => {
+    const repository = new PrismaLeadRepository();
+    jest.mocked(prisma.lead.findFirst).mockResolvedValue(null);
+    const result = await repository.existsLeadByCompanyInJob(
+      'job-1',
+      'Più Meccanico',
+      undefined
+    );
     expect(result).toBe(false);
   });
   it('counts leads per job id via groupBy', async () => {
