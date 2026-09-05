@@ -26,7 +26,9 @@ jest.mock('@/infrastructure/db/prisma', () => ({
     leadGenerationJob: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
-      upsert: jest.fn()
+      upsert: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn()
     },
     $queryRaw: jest.fn()
   }
@@ -331,6 +333,7 @@ describe('PrismaLeadRepository', () => {
       totalFound: 10,
       analyzed: 5,
       qualified: 2,
+      favorite: false,
       startedAt: new Date('2026-08-28T10:00:00.000Z'),
       completedAt: null,
       error: null,
@@ -353,6 +356,7 @@ describe('PrismaLeadRepository', () => {
       totalFound: 10,
       analyzed: 5,
       qualified: 2,
+      favorite: false,
       startedAt: '2026-08-28T10:00:00.000Z',
       completedAt: undefined,
       error: undefined,
@@ -372,6 +376,7 @@ describe('PrismaLeadRepository', () => {
         totalFound: 10,
         analyzed: 5,
         qualified: 2,
+        favorite: false,
         startedAt: new Date('2026-08-28T10:00:00.000Z'),
         completedAt: new Date('2026-08-28T10:30:00.000Z'),
         error: null,
@@ -386,6 +391,7 @@ describe('PrismaLeadRepository', () => {
         totalFound: 0,
         analyzed: 0,
         qualified: 0,
+        favorite: false,
         startedAt: null,
         completedAt: null,
         error: null,
@@ -410,6 +416,7 @@ describe('PrismaLeadRepository', () => {
         totalFound: 10,
         analyzed: 5,
         qualified: 2,
+        favorite: false,
         startedAt: '2026-08-28T10:00:00.000Z',
         completedAt: '2026-08-28T10:30:00.000Z',
         error: undefined,
@@ -423,6 +430,7 @@ describe('PrismaLeadRepository', () => {
         totalFound: 0,
         analyzed: 0,
         qualified: 0,
+        favorite: false,
         startedAt: undefined,
         completedAt: undefined,
         error: undefined,
@@ -459,6 +467,7 @@ describe('PrismaLeadRepository', () => {
         totalFound: 0,
         analyzed: 0,
         qualified: 0,
+        favorite: false,
         startedAt: null,
         completedAt: null,
         error: null,
@@ -477,6 +486,25 @@ describe('PrismaLeadRepository', () => {
         error: null,
         createdAt: new Date('2026-08-28T10:00:00.000Z')
       }
+    });
+  });
+  it('sets a job favorite', async () => {
+    const repository = new PrismaLeadRepository();
+
+    await repository.setJobFavorite('job-1', true);
+
+    expect(prisma.leadGenerationJob.update).toHaveBeenCalledWith({
+      where: { id: 'job-1' },
+      data: { favorite: true }
+    });
+  });
+  it('deletes a job', async () => {
+    const repository = new PrismaLeadRepository();
+
+    await repository.deleteJob('job-1');
+
+    expect(prisma.leadGenerationJob.delete).toHaveBeenCalledWith({
+      where: { id: 'job-1' }
     });
   });
   it('finds paginated leads with filters', async () => {

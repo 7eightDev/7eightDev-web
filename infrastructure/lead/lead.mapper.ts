@@ -42,6 +42,7 @@ export interface LeadGenerationJobRow {
   totalFound: number;
   analyzed: number;
   qualified: number;
+  favorite: boolean;
   startedAt: Date | null;
   completedAt: Date | null;
   error: string | null;
@@ -126,6 +127,7 @@ export function rowToLeadGenerationJob(
     totalFound: row.totalFound,
     analyzed: row.analyzed,
     qualified: row.qualified,
+    favorite: row.favorite,
     startedAt: row.startedAt?.toISOString(),
     completedAt: row.completedAt?.toISOString(),
     error: row.error ?? undefined,
@@ -145,6 +147,7 @@ export function leadGenerationJobToRow(
     totalFound: job.totalFound,
     analyzed: job.analyzed,
     qualified: job.qualified,
+    favorite: job.favorite ?? false,
     startedAt: job.startedAt ? new Date(job.startedAt) : null,
     completedAt: job.completedAt ? new Date(job.completedAt) : null,
     error: job.error ?? null,

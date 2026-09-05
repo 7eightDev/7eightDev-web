@@ -90,6 +90,40 @@ export async function rerunLeadGenerationAction(
   return { ok: true };
 }
 
+/** Server action: toggle the star (pin) on a recent search card. */
+export async function toggleJobFavoriteAction(
+  jobId: string
+): Promise<LeadActionResult> {
+  const parsed = jobIdSchema.safeParse(jobId);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  const job = await leadRepository.findJobById(parsed.data);
+  if (!job) {
+    return { ok: false, error: "Ricerca non trovata." };
+  }
+
+  await leadRepository.setJobFavorite(parsed.data, !(job.favorite ?? false));
+  revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
+/** Server action: permanently delete a recent search job. Its leads keep the
+ * association cleared (SetNull) and stay in the list. */
+export async function deleteJobAction(
+  jobId: string
+): Promise<LeadActionResult> {
+  const parsed = jobIdSchema.safeParse(jobId);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  await leadRepository.deleteJob(parsed.data);
+  revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
 /** Server action: permanently delete a single lead. */
 export async function deleteLeadAction(
   id: string

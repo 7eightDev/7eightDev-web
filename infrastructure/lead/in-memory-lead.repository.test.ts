@@ -88,7 +88,10 @@ describe('InMemoryLeadRepository', () => {
 
     await repository.saveJob(job);
 
-    await expect(repository.findJobById('job-1')).resolves.toEqual(job);
+    await expect(repository.findJobById('job-1')).resolves.toEqual({
+      ...job,
+      favorite: false
+    });
   });
 
   it('returns null when a job does not exist', async () => {
@@ -102,7 +105,9 @@ describe('InMemoryLeadRepository', () => {
 
     await repository.saveJob(job);
 
-    await expect(repository.findAllJobs()).resolves.toEqual([job]);
+    await expect(repository.findAllJobs()).resolves.toEqual([
+      { ...job, favorite: false }
+    ]);
   });
 
   it('filters paginated leads by jobId', async () => {
@@ -181,5 +186,31 @@ describe('InMemoryLeadRepository', () => {
         ['job-3', { analyzed: 0, qualified: 0 }]
       ])
     );
+  });
+
+  it('toggles a job favorite and preserves it across subsequent saves', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.saveJob(job);
+    await repository.setJobFavorite('job-1', true);
+
+    // A pipeline progress save (no favorite) must not reset the pin.
+    await repository.saveJob({ ...job, status: 'running', totalFound: 3 });
+
+    await expect(repository.findJobById('job-1')).resolves.toEqual({
+      ...job,
+      status: 'running',
+      totalFound: 3,
+      favorite: true
+    });
+  });
+
+  it('deletes a job', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.saveJob(job);
+    await repository.deleteJob('job-1');
+
+    await expect(repository.findJobById('job-1')).resolves.toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import { Container } from "@/presentation/components/shared/container";
 import { Button } from "@/presentation/components/ui/button";
 import { cn } from "@/presentation/lib/utils";
 import { resolveJobStatus } from "@/domain/lead/lead.job";
+import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import { reconcileStaleJobs } from "@/application/lead/reconcile-stale-jobs";
 import { LeadJobStatus } from "@/presentation/features/admin/leads/lead-job-status";
 import { LiveJobRefresher } from "@/presentation/features/admin/leads/live-job-refresher";
@@ -23,7 +24,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 
 export default async function LeadsPage({
   searchParams,
@@ -55,6 +56,9 @@ export default async function LeadsPage({
     ? jobs.find((job) => job.id === requestedJobId)
     : undefined;
   const jobId = activeJob ? activeJob.id : undefined;
+
+  // Sidebar view: "all" (default) or "favorites" (?jobs=favorites).
+  const sidebarView = param("jobs") === "favorites" ? "favorites" : "all";
 
   const leadCountByJobId = await leadRepository.countLeadsByJobIds(
     jobs.map((job) => job.id)
@@ -119,12 +123,24 @@ export default async function LeadsPage({
         })()
       : undefined;
 
+  const sidebarHref = (view: "all" | "favorites") => {
+    const qs = new URLSearchParams(listQuery({}));
+    if (view === "favorites") qs.set("jobs", "favorites");
+    else qs.delete("jobs");
+    const s = qs.toString();
+    return s ? `/admin/leads?${s}` : "/admin/leads";
+  };
+
   const hasActiveFilters =
     filters.status !== "all" ||
     filters.score !== "all" ||
     filters.source !== "all" ||
     filters.q !== "" ||
     jobId !== undefined;
+
+  const favoriteCount = jobs.filter((job) => job.favorite).length;
+  const sidebarJobs =
+    sidebarView === "favorites" ? jobs.filter((job) => job.favorite) : jobs;
 
   return (
     <Container className="max-w-[1100px] py-12">
@@ -152,22 +168,76 @@ export default async function LeadsPage({
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] lg:grid-rows-[auto_1fr] gap-x-8 gap-y-3 items-start">
       {jobs.length > 0 && (
         <>
-        <h2 className="lg:col-start-1 lg:row-start-1 font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-          Ricerche recenti
-        </h2>
-        <aside className="lg:col-start-1 lg:row-start-2 lg:sticky lg:top-6 flex flex-col gap-3">
-          <div className="flex flex-col gap-3">
-            {jobs.map((job) => (
-              <LeadJobStatus
-                key={job.id}
-                job={job}
-                active={job.id === requestedJobId}
-                foundCount={leadCountByJobId.get(job.id)}
+        <div className="lg:col-start-1 lg:row-start-1 flex items-center justify-between gap-3">
+          <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
+            Ricerche · {jobs.length}
+          </h2>
+          <div
+            role="group"
+            aria-label="Vista delle ricerche"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface p-1"
+          >
+            <Link
+              href={sidebarHref("all")}
+              aria-current={sidebarView === "all" ? "page" : undefined}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-mono text-[11px] leading-none no-underline transition-colors duration-150",
+                sidebarView === "all"
+                  ? "text-accent bg-accent/[0.08]"
+                  : "text-soft hover:text-foreground"
+              )}
+            >
+              Tutti
+            </Link>
+            <Link
+              href={sidebarHref("favorites")}
+              aria-current={sidebarView === "favorites" ? "page" : undefined}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-mono text-[11px] leading-none no-underline transition-colors duration-150",
+                sidebarView === "favorites"
+                  ? "text-accent bg-accent/[0.08]"
+                  : "text-soft hover:text-foreground"
+              )}
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z" />
+              </svg>
+              Preferiti{favoriteCount > 0 ? ` · ${favoriteCount}` : ""}
+            </Link>
+          </div>
+        </div>
+        <aside className="lg:col-start-1 lg:row-start-2 lg:sticky lg:top-6 flex flex-col gap-4">
+          <div className="lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 flex flex-col gap-3 lg:-mr-1">
+            {sidebarJobs.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-5 text-center">
+                <p className="font-hanken text-[13px] text-soft m-0">
+                  Nessuna ricerca preferita.
+                </p>
+                <p className="font-mono text-[11px] text-dim mt-1.5">
+                  Premi la stella su una ricerca per ritrovarla qui.
+                </p>
+              </div>
+            ) : (
+              <JobListSection
+                jobs={sidebarJobs}
+                requestedJobId={requestedJobId}
+                leadCountByJobId={leadCountByJobId}
               />
-            ))}
+            )}
           </div>
         </aside>
         </>
+
       )}
 
       <div className={cn(
@@ -185,9 +255,17 @@ export default async function LeadsPage({
         </div>
       ) : (
         <section className="flex flex-col gap-3">
+          <LeadFilterBar
+            status={filters.status}
+            score={filters.score}
+            source={filters.source}
+            q={filters.q}
+            sort={filters.sort}
+          />
+
           {activeJob && resetJobHref && (
-            <div className="flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/[0.06] px-3 py-2">
-              <span className="font-hanken text-[12.5px] text-muted">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent/[0.06] px-3 py-2">
+              <span className="font-hanken text-[12.5px] text-muted min-w-0">
                 Filtro di ricerca:{" "}
                 <span className="text-foreground font-medium">{activeJob.query}</span>
                 {activeJob.location && (
@@ -196,21 +274,27 @@ export default async function LeadsPage({
               </span>
               <Link
                 href={resetJobHref}
-                className="font-mono text-[12px] px-2 py-1 rounded-md text-muted hover:text-foreground transition-colors"
                 aria-label="Rimuovi filtro di ricerca"
+                title="Rimuovi filtro di ricerca"
+                className="inline-flex shrink-0 items-center justify-center size-7 rounded-md border border-accent/50 bg-accent/[0.08] text-accent transition-colors duration-150 hover:bg-accent hover:text-[#0a0b0d]"
               >
-                ×
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
               </Link>
             </div>
           )}
-
-          <LeadFilterBar
-            status={filters.status}
-            score={filters.score}
-            source={filters.source}
-            q={filters.q}
-            sort={filters.sort}
-          />
 
           <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
             {hasActiveFilters
@@ -282,5 +366,28 @@ export default async function LeadsPage({
       </div>
       </div>
     </Container>
+  );
+}
+
+function JobListSection({
+  jobs,
+  requestedJobId,
+  leadCountByJobId,
+}: {
+  jobs: LeadGenerationJob[];
+  requestedJobId: string | undefined;
+  leadCountByJobId: Map<string, number>;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {jobs.map((job) => (
+        <LeadJobStatus
+          key={job.id}
+          job={job}
+          active={job.id === requestedJobId}
+          foundCount={leadCountByJobId.get(job.id)}
+        />
+      ))}
+    </div>
   );
 }
