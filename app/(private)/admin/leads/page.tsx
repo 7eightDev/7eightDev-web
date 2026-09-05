@@ -2,6 +2,7 @@ import Link from "next/link";
 import { leadRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { Button } from "@/presentation/components/ui/button";
+import { cn } from "@/presentation/lib/utils";
 import { resolveJobStatus } from "@/domain/lead/lead.job";
 import { reconcileStaleJobs } from "@/application/lead/reconcile-stale-jobs";
 import { LeadJobStatus } from "@/presentation/features/admin/leads/lead-job-status";
@@ -148,12 +149,13 @@ export default async function LeadsPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] lg:grid-rows-[auto_1fr] gap-x-8 gap-y-3 items-start">
       {jobs.length > 0 && (
-        <aside className="lg:sticky lg:top-6 flex flex-col gap-3 lg:order-1">
-          <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-            Ricerche recenti
-          </h2>
+        <>
+        <h2 className="lg:col-start-1 lg:row-start-1 font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
+          Ricerche recenti
+        </h2>
+        <aside className="lg:col-start-1 lg:row-start-2 lg:sticky lg:top-6 flex flex-col gap-3">
           <div className="flex flex-col gap-3">
             {jobs.map((job) => (
               <LeadJobStatus
@@ -165,10 +167,14 @@ export default async function LeadsPage({
             ))}
           </div>
         </aside>
+        </>
       )}
 
-      <div className="lg:order-2 min-w-0">
-      {total === 0 && rows.length === 0 && !jobId ? (
+      <div className={cn(
+        "lg:col-start-2 min-w-0",
+        jobs.length > 0 ? "lg:row-start-2" : "lg:row-start-1"
+      )}>
+      {total === 0 && rows.length === 0 && !hasActiveFilters ? (
         <div className="p-10 rounded-2xl bg-surface border border-border text-center">
           <p className="font-hanken text-soft mb-4">
             Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
@@ -214,9 +220,22 @@ export default async function LeadsPage({
 
           {visibleRows.length === 0 ? (
             <div className="p-10 rounded-2xl bg-surface border border-border text-center">
-              <p className="font-hanken text-soft">
-                Nessun lead corrisponde ai filtri selezionati.
-              </p>
+              <div className="flex flex-col items-center gap-3">
+                <p className="font-hanken text-soft m-0">
+                  Nessun lead corrisponde ai filtri selezionati.
+                </p>
+                <Button variant="outline" asChild>
+                  <Link href="/admin/leads/new">+ Nuova ricerca</Link>
+                </Button>
+              </div>
+              {hasActiveFilters && (
+                <Link
+                  href="/admin/leads"
+                  className="inline-block mt-4 font-mono text-[12px] text-muted hover:text-foreground underline underline-offset-4"
+                >
+                  Torna a tutti i lead
+                </Link>
+              )}
             </div>
           ) : (
             <>

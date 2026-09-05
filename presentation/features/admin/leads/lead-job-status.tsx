@@ -23,13 +23,6 @@ const JOB_LABEL: Record<LeadGenerationJob["status"], string> = {
   failed: "fallito",
 };
 
-/**
- * Card describing a single lead-generation job: query, location, lifecycle
- * status and progress counters. Matches the admin list card weight (surface
- * card, mono labels, soft border). Clicking the card narrows the leads list
- * to the leads this job produced (?job=<id>); `active` highlights the
- * currently applied job filter.
- */
 export function LeadJobStatus({ job, active = false, foundCount }: LeadJobStatusProps) {
   const rerunnable =
     job.status === "completed" || job.status === "failed";
@@ -46,36 +39,53 @@ export function LeadJobStatus({ job, active = false, foundCount }: LeadJobStatus
       <Link
         href={`/admin/leads?job=${job.id}`}
         aria-current={active ? "page" : undefined}
-        className="group flex flex-col gap-2 px-4 py-3.5"
+        className="group flex flex-col gap-2.5 px-4 py-3.5"
       >
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="min-w-0 flex items-center gap-2 flex-wrap">
-            <span className="font-space text-[14px] font-semibold text-foreground truncate">
-              {job.query}
-            </span>
-            {job.location && (
-              <span className="font-mono text-[11px] text-dim">{job.location}</span>
-            )}
-          </div>
-          <span
-            className={cn(
-              "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
-              JOB_STYLE[job.status]
-            )}
-          >
-            {JOB_LABEL[job.status]}
+        {/* Badge stato — solo, niente altro sulla stessa riga */}
+        <span
+          className={cn(
+            "self-start font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
+            JOB_STYLE[job.status]
+          )}
+        >
+          {JOB_LABEL[job.status]}
+        </span>
+
+        <div className="flex flex-col gap-0.5 mt-1.5">
+          {/* Titolo ricerca */}
+          <span className="font-space text-[14px] font-semibold text-foreground truncate">
+            {job.query}
           </span>
+
+          {/* Luogo ricerca */}
+          {job.location && (
+            <span className="font-mono text-[11px] text-dim truncate">{job.location}</span>
+          )}
         </div>
 
-        <p className="font-mono text-[12.5px] text-muted">
-          Trovati{" "}
-          <span className="text-foreground">
-            {foundCount ?? job.totalFound}
+        {/* Risultati — icone al posto delle label */}
+        <div className="flex items-center gap-3 font-mono text-[12px] text-muted mt-2">
+          <span className="inline-flex items-center gap-1" title="Trovati">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <span className="text-foreground">{foundCount ?? job.totalFound}</span>
           </span>
-          {" · "}Analizzati <span className="text-foreground">{job.analyzed}</span>
-          {" · "}Qualificati{" "}
-          <span className="text-foreground">{job.qualified}</span>
-        </p>
+          <span className="inline-flex items-center gap-1" title="Analizzati">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className="text-foreground">{job.analyzed}</span>
+          </span>
+          <span className="inline-flex items-center gap-1" title="Qualificati">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z" />
+            </svg>
+            <span className="text-foreground">{job.qualified}</span>
+          </span>
+        </div>
 
         {job.error && (
           <p
