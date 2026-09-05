@@ -149,4 +149,37 @@ describe('InMemoryLeadRepository', () => {
       new Map()
     );
   });
+
+  it('returns analyzed and qualified counts per job as strict partitions', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.save({
+      ...lead,
+      id: 'lead-1',
+      jobId: 'job-1',
+      status: 'qualified'
+    });
+    await repository.save({
+      ...lead,
+      id: 'lead-2',
+      jobId: 'job-1',
+      status: 'analyzed'
+    });
+    await repository.save({
+      ...lead,
+      id: 'lead-3',
+      jobId: 'job-2',
+      status: 'analyzed'
+    });
+
+    await expect(
+      repository.getLeadCountsByJobIds(['job-1', 'job-2', 'job-3'])
+    ).resolves.toEqual(
+      new Map([
+        ['job-1', { analyzed: 1, qualified: 1 }],
+        ['job-2', { analyzed: 1, qualified: 0 }],
+        ['job-3', { analyzed: 0, qualified: 0 }]
+      ])
+    );
+  });
 });

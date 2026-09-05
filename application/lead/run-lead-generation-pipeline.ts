@@ -197,8 +197,14 @@ export async function runLeadGenerationPipeline(
     persistedLeads.push(refreshed.lead);
   }
 
+  // The run-time counters only reflect this run's discoveries. Recompute from
+  // the persisted leads so a re-score that kept prior analyses (or loaded old
+  // runs) reports the real analyzed/qualified totals for the job.
+  const counts = await deps.repository.getLeadCountsByJobIds([job.id]);
   job = {
     ...job,
+    analyzed: counts.get(job.id)?.analyzed ?? job.analyzed,
+    qualified: counts.get(job.id)?.qualified ?? job.qualified,
     status: 'completed',
     completedAt: now().toISOString()
   };
@@ -284,6 +290,9 @@ async function analyzeLead(input: {
     const analyzedLead = {
       ...input.lead,
       status,
+      // A successful re-analysis supersedes any earlier failure, so the
+      // stale `analysisError` from a previous run must not persist.
+      analysisError: undefined,
       updatedAt: input.now().toISOString()
     };
 
@@ -300,8 +309,16 @@ async function analyzeLead(input: {
     return {
       job: {
         ...input.job,
-        analyzed: input.job.analyzed + 1,
-        qualified: status === 'qualified' ? input.job.qualified + 1 : input.job.qualified
+        // Each status is a separate partition: a lead counts as `analyzed`
+        // only if it did NOT qualify, and as `qualified` only if it did.
+        analyzed:
+          status === 'qualified'
+            ? input.job.analyzed
+            : input.job.analyzed + 1,
+        qualified:
+          status === 'qualified'
+            ? input.job.qualified + 1
+            : input.job.qualified
       },
       lead: analyzedLead
     };

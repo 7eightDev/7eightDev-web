@@ -567,6 +567,28 @@ const result = await repository.findPaginated({
       total: 1
     });
   });
+  it('passes the status filter as a strict partition', async () => {
+    const repository = new PrismaLeadRepository();
+
+    jest.mocked(prisma.lead.findMany).mockResolvedValue([]);
+    jest.mocked(prisma.lead.count).mockResolvedValue(0);
+
+    await repository.findPaginated({
+      page: 1,
+      pageSize: 20,
+      status: 'analyzed'
+    });
+
+    expect(prisma.lead.count).toHaveBeenCalledWith({
+      where: { status: 'analyzed' }
+    });
+    expect(prisma.lead.findMany).toHaveBeenCalledWith({
+      where: { status: 'analyzed' },
+      orderBy: { createdAt: 'desc' },
+      skip: 0,
+      take: 20
+    });
+  });
   it('finds latest analyses by lead ids', async () => {
     const repository = new PrismaLeadRepository();
 

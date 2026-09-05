@@ -41,4 +41,8 @@ export interface LeadRepository {
   findJobById(id: string): Promise<LeadGenerationJob | null>;
   findAllJobs(): Promise<LeadGenerationJob[]>;
   saveJob(job: LeadGenerationJob): Promise<void>;
+  /** Analyzed + qualified lead counts for the given jobs, keyed by job id. */
+  getLeadCountsByJobIds(
+    jobIds: string[]
+  ): Promise<Map<string, { analyzed: number; qualified: number }>>;
 }

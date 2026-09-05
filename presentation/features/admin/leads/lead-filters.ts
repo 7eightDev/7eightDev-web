@@ -150,6 +150,9 @@ export function filterLeads(
   filters: LeadFilters
 ): LeadReadModel[] {
   return rows.filter(({ lead, score }) => {
+    // Status filters are strict partitions: each lead carries exactly one
+    // status badge, and the "analizzati"/"qualificati" counters on the job
+    // card follow the same partition (Trovati >= Analizzati + Qualificati).
     if (filters.status !== 'all' && lead.status !== filters.status) {
       return false;
     }

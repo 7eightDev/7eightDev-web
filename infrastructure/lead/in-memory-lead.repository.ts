@@ -156,6 +156,22 @@ export class InMemoryLeadRepository implements LeadRepository {
   async saveJob(job: LeadGenerationJob): Promise<void> {
     this.jobs.set(job.id, job);
   }
+
+  async getLeadCountsByJobIds(
+    jobIds: string[]
+  ): Promise<Map<string, { analyzed: number; qualified: number }>> {
+    const set = new Set(jobIds);
+    const result = new Map<string, { analyzed: number; qualified: number }>();
+    for (const jobId of jobIds) result.set(jobId, { analyzed: 0, qualified: 0 });
+    for (const lead of this.leads.values()) {
+      if (!lead.jobId || !set.has(lead.jobId)) continue;
+      const entry = result.get(lead.jobId);
+      if (!entry) continue;
+      if (lead.status === 'analyzed') entry.analyzed += 1;
+      if (lead.status === 'qualified') entry.qualified += 1;
+    }
+    return result;
+  }
 }
 
 function inMemoryWebsiteKey(website: string | undefined): string | null {

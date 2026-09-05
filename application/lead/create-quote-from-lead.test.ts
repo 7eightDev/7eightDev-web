@@ -98,6 +98,7 @@ function makeLeadRepo(lead: Lead | null, analyses: LeadAnalysis[] = []) {
     async findByWebsiteKey() { return null; },
     async existsLeadByCompanyInJob() { return false; },
     async countLeadsByJobIds() { return new Map(); },
+    async getLeadCountsByJobIds() { return new Map(); },
   } satisfies LeadRepository;
 }
 

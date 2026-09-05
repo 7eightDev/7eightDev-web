@@ -75,6 +75,7 @@ export class PrismaLeadRepository implements LeadRepository {
     const where: Record<string, unknown> = {};
 
     if (status && status !== 'all') {
+      // Strict partition: "analizzati"/"qualificati" are disjoint statuses.
       where.status = status;
     }
     if (source && source !== 'all') {
@@ -245,6 +246,28 @@ export class PrismaLeadRepository implements LeadRepository {
     });
 
     return rows.map((row) => rowToLeadGenerationJob(row as LeadGenerationJobRow));
+  }
+
+  async getLeadCountsByJobIds(
+    jobIds: string[]
+  ): Promise<Map<string, { analyzed: number; qualified: number }>> {
+    if (jobIds.length === 0) return new Map();
+
+    const leads = await prisma.lead.findMany({
+      where: { jobId: { in: jobIds } },
+      select: { id: true, jobId: true, status: true }
+    });
+    const result = new Map<string, { analyzed: number; qualified: number }>();
+    for (const jobId of jobIds) {
+      result.set(jobId, { analyzed: 0, qualified: 0 });
+    }
+    for (const lead of leads) {
+      const entry = result.get(lead.jobId as string);
+      if (!entry) continue;
+      if (lead.status === 'analyzed') entry.analyzed += 1;
+      if (lead.status === 'qualified') entry.qualified += 1;
+    }
+    return result;
   }
 
   async saveJob(job: LeadGenerationJob): Promise<void> {

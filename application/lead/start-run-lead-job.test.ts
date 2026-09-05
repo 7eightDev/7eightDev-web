@@ -38,7 +38,7 @@ describe('startRunLeadJob', () => {
     if (result.ok) {
       const job = await repository.findJobById(result.jobId);
       expect(job?.status).toBe('completed');
-      expect(job?.analyzed).toBe(1);
+      expect(job?.analyzed).toBe(0);
       expect(job?.qualified).toBe(1);
     }
   });

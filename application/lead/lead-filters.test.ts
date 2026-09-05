@@ -132,6 +132,17 @@ describe('filterLeads — status', () => {
     expect(result).toHaveLength(1);
     expect(result[0].lead.id).toBe('3');
   });
+
+  it('filters by analyzed (only the analyzed status)', () => {
+    const result = filterLeads(rows, {
+      status: 'analyzed',
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT
+    });
+    expect(result.map((r) => r.lead.id)).toEqual(['2']);
+  });
 });
 
 /* ------------------------------------------------------------------ */

@@ -67,6 +67,18 @@ function makeRepository(existingLeads: Lead[] = []) {
       }
       return counts;
     },
+    async getLeadCountsByJobIds(jobIds) {
+      const result = new Map<string, { analyzed: number; qualified: number }>();
+      for (const jobId of jobIds) result.set(jobId, { analyzed: 0, qualified: 0 });
+      for (const lead of leads.values()) {
+        if (!lead.jobId || !jobIds.includes(lead.jobId)) continue;
+        const entry = result.get(lead.jobId);
+        if (!entry) continue;
+        if (lead.status === 'analyzed') entry.analyzed += 1;
+        if (lead.status === 'qualified') entry.qualified += 1;
+      }
+      return result;
+    },
     async findLatestAnalysesByLeadIds(leadIds) {
       const idSet = new Set(leadIds);
       const byLead = new Map<string, LeadAnalysis>();
@@ -183,7 +195,7 @@ describe('runLeadGenerationPipeline', () => {
     expect(result.job).toMatchObject({
       status: 'completed',
       totalFound: 1,
-      analyzed: 1,
+      analyzed: 0,
       qualified: 1
     });
     expect(result.leads[0]).toMatchObject({
@@ -362,7 +374,7 @@ describe('runLeadGenerationPipeline', () => {
     expect(result.leads[0].status).toBe('qualified');
     expect(result.job).toMatchObject({
       totalFound: 1,
-      analyzed: 1,
+      analyzed: 0,
       qualified: 1
     });
     expect((await repository.findById('existing-lead'))?.status).toBe(
@@ -469,7 +481,7 @@ describe('runLeadGenerationPipeline', () => {
           { companyName: 'Beta', website: 'https://beta.example' }
         ]),
         pageSpeed: makePageSpeed({
-          performanceScore: 49,
+          performanceScore: 80,
           lcp: null,
           fcp: null,
           cls: null,
@@ -583,7 +595,7 @@ describe('runLeadGenerationPipeline', () => {
     expect(result.job).toMatchObject({
       status: 'completed',
       totalFound: 2,
-      analyzed: 1,
+      analyzed: 0,
       qualified: 1
     });
     expect(result.errors).toEqual([
@@ -599,6 +611,105 @@ describe('runLeadGenerationPipeline', () => {
     ]);
     expect((result.leads[0] as Lead).analysisError).toBe('PageSpeed unavailable');
     expect((result.leads[1] as Lead).analysisError).toBeUndefined();
+  });
+
+  it('clears a stale analysisError when a same-job re-score succeeds', async () => {
+    const existingLead: Lead = {
+      id: 'existing-lead',
+      jobId: 'job-1',
+      companyName: 'Acme Studio',
+      website: 'https://acme.example',
+      source: 'outscraper',
+      status: 'discarded',
+      analysisError: 'PageSpeed request failed with status 429',
+      createdAt: '2026-08-30T10:00:00.000Z',
+      updatedAt: '2026-08-30T10:00:00.000Z'
+    };
+    const repository = makeRepository([existingLead]);
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme Studio', website: 'https://acme.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 49,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        repository,
+        now: NOW,
+        generateId: jest.fn(() => 'analysis-1'),
+        jobId: 'job-1'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.leads[0]).toMatchObject({
+      id: 'existing-lead',
+      status: 'qualified',
+      analysisError: undefined
+    });
+    const stored = await repository.findById('existing-lead');
+    expect(stored?.status).toBe('qualified');
+    expect(stored?.analysisError).toBeUndefined();
+  });
+
+  it('recomputes analyzed/qualified at completion from retained leads', async () => {
+    const previousRun: Lead = {
+      id: 'lead-a',
+      jobId: 'job-1',
+      companyName: 'Alpha Studio',
+      website: 'https://alpha.example',
+      source: 'outscraper',
+      status: 'qualified',
+      createdAt: '2026-08-30T10:00:00.000Z',
+      updatedAt: '2026-08-30T10:00:00.000Z'
+    };
+    const repository = makeRepository([previousRun]);
+    // Alpha was analyzed in an earlier run: its analysis row is retained even
+    // though this run's discovery no longer returns it.
+    await repository.saveAnalysis({
+      id: 'prior-analysis-a',
+      leadId: 'lead-a',
+      strategy: 'mobile',
+      performanceScore: 30,
+      analyzedAt: '2026-08-30T10:00:00.000Z'
+    });
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Beta Studio', website: 'https://beta.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 80,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        repository,
+        now: NOW,
+        generateId: makeIds(),
+        jobId: 'job-1'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 2 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // This run analyzed only Beta, but the completed job must reflect the two
+    // leads the search actually holds (Alpha retained qualified + Beta new
+    // analyzed), split into the strict status partitions.
+    expect(result.job).toMatchObject({
+      status: 'completed',
+      analyzed: 1,
+      qualified: 1
+    });
   });
 
   it('fails the job when discovery fails', async () => {
