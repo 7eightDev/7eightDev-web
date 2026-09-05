@@ -61,6 +61,11 @@ export interface LeadGenerationJob {
   readonly analyzed: number;
   readonly qualified: number;
 
+  /** Pinned to the top of the recent-searches sidebar via the star toggle.
+   *  Optional because the pipeline creates jobs without the flag; the UI
+   *  treats a missing value as not-favorite. */
+  readonly favorite?: boolean;
+
   readonly startedAt?: string;
   readonly completedAt?: string;
 

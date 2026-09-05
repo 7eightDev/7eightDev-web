@@ -41,6 +41,10 @@ export interface LeadRepository {
   findJobById(id: string): Promise<LeadGenerationJob | null>;
   findAllJobs(): Promise<LeadGenerationJob[]>;
   saveJob(job: LeadGenerationJob): Promise<void>;
+  /** Toggle the sidebar pin (star) on a job. */
+  setJobFavorite(id: string, favorite: boolean): Promise<void>;
+  /** Permanently delete a job; its leads keep their `jobId` unset (SetNull). */
+  deleteJob(id: string): Promise<void>;
   /** Analyzed + qualified lead counts for the given jobs, keyed by job id. */
   getLeadCountsByJobIds(
     jobIds: string[]

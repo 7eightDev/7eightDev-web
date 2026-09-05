@@ -154,7 +154,23 @@ export class InMemoryLeadRepository implements LeadRepository {
   }
 
   async saveJob(job: LeadGenerationJob): Promise<void> {
-    this.jobs.set(job.id, job);
+    const current = this.jobs.get(job.id);
+    // Preserve the persisted pin: pipeline progress saves never manage it.
+    this.jobs.set(job.id, {
+      ...job,
+      favorite: job.favorite ?? current?.favorite ?? false
+    });
+  }
+
+  async setJobFavorite(id: string, favorite: boolean): Promise<void> {
+    const job = this.jobs.get(id);
+    if (job) {
+      this.jobs.set(id, { ...job, favorite });
+    }
+  }
+
+  async deleteJob(id: string): Promise<void> {
+    this.jobs.delete(id);
   }
 
   async getLeadCountsByJobIds(

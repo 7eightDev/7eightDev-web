@@ -248,6 +248,19 @@ export class PrismaLeadRepository implements LeadRepository {
     return rows.map((row) => rowToLeadGenerationJob(row as LeadGenerationJobRow));
   }
 
+  async setJobFavorite(id: string, favorite: boolean): Promise<void> {
+    await prisma.leadGenerationJob.update({
+      where: { id },
+      data: { favorite }
+    });
+  }
+
+  async deleteJob(id: string): Promise<void> {
+    await prisma.leadGenerationJob.delete({
+      where: { id }
+    });
+  }
+
   async getLeadCountsByJobIds(
     jobIds: string[]
   ): Promise<Map<string, { analyzed: number; qualified: number }>> {
@@ -284,11 +297,15 @@ export class PrismaLeadRepository implements LeadRepository {
         totalFound: job.totalFound,
         analyzed: job.analyzed,
         qualified: job.qualified,
+        favorite: job.favorite ?? false,
         startedAt: job.startedAt ? new Date(job.startedAt) : null,
         completedAt: job.completedAt ? new Date(job.completedAt) : null,
         error: job.error ?? null,
         createdAt: new Date(job.createdAt)
       },
+      // Favorite is deliberately NOT part of the update payload: it is managed
+      // exclusively by setJobFavorite, so a pipeline progress save (re-run,
+      // live counters) never clobbers the user's pin back to false.
       update: {
         query: job.query,
         location: job.location,

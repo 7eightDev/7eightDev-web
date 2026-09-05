@@ -49,6 +49,7 @@ const job: LeadGenerationJob = {
   totalFound: 20,
   analyzed: 18,
   qualified: 7,
+  favorite: true,
   startedAt: '2026-08-28T10:00:00.000Z',
   completedAt: '2026-08-28T10:30:00.000Z',
   error: undefined,

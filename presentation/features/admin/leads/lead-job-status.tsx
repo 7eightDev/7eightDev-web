@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
+import { LeadJobFavoriteButton } from "@/presentation/features/admin/leads/lead-job-favorite-button";
+import { LeadJobDeleteButton } from "@/presentation/features/admin/leads/lead-job-delete-button";
 import { LeadJobRerunButton } from "@/presentation/features/admin/leads/lead-job-rerun-button";
 import { cn } from "@/presentation/lib/utils";
 
@@ -36,35 +38,47 @@ export function LeadJobStatus({ job, active = false, foundCount }: LeadJobStatus
           : "border-border hover:border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]"
       )}
     >
-      <Link
-        href={`/admin/leads?job=${job.id}`}
-        aria-current={active ? "page" : undefined}
-        className="group flex flex-col gap-2.5 px-4 py-3.5"
-      >
-        {/* Badge stato — solo, niente altro sulla stessa riga */}
+      {/* Header row — actions sit here, outside the Link */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <span
           className={cn(
-            "self-start font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
+            "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
             JOB_STYLE[job.status]
           )}
         >
           {JOB_LABEL[job.status]}
         </span>
 
-        <div className="flex flex-col gap-0.5 mt-1.5">
-          {/* Titolo ricerca */}
+        <div className="flex items-center gap-0.5">
+          <LeadJobFavoriteButton
+            jobId={job.id}
+            favorite={job.favorite ?? false}
+          />
+          <LeadJobDeleteButton
+            jobId={job.id}
+            jobQuery={job.query}
+            jobLocation={job.location}
+          />
+        </div>
+      </div>
+
+      {/* Body — the interactive anchor, covering query/location/stats */}
+      <Link
+        href={`/admin/leads?job=${job.id}`}
+        aria-current={active ? "page" : undefined}
+        className="group flex flex-col gap-2 px-4 pt-1 pb-3"
+      >
+        <div className="flex flex-col gap-0.5">
           <span className="font-space text-[14px] font-semibold text-foreground truncate">
             {job.query}
           </span>
 
-          {/* Luogo ricerca */}
           {job.location && (
             <span className="font-mono text-[11px] text-dim truncate">{job.location}</span>
           )}
         </div>
 
-        {/* Risultati — icone al posto delle label */}
-        <div className="flex items-center gap-3 font-mono text-[12px] text-muted mt-2">
+        <div className="flex items-center gap-3 font-mono text-[12px] text-muted mt-1">
           <span className="inline-flex items-center gap-1" title="Trovati">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
               <circle cx="11" cy="11" r="8" />
@@ -81,7 +95,12 @@ export function LeadJobStatus({ job, active = false, foundCount }: LeadJobStatus
           </span>
           <span className="inline-flex items-center gap-1" title="Qualificati">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z" />
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" />
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
             </svg>
             <span className="text-foreground">{job.qualified}</span>
           </span>
