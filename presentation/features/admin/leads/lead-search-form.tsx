@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { startLeadGenerationAction } from "@/application/lead/admin.actions";
 import { cn } from "@/presentation/lib/utils";
+import { LocationAutocomplete } from "@/presentation/features/admin/leads/location-autocomplete";
 
 const inputClass =
   "px-3 py-[10px] rounded-lg bg-raised border border-border text-foreground font-hanken text-sm outline-none transition-colors focus:border-accent placeholder:text-dim w-full";
@@ -64,13 +65,13 @@ export function LeadSearchForm() {
             <label className={labelClass} htmlFor="lead-location">
               Località *
             </label>
-            <input
-              id="lead-location"
-              className={inputClass}
+            <LocationAutocomplete
               value={location}
               placeholder="es. Milano"
               disabled={pending}
-              onChange={(e) => setLocation(e.target.value)}
+              inputClass={inputClass}
+              onChange={setLocation}
+              onSelect={setLocation}
             />
           </div>
         </div>
