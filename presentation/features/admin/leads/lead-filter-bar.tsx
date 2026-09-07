@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
+import { ToggleGroup, ToggleGroupItem } from "@/presentation/components/ui/toggle-group";
 import { Button } from "@/presentation/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/presentation/components/ui/popover";
 import { LeadJobToolbarActions } from "@/presentation/features/admin/leads/lead-job-toolbar-actions";
 import { cn } from "@/presentation/lib/utils";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
@@ -69,11 +77,10 @@ function jobOptionLabel(job: ToolbarJob) {
 }
 
 /**
- * Unified sticky filter toolbar for the leads data table. One horizontal band:
- * search + job selector on the left, status segmented control in the middle,
- * global actions on the right. Secondary filters (score/source/sort) sit on a
- * quieter second row. All state lives in the URL so the page stays a Server
- * Component and views are shareable.
+ * Two-tier sticky leads toolbar. Row 1 is the action header (title + job
+ * selector + global actions); row 2 is the operational filter band (live
+ * search, status segmented control, advanced filters behind a popover). All
+ * state lives in the URL so the page stays a Server Component.
  */
 export function LeadFilterBar({
   status,
@@ -164,15 +171,14 @@ export function LeadFilterBar({
     source !== DEFAULT_SOURCE_FILTER ||
     q !== "";
 
-  const funnelActive =
-    status !== DEFAULT_LEAD_STATUS_FILTER ||
-    score !== DEFAULT_SCORE_FILTER ||
-    source !== DEFAULT_SOURCE_FILTER ||
-    q !== "";
+  const funnelActive = hasActive;
 
   const qActive = q !== "";
   const scoreActive = score !== DEFAULT_SCORE_FILTER;
   const sourceActive = source !== DEFAULT_SOURCE_FILTER;
+  // Hidden filters live in the popover: badge shows how many are active.
+  const advancedActive =
+    (scoreActive ? 1 : 0) + (sourceActive ? 1 : 0);
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
@@ -191,8 +197,48 @@ export function LeadFilterBar({
       data-pending={isPending ? "" : undefined}
       className="sticky top-16 z-30 -mx-8 px-8 py-3 flex flex-col gap-3 border-b border-border bg-[rgba(10,11,13,0.85)] backdrop-blur-[14px] transition-opacity data-[pending]:opacity-60"
     >
-      {/* Row 1: search + job | status | actions */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+      {/* Row 1: action header (title + job selector | global actions) */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h1 className="font-space text-xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
+          Lead
+        </h1>
+
+        {jobs.length > 0 && (
+          <div className="flex items-center gap-1">
+            <select
+              value={activeJobId ?? "all"}
+              onChange={(e) => setJob(e.target.value)}
+              aria-label="Filtra per ricerca"
+              className={cn(selectBase, "max-w-[260px]")}
+            >
+              <option value="all">
+                Tutte le ricerche · {jobs.length}
+              </option>
+              {sortedJobs.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {jobOptionLabel(job)}
+                </option>
+              ))}
+            </select>
+            <LeadJobToolbarActions
+              job={activeJob}
+              disabled={!activeJob}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 ml-auto">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/leads/export">Esporta CSV</Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/admin/leads/new">+ Nuova ricerca</Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Row 2: operational filter band (search | status | advanced filters) */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-center gap-2">
           <input
             type="search"
@@ -218,146 +264,122 @@ export function LeadFilterBar({
           )}
         </div>
 
-        {jobs.length > 0 && (
-          <div className="flex items-center gap-1">
-            <select
-              value={activeJobId ?? "all"}
-              onChange={(e) => setJob(e.target.value)}
-              aria-label="Filtra per ricerca"
-              className={cn(selectBase, "max-w-[300px]")}
-            >
-              <option value="all">
-                Tutte le ricerche · {jobs.length}
-              </option>
-              {sortedJobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {jobOptionLabel(job)}
-                </option>
-              ))}
-            </select>
-            <LeadJobToolbarActions
-              job={activeJob}
-              disabled={!activeJob}
-            />
-          </div>
-        )}
-
-        <div
-          className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-surface p-1"
-          role="group"
+        <ToggleGroup
+          type="single"
+          value={status}
+          onValueChange={(v) => v && setStatus(v as LeadStatusFilter)}
           aria-label="Filtro per stato"
+          className="rounded-lg border border-border bg-surface p-0.5"
         >
-          {ALL_STATUSES.map((value) => {
-            const active = status === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setStatus(value)}
-                aria-pressed={active}
-                title={LEAD_STATUS_FILTER_LABEL[value]}
-                className={cn(
-                  "font-mono text-[11px] px-2.5 py-1 rounded-md border transition-colors cursor-pointer",
-                  active
-                    ? "text-accent border-accent bg-accent/[0.08]"
-                    : "text-soft border-transparent hover:text-foreground"
-                )}
-              >
-                {LEAD_STATUS_FILTER_LABEL[value]}
-              </button>
-            );
-          })}
-        </div>
+          {ALL_STATUSES.map((value) => (
+            <ToggleGroupItem
+              key={value}
+              value={value}
+              title={LEAD_STATUS_FILTER_LABEL[value]}
+              className={cn(
+                "font-mono text-[11px] px-2.5 py-1 rounded-md transition-colors",
+                "data-[state=on]:text-accent data-[state=on]:bg-accent/[0.08]",
+                "data-[state=off]:text-soft data-[state=off]:hover:text-foreground"
+              )}
+            >
+              {LEAD_STATUS_FILTER_LABEL[value]}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
 
         <div className="flex items-center gap-2 ml-auto">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/leads/export">Esporta CSV</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/admin/leads/new">+ Nuova ricerca</Link>
-          </Button>
-        </div>
-      </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Filtri avanzati"
+                aria-pressed={advancedActive > 0}
+                title="Filtri avanzati"
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-9 rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
+                  advancedActive > 0
+                    ? "text-accent border-accent bg-accent/[0.06]"
+                    : "text-soft hover:text-foreground"
+                )}
+              >
+                <HugeiconsIcon icon={FilterHorizontalIcon} size={14} aria-hidden />
+                Filtri
+                {advancedActive > 0 && (
+                  <span className="font-mono text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-accent text-[#0a0b0d] font-bold">
+                    {advancedActive}
+                  </span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 p-2.5">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                    Score
+                  </span>
+                  <select
+                    value={score}
+                    onChange={(e) => setScore(e.target.value as ScoreFilter)}
+                    className={cn(
+                      selectBase,
+                      "w-full",
+                      scoreActive && selectActive
+                    )}
+                    aria-label="Filtro per score"
+                  >
+                    {(Object.keys(SCORE_FILTER_LABEL) as ScoreFilter[]).map(
+                      (value) => (
+                        <option key={value} value={value}>
+                          {SCORE_FILTER_LABEL[value]}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
 
-      {/* Row 2: secondary filters (quiet row, keeps the primary band clean) */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted transition-colors",
-              scoreActive && "text-accent"
-            )}
-          >
-            Score
-          </span>
-          <select
-            value={score}
-            onChange={(e) => setScore(e.target.value as ScoreFilter)}
-            className={cn(selectBase, scoreActive && selectActive)}
-            aria-label="Filtro per score"
-          >
-            {(Object.keys(SCORE_FILTER_LABEL) as ScoreFilter[]).map((value) => (
-              <option key={value} value={value}>
-                {SCORE_FILTER_LABEL[value]}
-              </option>
-            ))}
-          </select>
-        </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                    Sorgente
+                  </span>
+                  <select
+                    value={source}
+                    onChange={(e) => setSource(e.target.value as SourceFilter)}
+                    className={cn(
+                      selectBase,
+                      "w-full",
+                      sourceActive && selectActive
+                    )}
+                    aria-label="Filtro per sorgente"
+                  >
+                    {(Object.keys(SOURCE_FILTER_LABEL) as SourceFilter[]).map(
+                      (value) => (
+                        <option key={value} value={value}>
+                          {SOURCE_FILTER_LABEL[value]}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
 
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted transition-colors",
-              sourceActive && "text-accent"
-            )}
-          >
-            Sorgente
-          </span>
-          <select
-            value={source}
-            onChange={(e) => setSource(e.target.value as SourceFilter)}
-            className={cn(selectBase, sourceActive && selectActive)}
-            aria-label="Filtro per sorgente"
-          >
-            {(Object.keys(SOURCE_FILTER_LABEL) as SourceFilter[]).map(
-              (value) => (
-                <option key={value} value={value}>
-                  {SOURCE_FILTER_LABEL[value]}
-                </option>
-              )
-            )}
-          </select>
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  disabled={!hasActive}
+                  aria-label="Azzera filtri"
+                  title="Azzera filtri"
+                  className={cn(
+                    "inline-flex items-center justify-center gap-1.5 h-8 rounded-lg border font-mono text-[12px] transition-colors duration-150 cursor-pointer",
+                    funnelActive
+                      ? "text-accent border-accent bg-accent/[0.08] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                      : "text-soft border-border disabled:opacity-50 disabled:cursor-not-allowed"
+                  )}
+                >
+                  Azzera filtri
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
-
-        <button
-          type="button"
-          onClick={clearAll}
-          disabled={!hasActive}
-          aria-label="Azzera filtri"
-          aria-pressed={funnelActive}
-          title="Azzera filtri"
-          className={cn(
-            "inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all duration-150 cursor-pointer",
-            funnelActive
-              ? "text-accent border-accent bg-accent/[0.08] hover:brightness-110"
-              : "text-soft border-soft opacity-90"
-          )}
-        >
-          <svg
-            width="13.5"
-            height="13.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-            {funnelActive && <line x1="4.5" y1="5" x2="19.5" y2="20" />}
-          </svg>
-        </button>
       </div>
     </div>
   );

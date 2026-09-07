@@ -6,7 +6,6 @@ import {
   Delete02Icon,
   EyeIcon,
   FileAddIcon,
-  MoreHorizontalIcon,
 } from "@hugeicons/core-free-icons";
 import {
   deleteLeadAction,
@@ -212,7 +211,7 @@ export function LeadRowActions({
               : "text-soft hover:text-foreground"
           }`}
         >
-          <HugeiconsIcon icon={MoreHorizontalIcon} size={17} aria-hidden />
+          <HugeiconsIcon icon={EyeIcon} size={16} aria-hidden />
         </button>
       </div>
     </TooltipProvider>

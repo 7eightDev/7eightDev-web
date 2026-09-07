@@ -124,11 +124,8 @@ export default async function LeadsPage({
   return (
     <Container className="max-w-[1400px] py-10">
       <LiveJobRefresher active={hasActiveJob} />
-      <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground">
-        Lead
-      </h1>
 
-      <section className="mt-6 flex flex-col gap-3">
+      <section className="mt-2 flex flex-col gap-3">
         <LeadFilterBar
           status={filters.status}
           score={filters.score}
@@ -149,19 +146,6 @@ export default async function LeadsPage({
           </div>
         ) : (
           <div className="flex flex-col gap-3 mt-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted m-0">
-                {hasActiveFilters
-                  ? `${visibleRows.length} lead su ${total}`
-                  : `Tutti i lead · ${total}`}
-              </h2>
-              {totalPages > 1 && (
-                <span className="font-mono text-[11px] text-muted">
-                  Pagina {page} / {totalPages}
-                </span>
-              )}
-            </div>
-
             {visibleRows.length === 0 ? (
               <div className="p-10 rounded-2xl bg-surface border border-border text-center">
                 <div className="flex flex-col items-center gap-3">
@@ -182,37 +166,44 @@ export default async function LeadsPage({
                 )}
               </div>
             ) : (
-              <>
-                <LeadTable rows={visibleRows} />
-                {totalPages > 1 && (
-                  <nav className="flex items-center justify-center gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page <= 1}
-                      asChild={page > 1}
-                    >
-                      {page > 1 ? (
-                        <Link href={pageHref(page - 1)}>← Precedente</Link>
-                      ) : (
-                        "← Precedente"
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page >= totalPages}
-                      asChild={page < totalPages}
-                    >
-                      {page < totalPages ? (
-                        <Link href={pageHref(page + 1)}>Successiva →</Link>
-                      ) : (
-                        "Successiva →"
-                      )}
-                    </Button>
-                  </nav>
-                )}
-              </>
+              <LeadTable
+                rows={visibleRows}
+                footer={
+                  totalPages > 1 ? (
+                    <>
+                      <span className="font-mono text-[11px] text-muted">
+                        Pagina {page} di {totalPages} · {total} lead totali
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={page <= 1}
+                          asChild={page > 1}
+                        >
+                          {page > 1 ? (
+                            <Link href={pageHref(page - 1)}>← Precedente</Link>
+                          ) : (
+                            "← Precedente"
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={page >= totalPages}
+                          asChild={page < totalPages}
+                        >
+                          {page < totalPages ? (
+                            <Link href={pageHref(page + 1)}>Successiva →</Link>
+                          ) : (
+                            "Successiva →"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  ) : undefined
+                }
+              />
             )}
           </div>
         )}

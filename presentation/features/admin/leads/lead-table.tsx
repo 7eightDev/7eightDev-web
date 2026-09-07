@@ -37,6 +37,7 @@ export interface LeadTableRow {
 
 interface LeadTableProps {
   rows: LeadTableRow[];
+  footer?: React.ReactNode;
 }
 
 interface DetailTarget {
@@ -119,7 +120,7 @@ function StatusBadge({ status }: { status: LeadStatus }) {
   return (
     <span
       className={cn(
-        "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
+        "font-mono text-[9.5px] tracking-[0.1em] uppercase rounded-full px-2 py-[1px] border",
         STATUS_STYLE[status]
       )}
     >
@@ -130,7 +131,7 @@ function StatusBadge({ status }: { status: LeadStatus }) {
 
 function TechStackCell({ techStack }: { techStack: readonly string[] }) {
   if (!techStack || techStack.length === 0) {
-    return <span className="font-mono text-[11px] text-dim">—</span>;
+    return <span className="font-mono text-[11px] text-muted-foreground/40">—</span>;
   }
 
   const visible = techStack.slice(0, MAX_VISIBLE_TECH);
@@ -170,7 +171,7 @@ function TechStackCell({ techStack }: { techStack: readonly string[] }) {
  * cell slides an icon cluster in (quotas pattern) to open the detail Sheet or
  * delete the lead, keeping the list context visible under the sheet.
  */
-export function LeadTable({ rows }: LeadTableProps) {
+export function LeadTable({ rows, footer }: LeadTableProps) {
   const [detail, setDetail] = useState<DetailTarget | null>(null);
   const searchParams = useSearchParams();
   const currentSort = parseSortOption(searchParams.get("sort") ?? undefined);
@@ -186,29 +187,29 @@ export function LeadTable({ rows }: LeadTableProps) {
               <SortableHeader
                 column="company"
                 label="Azienda / Dominio"
-                className="w-[28%]"
+                className="w-[35%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
               <SortableHeader
                 column="city"
                 label="Città"
-                className="w-[14%]"
+                className="w-[11%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className="w-[25%]">Tech Stack</TableHead>
+              <TableHead className="w-[22%]">Tech Stack</TableHead>
               <SortableHeader
                 column="score"
                 label="PageSpeed"
-                className="w-[12%]"
+                className="w-[10%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
               <SortableHeader
                 column="status"
                 label="Stato"
-                className="w-[11%]"
+                className="w-[12%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
@@ -232,7 +233,7 @@ export function LeadTable({ rows }: LeadTableProps) {
                 </TableCell>
                 <TableCell className="overflow-hidden">
                   <span className="block font-hanken text-[13px] text-soft truncate">
-                    {lead.city ?? <span className="text-dim">—</span>}
+                    {lead.city ?? <span className="text-muted-foreground/40">—</span>}
                   </span>
                 </TableCell>
                 <TableCell className="overflow-hidden">
@@ -258,6 +259,11 @@ export function LeadTable({ rows }: LeadTableProps) {
             ))}
           </TableBody>
         </Table>
+        {footer && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+            {footer}
+          </div>
+        )}
       </div>
 
       <LeadDetailSheet

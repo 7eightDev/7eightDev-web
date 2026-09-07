@@ -14,7 +14,7 @@ interface LeadScoreBadgeProps {
 export function LeadScoreBadge({ score }: LeadScoreBadgeProps) {
   if (score === undefined || score === null) {
     return (
-      <span className="font-mono text-[11px] text-muted border border-border rounded-full px-2 py-[2px]">
+      <span className="font-mono text-[11px] text-muted-foreground/40 border border-border rounded-full px-2 py-[2px]">
         —
       </span>
     );
