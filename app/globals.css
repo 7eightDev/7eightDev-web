@@ -92,6 +92,14 @@ body {
   color: #0a0b0d;
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @utility custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--dim) transparent;

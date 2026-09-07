@@ -9,6 +9,9 @@ interface LeadJobStatusProps {
   job: LeadGenerationJob;
   active?: boolean;
   foundCount?: number;
+  /** Called when the card body is clicked to navigate to the job. Lets the
+   *  host (e.g. the job drawer) close itself after the navigation. */
+  onSelect?: () => void;
 }
 
 const JOB_STYLE: Record<LeadGenerationJob["status"], string> = {
@@ -25,14 +28,14 @@ const JOB_LABEL: Record<LeadGenerationJob["status"], string> = {
   failed: "fallito",
 };
 
-export function LeadJobStatus({ job, active = false, foundCount }: LeadJobStatusProps) {
+export function LeadJobStatus({ job, active = false, foundCount, onSelect }: LeadJobStatusProps) {
   const rerunnable =
     job.status === "completed" || job.status === "failed";
 
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-xl border bg-surface transition-colors",
+        "shrink-0 flex flex-col overflow-hidden rounded-xl border bg-surface transition-colors",
         active
           ? "border-accent bg-accent/[0.05]"
           : "border-border hover:border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]"
@@ -66,6 +69,7 @@ export function LeadJobStatus({ job, active = false, foundCount }: LeadJobStatus
       <Link
         href={`/admin/leads?job=${job.id}`}
         aria-current={active ? "page" : undefined}
+        onClick={onSelect}
         className="group flex flex-col gap-2 px-4 pt-1 pb-3"
       >
         <div className="flex flex-col gap-0.5">

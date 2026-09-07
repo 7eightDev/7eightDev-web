@@ -37,7 +37,9 @@ export interface LeadTableRow {
 
 interface LeadTableProps {
   rows: LeadTableRow[];
-  footer?: React.ReactNode;
+  /** Rendered as a full-width row in the tbody when `rows` is empty, so the
+   *  sticky column header stays mounted and visible in every data state. */
+  emptyRow?: React.ReactNode;
 }
 
 interface DetailTarget {
@@ -64,6 +66,11 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
 
 const MAX_VISIBLE_TECH = 3;
 
+// Sticky is applied per-cell (not on <thead>) because position: sticky on a
+// table-header-group element is unreliable across browsers when nested in
+// scroll containers. Each <th> carries its own sticky offset instead.
+const STICKY_HEAD_CLASS = "sticky top-0 z-10 border-b border-border bg-surface";
+
 function SortableHeader({
   column,
   label,
@@ -78,7 +85,10 @@ function SortableHeader({
   params: URLSearchParams;
 }) {
   const newSort = toggleColumnSort(column, currentSort);
-  if (!newSort) return <TableHead className={className}>{label}</TableHead>;
+  if (!newSort)
+    return (
+      <TableHead className={cn(STICKY_HEAD_CLASS, className)}>{label}</TableHead>
+    );
 
   const [field] = newSort.split("-");
   const isActive = currentSort.startsWith(field);
@@ -90,7 +100,7 @@ function SortableHeader({
   }).toString()}`;
 
   return (
-    <TableHead className={className}>
+    <TableHead className={cn(STICKY_HEAD_CLASS, className)}>
       <Link
         href={href}
         className={cn(
@@ -171,16 +181,14 @@ function TechStackCell({ techStack }: { techStack: readonly string[] }) {
  * cell slides an icon cluster in (quotas pattern) to open the detail Sheet or
  * delete the lead, keeping the list context visible under the sheet.
  */
-export function LeadTable({ rows, footer }: LeadTableProps) {
+export function LeadTable({ rows, emptyRow }: LeadTableProps) {
   const [detail, setDetail] = useState<DetailTarget | null>(null);
   const searchParams = useSearchParams();
   const currentSort = parseSortOption(searchParams.get("sort") ?? undefined);
 
-  if (rows.length === 0) return null;
-
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-surface">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -198,7 +206,7 @@ export function LeadTable({ rows, footer }: LeadTableProps) {
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className="w-[22%]">Tech Stack</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[22%]")}>Tech Stack</TableHead>
               <SortableHeader
                 column="score"
                 label="PageSpeed"
@@ -213,7 +221,7 @@ export function LeadTable({ rows, footer }: LeadTableProps) {
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className="w-[10%] text-right">Azioni</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[10%] text-right")}>Azioni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -257,13 +265,15 @@ export function LeadTable({ rows, footer }: LeadTableProps) {
                 </TableCell>
               </TableRow>
             ))}
+            {rows.length === 0 && (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={6} className="p-0">
+                  {emptyRow}
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
-        {footer && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
-            {footer}
-          </div>
-        )}
       </div>
 
       <LeadDetailSheet

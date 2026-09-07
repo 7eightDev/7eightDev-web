@@ -119,13 +119,15 @@ export default async function LeadsPage({
     analyzed: job.analyzed,
     qualified: job.qualified,
     favorite: job.favorite ?? false,
+    error: job.error,
+    createdAt: job.createdAt,
   }));
 
   return (
-    <Container className="max-w-[1400px] py-10">
+    <Container className="h-full max-w-[1400px] py-4">
       <LiveJobRefresher active={hasActiveJob} />
 
-      <section className="mt-2 flex flex-col gap-3">
+      <section className="flex h-full flex-col gap-3 overflow-hidden">
         <LeadFilterBar
           status={filters.status}
           score={filters.score}
@@ -135,76 +137,72 @@ export default async function LeadsPage({
           activeJobId={jobId}
         />
 
-        {total === 0 && visibleRows.length === 0 && !hasActiveFilters ? (
-          <div className="p-10 rounded-2xl bg-surface border border-border text-center mt-4">
-            <p className="font-hanken text-soft mb-4">
-              Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
-            </p>
-            <Button variant="ghost" asChild>
-              <Link href="/admin/leads/new">+ Nuova ricerca</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 mt-4">
-            {visibleRows.length === 0 ? (
-              <div className="p-10 rounded-2xl bg-surface border border-border text-center">
-                <div className="flex flex-col items-center gap-3">
-                  <p className="font-hanken text-soft m-0">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+          <LeadTable
+            rows={visibleRows}
+            emptyRow={
+              total === 0 && !hasActiveFilters ? (
+                <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+                  <p className="font-hanken text-soft">
+                    Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
+                  </p>
+                  <Button variant="ghost" asChild>
+                    <Link href="/admin/leads/new">+ Nuova ricerca</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+                  <p className="m-0 font-hanken text-soft">
                     Nessun lead corrisponde ai filtri selezionati.
                   </p>
                   <Button variant="outline" asChild>
                     <Link href="/admin/leads/new">+ Nuova ricerca</Link>
                   </Button>
+                  {hasActiveFilters && (
+                    <Link
+                      href="/admin/leads"
+                      className="font-mono text-[12px] text-muted underline underline-offset-4 hover:text-foreground"
+                    >
+                      Torna a tutti i lead
+                    </Link>
+                  )}
                 </div>
-                {hasActiveFilters && (
-                  <Link
-                    href="/admin/leads"
-                    className="inline-block mt-4 font-mono text-[12px] text-muted hover:text-foreground underline underline-offset-4"
-                  >
-                    Torna a tutti i lead
-                  </Link>
+              )
+            }
+          />
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex shrink-0 items-center justify-between rounded-xl border border-border bg-surface px-4 py-2.5">
+            <span className="font-mono text-[11px] text-muted">
+              Pagina {page} di {totalPages} · {total} lead totali
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                asChild={page > 1}
+              >
+                {page > 1 ? (
+                  <Link href={pageHref(page - 1)}>← Precedente</Link>
+                ) : (
+                  "← Precedente"
                 )}
-              </div>
-            ) : (
-              <LeadTable
-                rows={visibleRows}
-                footer={
-                  totalPages > 1 ? (
-                    <>
-                      <span className="font-mono text-[11px] text-muted">
-                        Pagina {page} di {totalPages} · {total} lead totali
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={page <= 1}
-                          asChild={page > 1}
-                        >
-                          {page > 1 ? (
-                            <Link href={pageHref(page - 1)}>← Precedente</Link>
-                          ) : (
-                            "← Precedente"
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={page >= totalPages}
-                          asChild={page < totalPages}
-                        >
-                          {page < totalPages ? (
-                            <Link href={pageHref(page + 1)}>Successiva →</Link>
-                          ) : (
-                            "Successiva →"
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                  ) : undefined
-                }
-              />
-            )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                asChild={page < totalPages}
+              >
+                {page < totalPages ? (
+                  <Link href={pageHref(page + 1)}>Successiva →</Link>
+                ) : (
+                  "Successiva →"
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </section>

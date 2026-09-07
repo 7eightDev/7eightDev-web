@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
+import { ChevronDownIcon, FilterHorizontalIcon, Folder01Icon } from "@hugeicons/core-free-icons";
 import { ToggleGroup, ToggleGroupItem } from "@/presentation/components/ui/toggle-group";
 import { Button } from "@/presentation/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/presentation/components/ui/popover";
-import { LeadJobToolbarActions } from "@/presentation/features/admin/leads/lead-job-toolbar-actions";
+import { LeadJobDrawer } from "@/presentation/features/admin/leads/lead-job-drawer";
 import { cn } from "@/presentation/lib/utils";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import {
@@ -27,7 +27,8 @@ import {
   type SourceFilter,
 } from "@/presentation/features/admin/leads/lead-filters";
 
-/** Serializable shape of a job passed down from the server page. */
+/** Serializable shape of a job passed down from the server page. Structurally
+ *  assignable to `LeadGenerationJob` so the drawer can reuse `LeadJobStatus`. */
 export interface ToolbarJob {
   id: string;
   query: string;
@@ -37,6 +38,8 @@ export interface ToolbarJob {
   analyzed: number;
   qualified: number;
   favorite: boolean;
+  error?: string;
+  createdAt: string;
 }
 
 interface LeadFilterBarProps {
@@ -64,18 +67,6 @@ const selectActive = "text-accent border-accent bg-accent/[0.06]";
 const inputBase =
   "h-9 rounded-lg border border-border bg-surface px-3 font-hanken text-[13px] text-foreground placeholder:text-dim outline-none transition-colors focus:border-accent min-w-[180px]";
 
-const JOB_LABEL: Record<LeadGenerationJob["status"], string> = {
-  pending: "in coda",
-  running: "in corso",
-  completed: "completato",
-  failed: "fallito",
-};
-
-function jobOptionLabel(job: ToolbarJob) {
-  const location = job.location ? ` (${job.location})` : "";
-  return `${job.query}${location} · ${job.totalFound} trovati · ${JOB_LABEL[job.status]}${job.favorite ? " ★" : ""}`;
-}
-
 /**
  * Two-tier sticky leads toolbar. Row 1 is the action header (title + job
  * selector + global actions); row 2 is the operational filter band (live
@@ -95,6 +86,7 @@ export function LeadFilterBar({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [draftQ, setDraftQ] = useState(q);
+  const [jobDrawerOpen, setJobDrawerOpen] = useState(false);
 
   const push = useCallback(
     (patch: Record<string, string>, deletes: string[] = []) => {
@@ -153,8 +145,6 @@ export function LeadFilterBar({
     push(
       value === DEFAULT_SOURCE_FILTER ? { source: "" } : { source: value }
     );
-  const setJob = (value: string) =>
-    push(value === "all" ? { job: "" } : { job: value });
 
   const clearAll = () =>
     push({ status: "", score: "", source: "", q: "" });
@@ -182,21 +172,14 @@ export function LeadFilterBar({
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
-  // Pinned searches first, then newest first.
-  const sortedJobs = [...jobs].sort((a, b) => {
-    if (Boolean(a.favorite) !== Boolean(b.favorite)) {
-      return Boolean(a.favorite) ? -1 : 1;
-    }
-    return b.id.localeCompare(a.id);
-  });
-
   return (
-    <div
-      role="toolbar"
-      aria-label="Filtri lead"
-      data-pending={isPending ? "" : undefined}
-      className="sticky top-16 z-30 -mx-8 px-8 py-3 flex flex-col gap-3 border-b border-border bg-[rgba(10,11,13,0.85)] backdrop-blur-[14px] transition-opacity data-[pending]:opacity-60"
-    >
+    <>
+      <div
+        role="toolbar"
+        aria-label="Filtri lead"
+        data-pending={isPending ? "" : undefined}
+        className="-mx-8 px-8 py-3 flex flex-col gap-3 border-b border-border transition-opacity data-[pending]:opacity-60"
+      >
       {/* Row 1: action header (title + job selector | global actions) */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h1 className="font-space text-xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
@@ -204,27 +187,43 @@ export function LeadFilterBar({
         </h1>
 
         {jobs.length > 0 && (
-          <div className="flex items-center gap-1">
-            <select
-              value={activeJobId ?? "all"}
-              onChange={(e) => setJob(e.target.value)}
-              aria-label="Filtra per ricerca"
-              className={cn(selectBase, "max-w-[260px]")}
-            >
-              <option value="all">
-                Tutte le ricerche · {jobs.length}
-              </option>
-              {sortedJobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {jobOptionLabel(job)}
-                </option>
-              ))}
-            </select>
-            <LeadJobToolbarActions
-              job={activeJob}
-              disabled={!activeJob}
+          <button
+            type="button"
+            onClick={() => setJobDrawerOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={jobDrawerOpen}
+            title={
+              activeJob
+                ? `${activeJob.query}${activeJob.location ? ` (${activeJob.location})` : ""}`
+                : "Tutte le ricerche"
+            }
+            className={cn(
+              "inline-flex items-center gap-2 h-9 max-w-[300px] rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
+              "hover:border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] hover:text-foreground",
+              jobDrawerOpen
+                ? "border-accent bg-accent/[0.06] text-accent"
+                : "text-soft"
+            )}
+          >
+            <HugeiconsIcon
+              icon={Folder01Icon}
+              size={15}
+              aria-hidden
+              className="shrink-0 text-muted"
             />
-          </div>
+            <span className="truncate">
+              {activeJob ? activeJob.query : "Tutte le ricerche"}
+            </span>
+            <span className="shrink-0 text-muted">
+              ({activeJob ? activeJob.totalFound : jobs.length})
+            </span>
+            <HugeiconsIcon
+              icon={ChevronDownIcon}
+              size={14}
+              aria-hidden
+              className="shrink-0 text-muted"
+            />
+          </button>
         )}
 
         <div className="flex items-center gap-2 ml-auto">
@@ -381,6 +380,14 @@ export function LeadFilterBar({
           </Popover>
         </div>
       </div>
-    </div>
+      </div>
+
+      <LeadJobDrawer
+        open={jobDrawerOpen}
+        onOpenChange={setJobDrawerOpen}
+        jobs={jobs}
+        activeJobId={activeJobId}
+      />
+    </>
   );
 }
