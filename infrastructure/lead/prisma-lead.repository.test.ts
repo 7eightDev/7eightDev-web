@@ -71,6 +71,7 @@ describe('PrismaLeadRepository', () => {
         source: 'google_maps',
         status: 'new',
         analysisError: null,
+        techStack: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -87,6 +88,7 @@ describe('PrismaLeadRepository', () => {
         source: 'google_maps',
         status: 'new',
         analysisError: null,
+        techStack: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -121,6 +123,7 @@ describe('PrismaLeadRepository', () => {
       source: 'google_maps',
       status: 'new',
       analysisError: null,
+      techStack: [],
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -147,6 +150,7 @@ describe('PrismaLeadRepository', () => {
       source: 'google_maps',
       status: 'new',
       analysisError: null,
+      techStack: [],
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -188,6 +192,7 @@ describe('PrismaLeadRepository', () => {
         source: 'google_maps',
         status: 'new',
         analysisError: null,
+        techStack: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -205,6 +210,7 @@ describe('PrismaLeadRepository', () => {
         source: 'google_maps',
         status: 'new',
         analysisError: null,
+        techStack: [],
         createdAt: new Date('2026-01-02T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z')
       }
@@ -525,6 +531,7 @@ describe('PrismaLeadRepository', () => {
         source: 'google_maps',
         status: 'new',
         analysisError: null,
+        techStack: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -716,6 +723,7 @@ const result = await repository.findPaginated({
       source: 'outscraper',
       status: 'qualified',
       analysisError: null,
+      techStack: [],
       createdAt: new Date('2026-08-28T10:00:00.000Z'),
       updatedAt: new Date('2026-08-28T10:00:00.000Z')
     };

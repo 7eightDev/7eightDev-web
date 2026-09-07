@@ -8,6 +8,7 @@ import type {
   PageSpeedResult
 } from '@/domain/lead/lead.pagespeed';
 import type { LeadRepository } from '@/domain/lead/lead.repository';
+import type { TechStackPort } from '@/domain/lead/lead.tech';
 import { calculateLeadQualification } from '@/domain/lead/lead.score';
 import type {
   Lead,
@@ -24,6 +25,7 @@ export interface RunLeadGenerationPipelineDeps {
   readonly discovery: LeadDiscoveryPort;
   readonly pageSpeed: PageSpeedPort;
   readonly repository: LeadRepository;
+  readonly techStack?: TechStackPort;
   readonly now?: () => Date;
   readonly generateId?: () => string;
   readonly source?: LeadSource;
@@ -287,9 +289,14 @@ async function analyzeLead(input: {
       pageSpeedResult
     });
     const status = leadStatusFromPageSpeed(pageSpeedResult);
+    const techStack =
+      input.deps.techStack && input.lead.website
+        ? await input.deps.techStack.detect(input.lead.website)
+        : [];
     const analyzedLead = {
       ...input.lead,
       status,
+      techStack: techStack.length > 0 ? techStack : input.lead.techStack,
       // A successful re-analysis supersedes any earlier failure, so the
       // stale `analysisError` from a previous run must not persist.
       analysisError: undefined,

@@ -128,6 +128,10 @@ model Lead {
   // Set when the PageSpeed analysis failed: keeps the reason the lead was
   // marked `discarded` visible in the admin detail view (null = ok/not tried).
   analysisError String?
+  // Technologies detected on the lead's website (e.g. WordPress, Wix, jQuery),
+  // surfaced in the admin data table. Archived from the pipeline as a bonus
+  // signal of how hard the site is to outrank.
+  techStack   String[]   @default([])
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 

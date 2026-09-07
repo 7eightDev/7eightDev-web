@@ -100,8 +100,12 @@ export const SORT_VALUES = [
   'date-asc',
   'name-asc',
   'name-desc',
+  'city-asc',
+  'city-desc',
   'score-asc',
   'score-desc',
+  'status-asc',
+  'status-desc',
 ] as const;
 
 export type SortOption = (typeof SORT_VALUES)[number];
@@ -119,9 +123,40 @@ export const SORT_LABEL: Record<SortOption, string> = {
   'date-asc': 'meno recenti',
   'name-asc': 'A → Z',
   'name-desc': 'Z → A',
+  'city-asc': 'A → Z',
+  'city-desc': 'Z → A',
   'score-asc': 'score basso',
   'score-desc': 'score alto',
+  'status-asc': 'stato A → Z',
+  'status-desc': 'stato Z → A',
 };
+
+/** Maps a table column key to its ascending sort value. */
+export const COLUMN_SORT_KEY: Partial<Record<string, SortOption>> = {
+  company: 'name-asc',
+  city: 'city-asc',
+  score: 'score-desc',
+  status: 'status-asc',
+};
+
+/** Given a column key and current sort, return the toggled sort option. */
+export function toggleColumnSort(
+  column: string,
+  currentSort: SortOption
+): SortOption | null {
+  const asc = COLUMN_SORT_KEY[column];
+  if (!asc) return null;
+  const [field] = asc.split('-');
+  const desc = `${field}-desc` as SortOption;
+  // For columns whose "natural" sort is descending (e.g. score), asc and desc
+  // share the same field, so derive the reverse from the current value.
+  if (desc === asc) {
+    return currentSort === asc
+      ? (`${field}-asc` as SortOption)
+      : asc;
+  }
+  return currentSort === asc ? desc : asc;
+}
 
 /* ----------------------------- Read model ------------------------- */
 
@@ -212,9 +247,19 @@ export function sortLeads(
         return a.lead.companyName.localeCompare(b.lead.companyName);
       case 'name-desc':
         return b.lead.companyName.localeCompare(a.lead.companyName);
+      case 'city-asc':
+      case 'city-desc': {
+        // Empty cities always sort to the end, regardless of direction.
+        const aHas = !!(a.lead.city ?? '');
+        const bHas = !!(b.lead.city ?? '');
+        if (aHas !== bHas) return aHas ? -1 : 1;
+        if (!aHas) return 0;
+        return sort === 'city-asc'
+          ? a.lead.city!.localeCompare(b.lead.city!)
+          : b.lead.city!.localeCompare(a.lead.city!);
+      }
       case 'score-asc':
       case 'score-desc': {
-        // Undefined scores always sort to the end, regardless of direction.
         const aHas = a.score !== undefined;
         const bHas = b.score !== undefined;
         if (aHas !== bHas) return aHas ? -1 : 1;
@@ -223,6 +268,10 @@ export function sortLeads(
           ? a.score! - b.score!
           : b.score! - a.score!;
       }
+      case 'status-asc':
+        return a.lead.status.localeCompare(b.lead.status);
+      case 'status-desc':
+        return b.lead.status.localeCompare(a.lead.status);
     }
   });
   return sorted;

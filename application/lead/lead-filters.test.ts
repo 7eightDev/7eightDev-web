@@ -6,6 +6,7 @@ import {
   parseScoreFilter,
   parseSourceFilter,
   parseSortOption,
+  toggleColumnSort,
   type LeadReadModel,
   type LeadStatusFilter,
   type ScoreFilter,
@@ -485,5 +486,80 @@ describe('sortLeads', () => {
     const input = [...rows];
     sortLeads(rows, 'name-asc');
     expect(rows).toEqual(input);
+  });
+});
+
+describe('sortLeads by column', () => {
+  const rows: LeadReadModel[] = [
+    row(
+      makeLead({ id: '1', companyName: 'Beta', city: 'Roma', status: 'new' }),
+      80
+    ),
+    row(
+      makeLead({
+        id: '2',
+        companyName: 'Alpha',
+        city: undefined,
+        status: 'qualified'
+      }),
+      30
+    ),
+    row(
+      makeLead({
+        id: '3',
+        companyName: 'Gamma',
+        city: 'Milano',
+        status: 'discarded'
+      }),
+      50
+    )
+  ];
+
+  it('city-asc: alphabetical, empty cities last', () => {
+    const result = sortLeads(rows, 'city-asc');
+    expect(result.map((r) => r.lead.id)).toEqual(['3', '1', '2']);
+  });
+
+  it('city-desc: reverse alphabetical, empty cities last', () => {
+    const result = sortLeads(rows, 'city-desc');
+    expect(result.map((r) => r.lead.id)).toEqual(['1', '3', '2']);
+  });
+
+  it('status-asc: alphabetical status', () => {
+    const result = sortLeads(rows, 'status-asc');
+    expect(result.map((r) => r.lead.status)).toEqual([
+      'discarded',
+      'new',
+      'qualified'
+    ]);
+  });
+
+  it('status-desc: reverse status', () => {
+    const result = sortLeads(rows, 'status-desc');
+    expect(result.map((r) => r.lead.status)).toEqual([
+      'qualified',
+      'new',
+      'discarded'
+    ]);
+  });
+});
+
+describe('toggleColumnSort', () => {
+  it('returns null for columns without a mapped sort', () => {
+    expect(toggleColumnSort('tech', 'date-desc')).toBeNull();
+  });
+
+  it('toggles asc -> desc per column', () => {
+    expect(toggleColumnSort('company', 'date-desc')).toBe('name-asc');
+    expect(toggleColumnSort('city', 'date-desc')).toBe('city-asc');
+    expect(toggleColumnSort('score', 'date-desc')).toBe('score-desc');
+    expect(toggleColumnSort('status', 'date-desc')).toBe('status-asc');
+  });
+
+  it('toggles desc -> asc when the column is already the active sort', () => {
+    expect(toggleColumnSort('company', 'name-asc')).toBe('name-desc');
+    expect(toggleColumnSort('company', 'name-desc')).toBe('name-asc');
+    expect(toggleColumnSort('score', 'score-desc')).toBe('score-asc');
+    expect(toggleColumnSort('status', 'status-asc')).toBe('status-desc');
   });
 });

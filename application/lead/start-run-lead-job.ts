@@ -4,6 +4,7 @@ import type {
 } from '@/domain/lead/lead.discovery';
 import type { PageSpeedPort } from '@/domain/lead/lead.pagespeed';
 import type { LeadRepository } from '@/domain/lead/lead.repository';
+import type { TechStackPort } from '@/domain/lead/lead.tech';
 import type {
   LeadGenerationJob,
   LeadSource
@@ -17,6 +18,7 @@ export interface StartRunLeadJobDeps {
   readonly discovery: LeadDiscoveryPort;
   readonly pageSpeed: PageSpeedPort;
   readonly repository: LeadRepository;
+  readonly techStack?: TechStackPort;
   readonly source?: LeadSource;
   readonly now?: () => Date;
   readonly generateId?: () => string;
@@ -73,6 +75,7 @@ export async function startRunLeadJob(
       discovery: deps.discovery,
       pageSpeed: deps.pageSpeed,
       repository: deps.repository,
+      techStack: deps.techStack,
       now,
       generateId,
       source: deps.source,

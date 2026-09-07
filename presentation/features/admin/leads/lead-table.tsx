@@ -1,8 +1,33 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import type { Lead, LeadStatus } from "@/domain/lead/lead.types";
-import { formatDateIt } from "@/presentation/lib/format-date";
-import { LeadRowActions } from "@/presentation/features/admin/leads/lead-row-actions";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/presentation/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/presentation/components/ui/tooltip";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
+import { LeadRowActions } from "@/presentation/features/admin/leads/lead-row-actions";
+import { LeadDetailSheet } from "@/presentation/features/admin/leads/lead-detail-sheet";
 import { cn } from "@/presentation/lib/utils";
+import {
+  toggleColumnSort,
+  parseSortOption,
+  type SortOption,
+} from "@/presentation/features/admin/leads/lead-filters";
 
 export interface LeadTableRow {
   lead: Lead;
@@ -14,11 +39,19 @@ interface LeadTableProps {
   rows: LeadTableRow[];
 }
 
+interface DetailTarget {
+  leadId: string;
+  companyName: string;
+}
+
 const STATUS_STYLE: Record<LeadStatus, string> = {
   new: "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
-  analyzed: "text-accent-cyan border-[color-mix(in_oklab,var(--color-accent-cyan)_45%,var(--border))]",
-  qualified: "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
-  discarded: "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+  analyzed:
+    "text-accent-cyan border-[color-mix(in_oklab,var(--color-accent-cyan)_45%,var(--border))]",
+  qualified:
+    "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
+  discarded:
+    "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
 };
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
@@ -28,64 +61,214 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   discarded: "scartato",
 };
 
+const MAX_VISIBLE_TECH = 3;
+
+function SortableHeader({
+  column,
+  label,
+  className,
+  currentSort,
+  params,
+}: {
+  column: string;
+  label: string;
+  className?: string;
+  currentSort: SortOption;
+  params: URLSearchParams;
+}) {
+  const newSort = toggleColumnSort(column, currentSort);
+  if (!newSort) return <TableHead className={className}>{label}</TableHead>;
+
+  const [field] = newSort.split("-");
+  const isActive = currentSort.startsWith(field);
+  const isAsc = currentSort.endsWith("asc");
+  const href = `/admin/leads?${new URLSearchParams({
+    ...Object.fromEntries(params),
+    sort: newSort,
+    page: "1",
+  }).toString()}`;
+
+  return (
+    <TableHead className={className}>
+      <Link
+        href={href}
+        className={cn(
+          "group inline-flex items-center gap-1.5 select-none -my-2 py-2 rounded transition-colors",
+          "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        )}
+      >
+        <span className="truncate">{label}</span>
+        <span
+          className={cn(
+            "flex-none opacity-0 transition-opacity",
+            isActive && "opacity-100"
+          )}
+        >
+          {isAsc ? (
+            <ArrowUp className="size-3" strokeWidth={2.5} />
+          ) : (
+            <ArrowDown className="size-3" strokeWidth={2.5} />
+          )}
+        </span>
+      </Link>
+    </TableHead>
+  );
+}
+
+function StatusBadge({ status }: { status: LeadStatus }) {
+  return (
+    <span
+      className={cn(
+        "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
+        STATUS_STYLE[status]
+      )}
+    >
+      {STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+function TechStackCell({ techStack }: { techStack: readonly string[] }) {
+  if (!techStack || techStack.length === 0) {
+    return <span className="font-mono text-[11px] text-dim">—</span>;
+  }
+
+  const visible = techStack.slice(0, MAX_VISIBLE_TECH);
+  const hidden = techStack.slice(MAX_VISIBLE_TECH);
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <div className="flex items-center gap-1 min-w-0 max-w-full">
+        {visible.map((tech) => (
+          <span
+            key={tech}
+            className="font-mono text-[10.5px] text-soft border border-border rounded px-1.5 py-[1px] truncate"
+            title={tech}
+          >
+            {tech}
+          </span>
+        ))}
+        {hidden.length > 0 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="font-mono text-[10.5px] text-muted border border-border rounded px-1.5 py-[1px] cursor-default">
+                +{hidden.length}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {hidden.join(" · ")}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}
+
 /**
- * Responsive table of leads. Rows are surface cards on every breakpoint
- * (mirroring the catalog list), with the company name, site, status badge,
- * performance score, creation date and per-row actions.
+ * Dense enterprise data table of leads. One lead per row; the row's action
+ * cell slides an icon cluster in (quotas pattern) to open the detail Sheet or
+ * delete the lead, keeping the list context visible under the sheet.
  */
 export function LeadTable({ rows }: LeadTableProps) {
+  const [detail, setDetail] = useState<DetailTarget | null>(null);
+  const searchParams = useSearchParams();
+  const currentSort = parseSortOption(searchParams.get("sort") ?? undefined);
+
   if (rows.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3">
-      {rows.map(({ lead, score }) => (
-        <div
-          key={lead.id}
-          className="grid grid-cols-[1fr_auto_auto] max-[820px]:grid-cols-1 gap-4 items-center rounded-xl border border-border bg-surface px-5 py-4"
-        >
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-space text-[15.5px] font-semibold text-foreground">
-                {lead.companyName}
-              </span>
-              <span
-                className={cn(
-                  "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
-                  STATUS_STYLE[lead.status]
-                )}
-              >
-                {STATUS_LABEL[lead.status]}
-              </span>
-            </div>
+    <>
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <SortableHeader
+                column="company"
+                label="Azienda / Dominio"
+                className="w-[28%]"
+                currentSort={currentSort}
+                params={searchParams}
+              />
+              <SortableHeader
+                column="city"
+                label="Città"
+                className="w-[14%]"
+                currentSort={currentSort}
+                params={searchParams}
+              />
+              <TableHead className="w-[25%]">Tech Stack</TableHead>
+              <SortableHeader
+                column="score"
+                label="PageSpeed"
+                className="w-[12%]"
+                currentSort={currentSort}
+                params={searchParams}
+              />
+              <SortableHeader
+                column="status"
+                label="Stato"
+                className="w-[11%]"
+                currentSort={currentSort}
+                params={searchParams}
+              />
+              <TableHead className="w-[10%] text-right">Azioni</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map(({ lead, score }) => (
+              <TableRow key={lead.id} className="group last:border-0">
+                <TableCell className="overflow-hidden">
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="font-space text-[13.5px] font-semibold text-foreground truncate">
+                      {lead.companyName}
+                    </span>
+                    {lead.website && (
+                      <span className="font-mono text-[11px] text-dim truncate">
+                        {lead.website.replace(/^https?:\/\//, "")}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="overflow-hidden">
+                  <span className="block font-hanken text-[13px] text-soft truncate">
+                    {lead.city ?? <span className="text-dim">—</span>}
+                  </span>
+                </TableCell>
+                <TableCell className="overflow-hidden">
+                  <TechStackCell techStack={lead.techStack ?? []} />
+                </TableCell>
+                <TableCell>
+                  <LeadScoreBadge score={score} />
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={lead.status} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <LeadRowActions
+                    id={lead.id}
+                    companyName={lead.companyName}
+                    status={lead.status}
+                    onOpenDetail={(id, name) =>
+                      setDetail({ leadId: id, companyName: name })
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-            <div className="flex items-center gap-2 flex-wrap mt-1">
-              {lead.website && (
-                <span className="font-mono text-[11.5px] text-dim truncate max-w-full">
-                  {lead.website}
-                </span>
-              )}
-              {lead.city && (
-                <span className="font-mono text-[11.5px] text-dim">· {lead.city}</span>
-              )}
-              {lead.category && (
-                <span className="font-mono text-[11.5px] text-dim">
-                  · {lead.category}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end gap-[3px]">
-              <LeadScoreBadge score={score} />
-              <span className="font-mono text-[10.5px] text-muted">
-                {formatDateIt(lead.createdAt)}
-              </span>
-            </div>
-            <LeadRowActions id={lead.id} companyName={lead.companyName} />
-          </div>
-        </div>
-      ))}
-    </div>
+      <LeadDetailSheet
+        key={detail?.leadId ?? "closed"}
+        open={detail !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetail(null);
+        }}
+        leadId={detail?.leadId ?? ""}
+        leadCompanyName={detail?.companyName ?? ""}
+      />
+    </>
   );
 }

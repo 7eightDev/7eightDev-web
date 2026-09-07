@@ -18,6 +18,7 @@ import {
   pageSpeedAnalyzer,
   quoteRepository,
   leadGenerationRateLimiter,
+  techStackDetector,
 } from "@/infrastructure/container";
 
 export interface LeadActionResult {
@@ -46,6 +47,7 @@ export async function startLeadGenerationAction(
       discovery: leadDiscovery,
       pageSpeed: pageSpeedAnalyzer,
       repository: leadRepository,
+      techStack: techStackDetector,
       source: "google_maps",
     },
     parsed.data
@@ -78,6 +80,7 @@ export async function rerunLeadGenerationAction(
       discovery: leadDiscovery,
       pageSpeed: pageSpeedAnalyzer,
       repository: leadRepository,
+      techStack: techStackDetector,
       source: "google_maps",
     },
     parsed.data
@@ -136,6 +139,37 @@ export async function deleteLeadAction(
   await leadRepository.delete(parsed.data);
   revalidatePath("/admin/leads");
   return { ok: true };
+}
+
+/**
+ * Server action: fetch a lead with all its PageSpeed analyses, for the
+ * slide-over detail Sheet. Returns plain serializable data (no revalidate).
+ */
+export async function getLeadDetailAction(
+  leadId: string
+): Promise<
+  | {
+      readonly ok: true;
+      readonly lead: Awaited<ReturnType<typeof leadRepository.findById>>;
+      readonly analyses: Awaited<
+        ReturnType<typeof leadRepository.findAnalysesByLeadId>
+      >;
+    }
+  | { readonly ok: false; readonly error: string }
+> {
+  const parsed = leadIdSchema.safeParse(leadId);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  const lead = await leadRepository.findById(parsed.data);
+  if (!lead) {
+    return { ok: false, error: "Lead non trovato." };
+  }
+
+  const analyses = await leadRepository.findAnalysesByLeadId(parsed.data);
+
+  return { ok: true, lead, analyses };
 }
 
 /**

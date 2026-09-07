@@ -2,12 +2,14 @@ import type { CatalogRepository } from "@/domain/catalog/catalog.repository";
 import type { LeadDiscoveryPort } from "@/domain/lead/lead.discovery";
 import type { LeadRepository } from "@/domain/lead/lead.repository";
 import type { PageSpeedPort } from "@/domain/lead/lead.pagespeed";
+import type { TechStackPort } from "@/domain/lead/lead.tech";
 import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
 import { GooglePlacesLeadDiscovery } from "@/infrastructure/lead/discovery/google-places-lead-discovery";
 import { PrismaLeadRepository } from "@/infrastructure/lead/prisma-lead.repository";
 import { GooglePageSpeedInsights } from "@/infrastructure/lead/pagespeed/google-pagespeed-insights";
+import { HtmlTechDetector } from "@/infrastructure/lead/tech-stack/html-tech-detector";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
 import { PrismaQuoteRepository } from "@/infrastructure/quote/prisma-quote.repository";
 import {
@@ -56,6 +58,9 @@ export const quoteNotifier: QuoteNotificationPort = buildQuoteNotifier();
 export const pageSpeedAnalyzer: PageSpeedPort = new GooglePageSpeedInsights({
   apiKey: process.env.GOOGLE_PAGESPEED_API_KEY,
 });
+
+/** Heuristic tech-stack detection on a lead's website (WordPress, Wix…). */
+export const techStackDetector: TechStackPort = new HtmlTechDetector();
 
 /** Rate limiters: per-instance in-memory (sufficient for B2B admin). */
 export const leadGenerationRateLimiter = new RateLimiter({

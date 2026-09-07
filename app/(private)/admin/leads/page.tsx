@@ -2,13 +2,14 @@ import Link from "next/link";
 import { leadRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { Button } from "@/presentation/components/ui/button";
-import { cn } from "@/presentation/lib/utils";
 import { resolveJobStatus } from "@/domain/lead/lead.job";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import { reconcileStaleJobs } from "@/application/lead/reconcile-stale-jobs";
-import { LeadJobStatus } from "@/presentation/features/admin/leads/lead-job-status";
 import { LiveJobRefresher } from "@/presentation/features/admin/leads/live-job-refresher";
-import { LeadFilterBar } from "@/presentation/features/admin/leads/lead-filter-bar";
+import {
+  LeadFilterBar,
+  type ToolbarJob,
+} from "@/presentation/features/admin/leads/lead-filter-bar";
 import {
   filterLeads,
   sortLeads,
@@ -45,8 +46,8 @@ export default async function LeadsPage({
   const rawPage = parseInt(param("page") ?? "1", 10);
   const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
 
-  // Persist the failed status for jobs whose worker died, so the sidebar does
-  // not show an endless 'in corso' for a row that will never complete.
+  // Persist the failed status for jobs whose worker died, so the toolbar does
+  // not keep offering a re-run on a job that will never complete.
   await reconcileStaleJobs({ repository: leadRepository });
   const jobs = (await leadRepository.findAllJobs()).map((job) =>
     resolveJobStatus(job)
@@ -56,13 +57,6 @@ export default async function LeadsPage({
     ? jobs.find((job) => job.id === requestedJobId)
     : undefined;
   const jobId = activeJob ? activeJob.id : undefined;
-
-  // Sidebar view: "all" (default) or "favorites" (?jobs=favorites).
-  const sidebarView = param("jobs") === "favorites" ? "favorites" : "all";
-
-  const leadCountByJobId = await leadRepository.countLeadsByJobIds(
-    jobs.map((job) => job.id)
-  );
 
   const { leads, total } = await leadRepository.findPaginated({
     page,
@@ -103,33 +97,11 @@ export default async function LeadsPage({
       ...(filters.q && { q: filters.q }),
       ...(filters.sort !== "date-desc" && { sort: filters.sort }),
       ...(jobId && { job: jobId }),
-      ...overrides
+      ...overrides,
     }).toString();
 
   const pageHref = (pageNumber: number) =>
     `/admin/leads?${listQuery({ page: String(pageNumber) })}`;
-
-  const resetJobHref =
-    jobId
-      ? (() => {
-          const qs = new URLSearchParams({
-            ...(filters.status !== "all" && { status: filters.status }),
-            ...(filters.score !== "all" && { score: filters.score }),
-            ...(filters.source !== "all" && { source: filters.source }),
-            ...(filters.q && { q: filters.q }),
-            ...(filters.sort !== "date-desc" && { sort: filters.sort })
-          });
-          return qs.toString() ? `/admin/leads?${qs.toString()}` : "/admin/leads";
-        })()
-      : undefined;
-
-  const sidebarHref = (view: "all" | "favorites") => {
-    const qs = new URLSearchParams(listQuery({}));
-    if (view === "favorites") qs.set("jobs", "favorites");
-    else qs.delete("jobs");
-    const s = qs.toString();
-    return s ? `/admin/leads?${s}` : "/admin/leads";
-  };
 
   const hasActiveFilters =
     filters.status !== "all" ||
@@ -138,256 +110,113 @@ export default async function LeadsPage({
     filters.q !== "" ||
     jobId !== undefined;
 
-  const favoriteCount = jobs.filter((job) => job.favorite).length;
-  const sidebarJobs =
-    sidebarView === "favorites" ? jobs.filter((job) => job.favorite) : jobs;
+  const toolbarJobs: ToolbarJob[] = jobs.map((job: LeadGenerationJob) => ({
+    id: job.id,
+    query: job.query,
+    location: job.location,
+    status: job.status,
+    totalFound: job.totalFound,
+    analyzed: job.analyzed,
+    qualified: job.qualified,
+    favorite: job.favorite ?? false,
+  }));
 
   return (
-    <Container className="max-w-[1100px] py-12">
+    <Container className="max-w-[1400px] py-10">
       <LiveJobRefresher active={hasActiveJob} />
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground">
-          Lead
-        </h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/admin/leads/export">
-              <span className="hidden sm:inline">Esporta CSV</span>
-              <span className="sm:hidden text-lg">↓</span>
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/admin/leads/new">
-              <span className="sm:hidden text-lg">+</span>
-              <span className="hidden sm:inline">+ Nuova ricerca</span>
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground">
+        Lead
+      </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] lg:grid-rows-[auto_1fr] gap-x-8 gap-y-3 items-start">
-      {jobs.length > 0 && (
-        <>
-        <div className="lg:col-start-1 lg:row-start-1 flex items-center justify-between gap-3">
-          <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-            Ricerche · {jobs.length}
-          </h2>
-          <div
-            role="group"
-            aria-label="Vista delle ricerche"
-            className="flex items-center gap-1 rounded-lg border border-border bg-surface p-1"
-          >
-            <Link
-              href={sidebarHref("all")}
-              aria-current={sidebarView === "all" ? "page" : undefined}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-mono text-[11px] leading-none no-underline transition-colors duration-150",
-                sidebarView === "all"
-                  ? "text-accent bg-accent/[0.08]"
-                  : "text-soft hover:text-foreground"
-              )}
-            >
-              Tutti
-            </Link>
-            <Link
-              href={sidebarHref("favorites")}
-              aria-current={sidebarView === "favorites" ? "page" : undefined}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-mono text-[11px] leading-none no-underline transition-colors duration-150",
-                sidebarView === "favorites"
-                  ? "text-accent bg-accent/[0.08]"
-                  : "text-soft hover:text-foreground"
-              )}
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z" />
-              </svg>
-              Preferiti{favoriteCount > 0 ? ` · ${favoriteCount}` : ""}
-            </Link>
+      <section className="mt-6 flex flex-col gap-3">
+        <LeadFilterBar
+          status={filters.status}
+          score={filters.score}
+          source={filters.source}
+          q={filters.q}
+          jobs={toolbarJobs}
+          activeJobId={jobId}
+        />
+
+        {total === 0 && visibleRows.length === 0 && !hasActiveFilters ? (
+          <div className="p-10 rounded-2xl bg-surface border border-border text-center mt-4">
+            <p className="font-hanken text-soft mb-4">
+              Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
+            </p>
+            <Button variant="ghost" asChild>
+              <Link href="/admin/leads/new">+ Nuova ricerca</Link>
+            </Button>
           </div>
-        </div>
-        <aside className="lg:col-start-1 lg:row-start-2 lg:sticky lg:top-6 flex flex-col gap-4">
-          <div className="lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 flex flex-col gap-3 lg:-mr-1 custom-scrollbar">
-            {sidebarJobs.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-5 text-center">
-                <p className="font-hanken text-[13px] text-soft m-0">
-                  Nessuna ricerca preferita.
-                </p>
-                <p className="font-mono text-[11px] text-dim mt-1.5">
-                  Premi la stella su una ricerca per ritrovarla qui.
-                </p>
+        ) : (
+          <div className="flex flex-col gap-3 mt-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted m-0">
+                {hasActiveFilters
+                  ? `${visibleRows.length} lead su ${total}`
+                  : `Tutti i lead · ${total}`}
+              </h2>
+              {totalPages > 1 && (
+                <span className="font-mono text-[11px] text-muted">
+                  Pagina {page} / {totalPages}
+                </span>
+              )}
+            </div>
+
+            {visibleRows.length === 0 ? (
+              <div className="p-10 rounded-2xl bg-surface border border-border text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <p className="font-hanken text-soft m-0">
+                    Nessun lead corrisponde ai filtri selezionati.
+                  </p>
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/leads/new">+ Nuova ricerca</Link>
+                  </Button>
+                </div>
+                {hasActiveFilters && (
+                  <Link
+                    href="/admin/leads"
+                    className="inline-block mt-4 font-mono text-[12px] text-muted hover:text-foreground underline underline-offset-4"
+                  >
+                    Torna a tutti i lead
+                  </Link>
+                )}
               </div>
             ) : (
-              <JobListSection
-                jobs={sidebarJobs}
-                requestedJobId={requestedJobId}
-                leadCountByJobId={leadCountByJobId}
-              />
+              <>
+                <LeadTable rows={visibleRows} />
+                {totalPages > 1 && (
+                  <nav className="flex items-center justify-center gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      asChild={page > 1}
+                    >
+                      {page > 1 ? (
+                        <Link href={pageHref(page - 1)}>← Precedente</Link>
+                      ) : (
+                        "← Precedente"
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      asChild={page < totalPages}
+                    >
+                      {page < totalPages ? (
+                        <Link href={pageHref(page + 1)}>Successiva →</Link>
+                      ) : (
+                        "Successiva →"
+                      )}
+                    </Button>
+                  </nav>
+                )}
+              </>
             )}
           </div>
-        </aside>
-        </>
-
-      )}
-
-      <div className={cn(
-        "lg:col-start-2 min-w-0",
-        jobs.length > 0 ? "lg:row-start-2" : "lg:row-start-1"
-      )}>
-      {total === 0 && rows.length === 0 && !hasActiveFilters ? (
-        <div className="p-10 rounded-2xl bg-surface border border-border text-center">
-          <p className="font-hanken text-soft mb-4">
-            Nessun lead ancora. Avvia la prima ricerca nella tua nicchia.
-          </p>
-          <Button variant="ghost" asChild>
-            <Link href="/admin/leads/new">+ Nuova ricerca</Link>
-          </Button>
-        </div>
-      ) : (
-        <section className="flex flex-col gap-3">
-          <LeadFilterBar
-            status={filters.status}
-            score={filters.score}
-            source={filters.source}
-            q={filters.q}
-            sort={filters.sort}
-          />
-
-          {activeJob && resetJobHref && (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent/[0.06] px-3 py-2">
-              <span className="font-hanken text-[12.5px] text-muted min-w-0">
-                Filtro di ricerca:{" "}
-                <span className="text-foreground font-medium">{activeJob.query}</span>
-                {activeJob.location && (
-                  <span className="font-mono text-[11px]"> · {activeJob.location}</span>
-                )}
-              </span>
-              <Link
-                href={resetJobHref}
-                aria-label="Rimuovi filtro di ricerca"
-                title="Rimuovi filtro di ricerca"
-                className="inline-flex shrink-0 items-center justify-center size-7 rounded-md border border-accent/50 bg-accent/[0.08] text-accent transition-colors duration-150 hover:bg-accent hover:text-[#0a0b0d]"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M18 6L6 18" />
-                  <path d="M6 6l12 12" />
-                </svg>
-              </Link>
-            </div>
-          )}
-
-          <h2 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-            {hasActiveFilters
-              ? `${visibleRows.length} ${visibleRows.length === 1 ? "lead" : "lead"} su ${total}`
-              : `Tutti i lead · ${total}`}
-          </h2>
-
-          {visibleRows.length === 0 ? (
-            <div className="p-10 rounded-2xl bg-surface border border-border text-center">
-              <div className="flex flex-col items-center gap-3">
-                <p className="font-hanken text-soft m-0">
-                  Nessun lead corrisponde ai filtri selezionati.
-                </p>
-                <Button variant="outline" asChild>
-                  <Link href="/admin/leads/new">+ Nuova ricerca</Link>
-                </Button>
-              </div>
-              {hasActiveFilters && (
-                <Link
-                  href="/admin/leads"
-                  className="inline-block mt-4 font-mono text-[12px] text-muted hover:text-foreground underline underline-offset-4"
-                >
-                  Torna a tutti i lead
-                </Link>
-              )}
-            </div>
-          ) : (
-            <>
-              <LeadTable rows={visibleRows} />
-              {totalPages > 1 && (
-                <nav className="flex items-center justify-center gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    asChild={page > 1}
-                  >
-                    {page > 1 ? (
-                      <Link href={pageHref(page - 1)}>
-                        ← Precedente
-                      </Link>
-                    ) : (
-                      "← Precedente"
-                    )}
-                  </Button>
-                  <span className="font-mono text-xs text-muted px-3">
-                    {page} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    asChild={page < totalPages}
-                  >
-                    {page < totalPages ? (
-                      <Link href={pageHref(page + 1)}>
-                        Successiva →
-                      </Link>
-                    ) : (
-                      "Successiva →"
-                    )}
-                  </Button>
-                </nav>
-              )}
-            </>
-          )}
-        </section>
-      )}
-      </div>
-      </div>
+        )}
+      </section>
     </Container>
-  );
-}
-
-function JobListSection({
-  jobs,
-  requestedJobId,
-  leadCountByJobId,
-}: {
-  jobs: LeadGenerationJob[];
-  requestedJobId: string | undefined;
-  leadCountByJobId: Map<string, number>;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      {jobs.map((job) => (
-        <LeadJobStatus
-          key={job.id}
-          job={job}
-          active={job.id === requestedJobId}
-          foundCount={leadCountByJobId.get(job.id)}
-        />
-      ))}
-    </div>
   );
 }

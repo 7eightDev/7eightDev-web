@@ -17,6 +17,7 @@ export interface LeadRow {
   source: Lead['source'];
   status: Lead['status'];
   analysisError: string | null;
+  techStack: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,6 +64,10 @@ export function rowToLead(row: LeadRow): Lead {
     source: row.source,
     status: row.status,
     analysisError: row.analysisError ?? undefined,
+    techStack:
+      row.techStack !== undefined && row.techStack.length > 0
+        ? row.techStack
+        : undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString()
   };
@@ -82,6 +87,7 @@ export function leadToRow(lead: Lead): LeadRow {
     source: lead.source,
     status: lead.status,
     analysisError: lead.analysisError ?? null,
+    techStack: lead.techStack ? [...lead.techStack] : [],
     createdAt: new Date(lead.createdAt),
     updatedAt: new Date(lead.updatedAt)
   };

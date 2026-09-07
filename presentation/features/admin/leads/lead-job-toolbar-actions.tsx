@@ -4,15 +4,17 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Delete02Icon,
-  EyeIcon,
-  FileAddIcon,
   MoreHorizontalIcon,
+  Refresh01Icon,
+  StarIcon,
+  StarOffIcon,
 } from "@hugeicons/core-free-icons";
+import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import {
-  deleteLeadAction,
-  createQuoteFromLeadAction,
+  toggleJobFavoriteAction,
+  rerunLeadGenerationAction,
+  deleteJobAction,
 } from "@/application/lead/admin.actions";
-import type { LeadStatus } from "@/domain/lead/lead.types";
 import {
   Tooltip,
   TooltipContent,
@@ -31,40 +33,49 @@ import {
   AlertDialogTrigger,
 } from "@/presentation/components/ui/alert-dialog";
 
-interface LeadRowActionsProps {
+/** Minimal shape the action cluster needs from the selected toolbar job. */
+export interface JobActionTarget {
   id: string;
-  companyName: string;
-  status: LeadStatus;
-  /** Called when the user asks for the slide-over detail. */
-  onOpenDetail: (id: string, companyName: string) => void;
+  query: string;
+  status: LeadGenerationJob["status"];
+  favorite?: boolean;
 }
 
-// Ghost by default: no bordered box, so the row reads quieter and the only
-// control per row is a single "…" toggle that slides the action cluster in
-// from the right (mirrors the quotes list pattern).
+interface LeadJobToolbarActionsProps {
+  /** Job the actions apply to. Undefined when "all searches" is selected. */
+  job: JobActionTarget | undefined;
+  /** Disables the trigger entirely (no job selected). */
+  disabled?: boolean;
+}
+
 const iconBtn =
   "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-
-const toggleBtn =
-  "relative z-20 inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const dangerIconBtn =
   "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-[var(--coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
-export function LeadRowActions({
-  id,
-  companyName,
-  status,
-  onOpenDetail,
-}: LeadRowActionsProps) {
+const STARRED =
+  "inline-flex items-center justify-center w-8 h-8 rounded-lg text-accent cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+/**
+ * Slide-in action cluster for the job selected in the toolbar dropdown:
+ * favorite, re-run and delete. Mirrors the quotes per-row action pattern.
+ */
+export function LeadJobToolbarActions({
+  job,
+  disabled = false,
+}: LeadJobToolbarActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const cellRef = useRef<HTMLDivElement>(null);
 
-  // The slide-in lives inside the row (no portal), so dismissal is ours to
-  // manage: collapse on outside pointer-down or Escape.
+  const jobId = job?.id;
+  const favorite = job?.favorite ?? false;
+  const rerunnable =
+    (job?.status === "completed" || job?.status === "failed") === true;
+
   useEffect(() => {
     if (!menuOpen) return;
     const onPointerDown = (e: PointerEvent) => {
@@ -83,22 +94,25 @@ export function LeadRowActions({
     };
   }, [menuOpen]);
 
-  const openDetail = () => {
-    setMenuOpen(false);
-    onOpenDetail(id, companyName);
+  const toggleFavorite = () => {
+    if (!jobId) return;
+    startTransition(async () => {
+      await toggleJobFavoriteAction(jobId);
+    });
   };
 
-  const createQuote = () => {
-    setMenuOpen(false);
-    startTransition(() => {
-      void createQuoteFromLeadAction(id);
+  const rerun = () => {
+    if (!jobId) return;
+    startTransition(async () => {
+      await rerunLeadGenerationAction(jobId);
     });
   };
 
   const remove = () => {
+    if (!jobId) return;
     setError(null);
     startTransition(async () => {
-      const result = await deleteLeadAction(id);
+      const result = await deleteJobAction(jobId);
       if (!result.ok) setError(result.error ?? "Eliminazione non riuscita.");
       else setDeleteOpen(false);
     });
@@ -109,7 +123,7 @@ export function LeadRowActions({
       <div ref={cellRef} className="relative inline-flex items-center justify-end self-stretch">
         <div
           inert={!menuOpen}
-          className={`absolute top-1/2 right-0 z-10 flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-14 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+          className={`absolute top-1/2 right-0 z-10 flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-12 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
             menuOpen
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"
@@ -119,30 +133,41 @@ export function LeadRowActions({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                onClick={openDetail}
-                aria-label={`Apri il dettaglio di ${companyName}`}
-                className={iconBtn}
+                onClick={toggleFavorite}
+                disabled={pending}
+                aria-label={
+                  favorite
+                    ? `Rimuovi dai preferiti${job ? ` (${job.query})` : ""}`
+                    : `Aggiungi ai preferiti${job ? ` (${job.query})` : ""}`
+                }
+                className={favorite ? STARRED : iconBtn}
               >
-                <HugeiconsIcon icon={EyeIcon} size={17} aria-hidden />
+                <HugeiconsIcon
+                  icon={favorite ? StarIcon : StarOffIcon}
+                  size={17}
+                  aria-hidden
+                />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Dettaglio</TooltipContent>
+            <TooltipContent>
+              {favorite ? "Rimuovi preferito" : "Aggiungi preferito"}
+            </TooltipContent>
           </Tooltip>
 
-          {status === "qualified" && (
+          {rerunnable && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={createQuote}
+                  onClick={rerun}
                   disabled={pending}
-                  aria-label={`Crea preventivo da ${companyName}`}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-accent/15 text-accent cursor-pointer transition-all duration-150 hover:bg-accent hover:text-[#0a0b0d] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label={`Ripeti la ricerca${job ? ` «${job.query}»` : ""}`}
+                  className={iconBtn}
                 >
-                  <HugeiconsIcon icon={FileAddIcon} size={17} aria-hidden />
+                  <HugeiconsIcon icon={Refresh01Icon} size={17} aria-hidden />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Crea preventivo</TooltipContent>
+              <TooltipContent>Ripeti ricerca</TooltipContent>
             </Tooltip>
           )}
 
@@ -152,24 +177,25 @@ export function LeadRowActions({
                 <AlertDialogTrigger asChild>
                   <button
                     type="button"
-                    aria-label={`Elimina ${companyName}`}
+                    aria-label={`Elimina la ricerca${job ? ` «${job.query}»` : ""}`}
                     className={dangerIconBtn}
                   >
                     <HugeiconsIcon icon={Delete02Icon} size={17} aria-hidden />
                   </button>
                 </AlertDialogTrigger>
               </TooltipTrigger>
-              <TooltipContent>Elimina</TooltipContent>
+              <TooltipContent>Elimina ricerca</TooltipContent>
             </Tooltip>
 
             <AlertDialogContent onCloseAutoFocus={() => setError(null)}>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  Eliminare «{companyName}»?
+                  Eliminare la ricerca{job ? ` «${job.query}»` : ""}?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Il lead e le sue analisi verranno rimossi definitivamente.
-                  Non è possibile annullare l&apos;operazione.
+                  I lead trovati resteranno nella lista, ma perderanno il
+                  collegamento a questa ricerca. L&apos;operazione non può
+                  essere annullata.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -204,13 +230,12 @@ export function LeadRowActions({
         <button
           type="button"
           onClick={() => setMenuOpen((v) => !v)}
-          aria-label={`Azioni per ${companyName}`}
+          disabled={disabled}
+          aria-label={`Azioni per la ricerca selezionata`}
           aria-expanded={menuOpen}
-          className={`${toggleBtn} ${
-            menuOpen
-              ? "bg-foreground/[0.06] text-accent"
-              : "text-soft hover:text-foreground"
-          }`}
+          className={`${iconBtn} ${
+            menuOpen ? "bg-foreground/[0.06] text-accent" : "text-soft hover:text-foreground"
+          } disabled:opacity-40 disabled:cursor-not-allowed`}
         >
           <HugeiconsIcon icon={MoreHorizontalIcon} size={17} aria-hidden />
         </button>

@@ -23,6 +23,9 @@ export interface Lead {
   // reason shown in the admin detail view.
   readonly analysisError?: string;
 
+  /** Technologies detected on the lead's website, e.g. ['WordPress', jQuery'] */
+  readonly techStack?: readonly string[];
+
   readonly createdAt: string;
   readonly updatedAt: string;
 }
