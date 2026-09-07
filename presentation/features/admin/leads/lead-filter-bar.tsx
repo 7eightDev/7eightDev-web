@@ -161,8 +161,6 @@ export function LeadFilterBar({
     source !== DEFAULT_SOURCE_FILTER ||
     q !== "";
 
-  const funnelActive = hasActive;
-
   const qActive = q !== "";
   const scoreActive = score !== DEFAULT_SCORE_FILTER;
   const sourceActive = source !== DEFAULT_SOURCE_FILTER;
@@ -178,10 +176,10 @@ export function LeadFilterBar({
         role="toolbar"
         aria-label="Filtri lead"
         data-pending={isPending ? "" : undefined}
-        className="-mx-8 px-8 py-3 flex flex-col gap-3 border-b border-border transition-opacity data-[pending]:opacity-60"
+        className="-mx-8 px-8 pt-8 pb-6 flex flex-col gap-3 border-b border-border transition-opacity data-[pending]:opacity-60"
       >
       {/* Row 1: action header (title + job selector | global actions) */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
         <h1 className="font-space text-xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
           Lead
         </h1>
@@ -264,7 +262,7 @@ export function LeadFilterBar({
           value={status}
           onValueChange={(v) => v && setStatus(v as LeadStatusFilter)}
           aria-label="Filtro per stato"
-          className="rounded-lg border border-border bg-surface p-0.5"
+          className="h-9 rounded-lg border border-border bg-surface p-0.5"
         >
           {ALL_STATUSES.map((value) => (
             <ToggleGroupItem
@@ -272,7 +270,7 @@ export function LeadFilterBar({
               value={value}
               title={LEAD_STATUS_FILTER_LABEL[value]}
               className={cn(
-                "font-mono text-[11px] px-2.5 py-1 rounded-md transition-colors",
+                "h-full font-mono text-[11px] px-2.5 rounded-md transition-colors",
                 "data-[state=on]:text-accent data-[state=on]:bg-accent/[0.08]",
                 "data-[state=off]:text-soft data-[state=off]:hover:text-foreground"
               )}
@@ -281,6 +279,21 @@ export function LeadFilterBar({
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
+
+        {hasActive && (
+          <button
+            type="button"
+            onClick={clearAll}
+            aria-label="Azzera filtri"
+            title="Azzera filtri"
+            className={cn(
+              "inline-flex items-center gap-1.5 h-9 rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
+              "text-accent border-accent bg-accent/[0.08] hover:brightness-110"
+            )}
+          >
+            Azzera filtri
+          </button>
+        )}
 
         <div className="flex items-center gap-2 ml-auto">
           <Popover>
@@ -298,7 +311,7 @@ export function LeadFilterBar({
                 )}
               >
                 <HugeiconsIcon icon={FilterHorizontalIcon} size={14} aria-hidden />
-                Filtri
+                Filtri avanzati
                 {advancedActive > 0 && (
                   <span className="font-mono text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-accent text-[#0a0b0d] font-bold">
                     {advancedActive}
@@ -355,22 +368,6 @@ export function LeadFilterBar({
                     )}
                   </select>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  disabled={!hasActive}
-                  aria-label="Azzera filtri"
-                  title="Azzera filtri"
-                  className={cn(
-                    "inline-flex items-center justify-center gap-1.5 h-8 rounded-lg border font-mono text-[12px] transition-colors duration-150 cursor-pointer",
-                    funnelActive
-                      ? "text-accent border-accent bg-accent/[0.08] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                      : "text-soft border-border disabled:opacity-50 disabled:cursor-not-allowed"
-                  )}
-                >
-                  Azzera filtri
-                </button>
               </div>
             </PopoverContent>
           </Popover>
