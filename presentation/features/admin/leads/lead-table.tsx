@@ -189,7 +189,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
 
   return (
     <>
-      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-surface">
+      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-surface">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
