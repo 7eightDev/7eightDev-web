@@ -199,7 +199,7 @@ export function LeadFilterBar({
       >
       {/* Row 1: action header (title + job selector | global actions) */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-        <h1 className="font-space text-xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
+        <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
           Lead
         </h1>
 
