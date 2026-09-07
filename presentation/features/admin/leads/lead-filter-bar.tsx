@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ChevronDownIcon, FilterHorizontalIcon, Folder01Icon } from "@hugeicons/core-free-icons";
+import { ChevronDownIcon, FilterHorizontalIcon } from "@hugeicons/core-free-icons";
 import { ToggleGroup, ToggleGroupItem } from "@/presentation/components/ui/toggle-group";
 import { Button } from "@/presentation/components/ui/button";
 import {
@@ -186,51 +186,47 @@ export function LeadFilterBar({
           Lead
         </h1>
 
-        {jobs.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setJobDrawerOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={jobDrawerOpen}
-            title={
-              activeJob
-                ? `${activeJob.query}${activeJob.location ? ` (${activeJob.location})` : ""}`
-                : "Tutte le ricerche"
-            }
-            className={cn(
-              "inline-flex items-center gap-2 h-9 max-w-[300px] rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
-              "hover:border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] hover:text-foreground",
-              jobDrawerOpen
-                ? "border-accent bg-accent/[0.06] text-accent"
-                : "text-soft"
-            )}
-          >
-            <HugeiconsIcon
-              icon={Folder01Icon}
-              size={15}
-              aria-hidden
-              className="shrink-0 text-muted"
-            />
-            <span className="truncate">
-              {activeJob ? activeJob.query : "Tutte le ricerche"}
-            </span>
-            <span className="shrink-0 text-muted">
-              ({activeJob ? activeJob.totalFound : jobs.length})
-            </span>
-            <HugeiconsIcon
-              icon={ChevronDownIcon}
-              size={14}
-              aria-hidden
-              className="shrink-0 text-muted"
-            />
-          </button>
-        )}
-
         <div className="flex items-center gap-2 ml-auto">
+          {jobs.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setJobDrawerOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={jobDrawerOpen}
+              title={
+                activeJob
+                  ? `${activeJob.query}${activeJob.location ? ` (${activeJob.location})` : ""}`
+                  : "Tutte le ricerche"
+              }
+              className={cn(
+                "max-w-[300px] font-mono text-[12.5px]",
+                jobDrawerOpen && "border-accent text-accent bg-accent/[0.06]"
+              )}
+            >
+              <span className="flex-1 min-w-0 truncate">
+                Tutte le ricerche
+              </span>
+              <span className="shrink-0 text-muted">
+                ({activeJob ? activeJob.totalFound : jobs.length})
+              </span>
+              <HugeiconsIcon
+                icon={ChevronDownIcon}
+                size={14}
+                aria-hidden
+                className="shrink-0 text-muted"
+              />
+            </Button>
+          )}
           <Button variant="outline" size="sm" asChild>
             <Link href="/admin/leads/export">Esporta CSV</Link>
           </Button>
-          <Button size="sm" asChild>
+          <Button
+            size="sm"
+            asChild
+            className="border-accent text-accent hover:bg-accent/[0.08] hover:text-accent"
+          >
             <Link href="/admin/leads/new">+ Nuova ricerca</Link>
           </Button>
         </div>
