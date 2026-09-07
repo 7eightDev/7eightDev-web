@@ -624,6 +624,33 @@ const result = await repository.findPaginated({
       take: 20
     });
   });
+  it('returns all matching leads without pagination', async () => {
+    const repository = new PrismaLeadRepository();
+
+    jest.mocked(prisma.lead.findMany).mockResolvedValue([]);
+
+    await repository.findMatchingLeads({
+      status: 'new',
+      jobId: 'job-1',
+      q: 'acme'
+    });
+
+    expect(prisma.lead.findMany).toHaveBeenCalledWith({
+      where: {
+        status: 'new',
+        jobId: 'job-1',
+        OR: [
+          { companyName: { contains: 'acme', mode: 'insensitive' } },
+          { city: { contains: 'acme', mode: 'insensitive' } },
+          { category: { contains: 'acme', mode: 'insensitive' } },
+          { website: { contains: 'acme', mode: 'insensitive' } },
+          { phone: { contains: 'acme', mode: 'insensitive' } },
+          { email: { contains: 'acme', mode: 'insensitive' } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  });
   it('finds latest analyses by lead ids', async () => {
     const repository = new PrismaLeadRepository();
 

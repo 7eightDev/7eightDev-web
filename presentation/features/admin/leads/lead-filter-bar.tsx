@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronDownIcon, FilterHorizontalIcon } from "@hugeicons/core-free-icons";
@@ -170,6 +177,18 @@ export function LeadFilterBar({
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
+  // The CSV export mirrors the current filter context (job, status, source,
+  // free-text), forwarding the same params the server page reads.
+  const exportHref = useMemo(() => {
+    const keep = ["status", "source", "q", "job"];
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of [...params.keys()]) {
+      if (!keep.includes(key)) params.delete(key);
+    }
+    const query = params.toString();
+    return query ? `/admin/leads/export?${query}` : "/admin/leads/export";
+  }, [searchParams]);
+
   return (
     <>
       <div
@@ -204,7 +223,9 @@ export function LeadFilterBar({
               )}
             >
               <span className="flex-1 min-w-0 truncate">
-                Tutte le ricerche
+                {activeJob
+                  ? activeJob.query
+                  : "Tutte le ricerche"}
               </span>
               <span className="shrink-0 text-muted">
                 ({activeJob ? activeJob.totalFound : jobs.length})
@@ -218,7 +239,7 @@ export function LeadFilterBar({
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/leads/export">Esporta CSV</Link>
+            <Link href={exportHref}>Esporta CSV</Link>
           </Button>
           <Button
             size="sm"

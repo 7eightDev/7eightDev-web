@@ -1,4 +1,5 @@
 import type {
+  LeadMatchParams,
   LeadPage,
   LeadPageParams,
   LeadRepository
@@ -73,29 +74,7 @@ export class PrismaLeadRepository implements LeadRepository {
     jobId,
     q
   }: LeadPageParams): Promise<LeadPage> {
-    const where: Record<string, unknown> = {};
-
-    if (status && status !== 'all') {
-      // Strict partition: "analizzati"/"qualificati" are disjoint statuses.
-      where.status = status;
-    }
-    if (source && source !== 'all') {
-      where.source = source;
-    }
-    if (jobId) {
-      where.jobId = jobId;
-    }
-    if (q) {
-      const term = q.toLowerCase();
-      where.OR = [
-        { companyName: { contains: term, mode: 'insensitive' } },
-        { city: { contains: term, mode: 'insensitive' } },
-        { category: { contains: term, mode: 'insensitive' } },
-        { website: { contains: term, mode: 'insensitive' } },
-        { phone: { contains: term, mode: 'insensitive' } },
-        { email: { contains: term, mode: 'insensitive' } }
-      ];
-    }
+    const where = buildLeadsWhere({ status, source, jobId, q });
 
     const [total, rows] = await Promise.all([
       prisma.lead.count({ where }),
@@ -111,6 +90,20 @@ export class PrismaLeadRepository implements LeadRepository {
       leads: rows.map((r) => rowToLead(r as unknown as LeadRow)),
       total
     };
+  }
+
+  async findMatchingLeads({
+    status,
+    source,
+    jobId,
+    q
+  }: LeadMatchParams): Promise<Lead[]> {
+    const rows = await prisma.lead.findMany({
+      where: buildLeadsWhere({ status, source, jobId, q }),
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return rows.map((r) => rowToLead(r as unknown as LeadRow));
   }
 
   async countLeadsByJobIds(jobIds: string[]): Promise<Map<string, number>> {
@@ -336,4 +329,37 @@ function websiteKey(website: string | undefined): string | null {
       .replace(/^https?:\/\//, '')
       .replace(/^www\./, '');
   }
+}
+
+function buildLeadsWhere({
+  status,
+  source,
+  jobId,
+  q
+}: LeadMatchParams): Record<string, unknown> {
+  const where: Record<string, unknown> = {};
+
+  if (status && status !== 'all') {
+    // Strict partition: "analizzati"/"qualificati" are disjoint statuses.
+    where.status = status;
+  }
+  if (source && source !== 'all') {
+    where.source = source;
+  }
+  if (jobId) {
+    where.jobId = jobId;
+  }
+  if (q) {
+    const term = q.toLowerCase();
+    where.OR = [
+      { companyName: { contains: term, mode: 'insensitive' } },
+      { city: { contains: term, mode: 'insensitive' } },
+      { category: { contains: term, mode: 'insensitive' } },
+      { website: { contains: term, mode: 'insensitive' } },
+      { phone: { contains: term, mode: 'insensitive' } },
+      { email: { contains: term, mode: 'insensitive' } }
+    ];
+  }
+
+  return where;
 }

@@ -1,4 +1,5 @@
 import type {
+  LeadMatchParams,
   LeadPage,
   LeadPageParams,
   LeadRepository
@@ -20,6 +21,44 @@ export class InMemoryLeadRepository implements LeadRepository {
 
   async findAll(): Promise<Lead[]> {
     return [...this.leads.values()];
+  }
+
+  async findMatchingLeads({
+    status,
+    source,
+    jobId,
+    q
+  }: LeadMatchParams): Promise<Lead[]> {
+    let filtered = [...this.leads.values()];
+
+    if (status && status !== 'all') {
+      filtered = filtered.filter((l) => l.status === status);
+    }
+    if (source && source !== 'all') {
+      filtered = filtered.filter((l) => l.source === source);
+    }
+    if (jobId) {
+      filtered = filtered.filter((l) => l.jobId === jobId);
+    }
+    if (q) {
+      const term = q.toLowerCase();
+      filtered = filtered.filter((l) => {
+        const haystack = [
+          l.companyName,
+          l.city,
+          l.category,
+          l.website,
+          l.phone,
+          l.email
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(term);
+      });
+    }
+
+    return filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   async findPaginated({

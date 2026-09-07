@@ -1,13 +1,18 @@
-import { exportQualifiedLeadsCsv } from "@/application/lead/export-leads";
+import { exportLeadsCsv } from "@/application/lead/export-leads";
+import {
+  parseLeadStatusFilter,
+  parseSourceFilter,
+} from "@/presentation/features/admin/leads/lead-filters";
 import { leadRepository, exportRateLimiter } from "@/infrastructure/container";
 
 export const dynamic = "force-dynamic";
 
 /**
- * GET /admin/leads/export — streams the qualified leads as a CSV download.
- * Auth is enforced by the Clerk proxy on the `(private)` area.
+ * GET /admin/leads/export — streams as CSV the leads matching the same filter
+ * context as the list (job, status, source, free-text). Auth is enforced by
+ * the Clerk proxy on the `(private)` area.
  */
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   if (!exportRateLimiter.allow("export")) {
     return new Response("Troppe richieste. Riprova tra qualche secondo.", {
       status: 429,
@@ -15,7 +20,13 @@ export async function GET(): Promise<Response> {
     });
   }
 
-  const csv = await exportQualifiedLeadsCsv(leadRepository);
+  const params = new URL(request.url).searchParams;
+  const csv = await exportLeadsCsv(leadRepository, {
+    status: parseLeadStatusFilter(params.get("status") ?? undefined),
+    source: parseSourceFilter(params.get("source") ?? undefined),
+    q: (params.get("q") ?? "").trim(),
+    jobId: params.get("job") ?? undefined,
+  });
 
   return new Response(csv, {
     status: 200,

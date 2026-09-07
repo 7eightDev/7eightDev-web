@@ -105,13 +105,14 @@ function SortableHeader({
         href={href}
         className={cn(
           "group inline-flex items-center gap-1.5 select-none -my-2 py-2 rounded transition-colors",
-          "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          isActive && "text-accent"
         )}
       >
         <span className="truncate">{label}</span>
         <span
           className={cn(
-            "flex-none opacity-0 transition-opacity",
+            "flex-none opacity-0 transition-opacity text-accent",
             isActive && "opacity-100"
           )}
         >

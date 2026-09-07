@@ -1,10 +1,11 @@
-import { exportQualifiedLeadsCsv } from '@/application/lead/export-leads';
+import { exportLeadsCsv } from '@/application/lead/export-leads';
 import type { Lead, LeadAnalysis } from '@/domain/lead/lead.types';
 import { InMemoryLeadRepository } from '@/infrastructure/lead/in-memory-lead.repository';
 
 function makeLead(overrides: Partial<Lead> = {}): Lead {
   return {
     id: 'lead-1',
+    jobId: 'job-1',
     companyName: 'Studio Dentistico Rossi',
     category: 'dentist',
     website: 'https://rossi.example',
@@ -38,19 +39,64 @@ function makeAnalysis(overrides: Partial<LeadAnalysis> = {}): LeadAnalysis {
 const CSV_HEADER =
   'company,category,website,phone,email,address,city,performance,lcp,fcp,cls,tbt,qualification,source';
 
-describe('exportQualifiedLeadsCsv', () => {
-  it('exports only qualified leads with the CSV header', async () => {
+describe('exportLeadsCsv', () => {
+  it('exports every lead with the CSV header when no filters are set', async () => {
     const repo = new InMemoryLeadRepository();
     await repo.save(makeLead());
     await repo.save(
       makeLead({ id: 'lead-2', companyName: 'Lead scartato', status: 'discarded' })
     );
 
-    const csv = await exportQualifiedLeadsCsv(repo);
+    const csv = await exportLeadsCsv(repo);
 
-    expect(csv.split('\r\n')[0]).toBe(CSV_HEADER);
+    const lines = csv.split('\r\n').filter((line) => line.length > 0);
+    expect(lines[0]).toBe(CSV_HEADER);
     expect(csv).toContain('Studio Dentistico Rossi');
-    expect(csv).not.toContain('Lead scartato');
+    expect(csv).toContain('Lead scartato');
+  });
+
+  it('filters by jobId when a job is selected', async () => {
+    const repo = new InMemoryLeadRepository();
+    await repo.save(makeLead({ jobId: 'job-1' }));
+    await repo.save(
+      makeLead({
+        id: 'lead-2',
+        jobId: 'job-2',
+        companyName: 'Un altra ricerca'
+      })
+    );
+
+    const csv = await exportLeadsCsv(repo, { jobId: 'job-1' });
+
+    expect(csv).toContain('Studio Dentistico Rossi');
+    expect(csv).not.toContain('Un altra ricerca');
+  });
+
+  it('filters by status and reports the real status in the qualification column', async () => {
+    const repo = new InMemoryLeadRepository();
+    await repo.save(makeLead());
+    await repo.save(
+      makeLead({ id: 'lead-2', companyName: 'Lead scartato', status: 'discarded' })
+    );
+
+    const csv = await exportLeadsCsv(repo, { status: 'discarded' });
+
+    expect(csv).toContain('Lead scartato');
+    expect(csv).toContain(',discarded,google_maps\r\n');
+    expect(csv).not.toContain('Studio Dentistico Rossi');
+  });
+
+  it('filters by free-text query', async () => {
+    const repo = new InMemoryLeadRepository();
+    await repo.save(makeLead());
+    await repo.save(
+      makeLead({ id: 'lead-2', companyName: 'Fiorario Ravenna' })
+    );
+
+    const csv = await exportLeadsCsv(repo, { q: 'ravenna' });
+
+    expect(csv).toContain('Fiorario Ravenna');
+    expect(csv).not.toContain('Studio Dentistico Rossi');
   });
 
   it('includes contact data and the latest analysis metrics', async () => {
@@ -61,7 +107,7 @@ describe('exportQualifiedLeadsCsv', () => {
       makeAnalysis({ id: 'older', analyzedAt: '2026-08-01T10:00:00.000Z', performanceScore: 10 })
     );
 
-    const csv = await exportQualifiedLeadsCsv(repo);
+    const csv = await exportLeadsCsv(repo);
 
     expect(csv).toContain(
       'Studio Dentistico Rossi,dentist,https://rossi.example,+39 02 1234567,info@rossi.example,'
@@ -79,7 +125,7 @@ describe('exportQualifiedLeadsCsv', () => {
       makeAnalysis({ id: 'a2', performanceScore: 45, analyzedAt: '2026-09-01T10:00:00.000Z' })
     );
 
-    const csv = await exportQualifiedLeadsCsv(repo);
+    const csv = await exportLeadsCsv(repo);
 
     expect(csv).toContain(',45,4100,2600,0.4,820,qualified,google_maps');
     expect(csv).not.toContain(',20,4100,2600,0.4,820,qualified,google_maps');
@@ -95,18 +141,18 @@ describe('exportQualifiedLeadsCsv', () => {
       })
     );
 
-    const csv = await exportQualifiedLeadsCsv(repo);
+    const csv = await exportLeadsCsv(repo);
 
     expect(csv).toContain('"Rossi, Mario & Figli"');
     expect(csv).toContain('"dentist, implants"');
     expect(csv).toContain('"Via ""degli Esperti"", 5\nPiano 2"');
   });
 
-  it('returns only the header when there are no qualified leads', async () => {
+  it('returns only the header when no lead matches', async () => {
     const repo = new InMemoryLeadRepository();
-    await repo.save(makeLead({ status: 'new' }));
+    await repo.save(makeLead());
 
-    const csv = await exportQualifiedLeadsCsv(repo);
+    const csv = await exportLeadsCsv(repo, { q: 'niente da trovare' });
 
     const lines = csv.split('\r\n').filter((line) => line.length > 0);
     expect(lines).toEqual([CSV_HEADER]);
@@ -125,7 +171,7 @@ describe('exportQualifiedLeadsCsv', () => {
       })
     );
 
-    const csv = await exportQualifiedLeadsCsv(repo);
+    const csv = await exportLeadsCsv(repo);
 
     expect(csv).toContain('Studio Dentistico Rossi,,,,,,,,,,,,qualified,google_maps\r\n');
   });

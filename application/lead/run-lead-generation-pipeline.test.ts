@@ -60,6 +60,10 @@ function makeRepository(existingLeads: Lead[] = []) {
         : all;
       return { leads: filtered, total: filtered.length };
     },
+    async findMatchingLeads({ jobId }: { jobId?: string }) {
+      const all = [...leads.values()];
+      return jobId ? all.filter((lead) => lead.jobId === jobId) : all;
+    },
     async countLeadsByJobIds(jobIds) {
       const counts = new Map<string, number>();
       for (const lead of leads.values()) {

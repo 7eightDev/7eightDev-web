@@ -145,6 +145,47 @@ describe('InMemoryLeadRepository', () => {
     );
   });
 
+  it('returns all matching leads newest first with combined filters', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.save({
+      ...lead,
+      id: 'lead-1',
+      jobId: 'job-1',
+      status: 'qualified',
+      createdAt: '2026-01-03T00:00:00.000Z'
+    });
+    await repository.save({
+      ...lead,
+      id: 'lead-2',
+      jobId: 'job-1',
+      status: 'new',
+      createdAt: '2026-01-02T00:00:00.000Z'
+    });
+    await repository.save({
+      ...lead,
+      id: 'lead-3',
+      jobId: 'job-2',
+      status: 'qualified',
+      createdAt: '2026-01-01T00:00:00.000Z'
+    });
+    await repository.save({
+      ...lead,
+      id: 'lead-4',
+      jobId: 'job-1',
+      status: 'qualified',
+      companyName: 'Acme',
+      createdAt: '2026-01-04T00:00:00.000Z'
+    });
+
+    const matching = await repository.findMatchingLeads({
+      status: 'qualified',
+      jobId: 'job-1'
+    });
+
+    expect(matching.map((l) => l.id)).toEqual(['lead-4', 'lead-1']);
+  });
+
   it('returns an empty map when no leads are linked to the given jobs', async () => {
     const repository = new InMemoryLeadRepository();
 

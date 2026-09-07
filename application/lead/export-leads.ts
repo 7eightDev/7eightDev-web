@@ -18,17 +18,32 @@ export const LEAD_CSV_HEADER = [
   'source'
 ].join(',');
 
+/** Mirrors the filter dimensions of the leads page (job, status, source, q),
+ *  so the export matches exactly what is visible on screen. */
+export interface LeadExportFilters {
+  readonly status?: string;
+  readonly source?: string;
+  readonly q?: string;
+  readonly jobId?: string;
+}
+
 /**
- * Exports only the leads that are currently qualified, joined with their most
- * recent PageSpeed analysis, as a CSV string (RFC 4180-ish: comma separator,
+ * Exports the leads matching the given filters, joined with their most recent
+ * PageSpeed analysis, as a CSV string (RFC 4180-ish: comma separator,
  * double-quote escaping, CRLF line endings for Excel compatibility).
+ * Without filters it exports every lead, keeping the "qualification" column
+ * truthful to each lead's real status.
  */
-export async function exportQualifiedLeadsCsv(
-  repo: LeadRepository
+export async function exportLeadsCsv(
+  repo: LeadRepository,
+  filters: LeadExportFilters = {}
 ): Promise<string> {
-  const leads = (await repo.findAll()).filter(
-    (lead) => lead.status === 'qualified'
-  );
+  const leads = await repo.findMatchingLeads({
+    status: filters.status,
+    source: filters.source,
+    q: filters.q,
+    jobId: filters.jobId
+  });
 
   const rows = await Promise.all(
     leads.map(async (lead) => {
@@ -55,7 +70,7 @@ function toRow(lead: Lead, analysis: LeadAnalysis | undefined): string {
     analysis?.fcp,
     analysis?.cls,
     analysis?.tbt,
-    'qualified',
+    lead.status,
     lead.source
   ]
     .map(csvCell)
