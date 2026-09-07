@@ -87,7 +87,7 @@ export function LeadJobDeleteButton({
             Annulla
           </AlertDialogCancel>
           <AlertDialogAction
-            className="w-full"
+            className="w-full bg-accent-coral text-[#0a0b0d] hover:brightness-105"
             disabled={pending}
             onClick={(e) => {
               e.preventDefault();
