@@ -217,7 +217,7 @@ export default async function LeadsPage({
           </div>
         </div>
         <aside className="lg:col-start-1 lg:row-start-2 lg:sticky lg:top-6 flex flex-col gap-4">
-          <div className="lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 flex flex-col gap-3 lg:-mr-1">
+          <div className="lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 flex flex-col gap-3 lg:-mr-1 custom-scrollbar">
             {sidebarJobs.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-5 text-center">
                 <p className="font-hanken text-[13px] text-soft m-0">

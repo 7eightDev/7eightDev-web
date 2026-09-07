@@ -92,6 +92,26 @@ body {
   color: #0a0b0d;
 }
 
+@utility custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dim) transparent;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--dim);
+    border-radius: var(--radius);
+    transition: background 0.15s ease;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
