@@ -294,8 +294,8 @@ export function LeadFilterBar({
       </div>
 
       {/* Row 2: operational filter band (search | status | clear) */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <div className="flex items-center gap-2">
+      <div className="mx-auto mt-6 flex w-full max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <input
             type="search"
             value={draftQ}
@@ -303,7 +303,7 @@ export function LeadFilterBar({
             placeholder="Cerca lead…"
             aria-label="Cerca lead"
             className={cn(
-              "w-44 sm:w-56",
+              "w-56 min-w-0 flex-1 sm:flex-1",
               inputBase,
               qActive && "border-accent"
             )}
