@@ -1,3 +1,5 @@
+import type { Lead } from '@/domain/lead/lead.types';
+
 export interface CopyrightPort {
   /**
    * Extracts the footer copyright line from a website's homepage, e.g.
@@ -26,4 +28,30 @@ export function isCopyrightPayload(text: string | null | undefined): boolean {
     return true;
   }
   return false;
+}
+
+/** First 4-digit year found in a footer copyright text, if any. */
+export function extractCopyrightYear(
+  text: string | null | undefined
+): number | undefined {
+  if (!text) return undefined;
+  const match = /\b(?:19|20)\d{2}\b/.exec(text);
+  return match ? Number(match[0]) : undefined;
+}
+
+/**
+ * True when a lead's footer year falls inside an inclusive from/to range.
+ * Leads without a detectable year never match an active range.
+ */
+export function leadMatchesYearRange(
+  lead: Lead,
+  from: number | undefined,
+  to: number | undefined
+): boolean {
+  if (from === undefined && to === undefined) return true;
+  const year = extractCopyrightYear(lead.copyright);
+  if (year === undefined) return false;
+  if (from !== undefined && year < from) return false;
+  if (to !== undefined && year > to) return false;
+  return true;
 }

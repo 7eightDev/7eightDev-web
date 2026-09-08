@@ -10,15 +10,11 @@ import {
   useTransition,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
 import { ToggleGroup, ToggleGroupItem } from "@/presentation/components/ui/toggle-group";
 import { Button } from "@/presentation/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/presentation/components/ui/popover";
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { LeadJobDrawer } from "@/presentation/features/admin/leads/lead-job-drawer";
 import { cn } from "@/presentation/lib/utils";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
@@ -26,7 +22,6 @@ import {
   DEFAULT_LEAD_STATUS_FILTER,
   DEFAULT_SCORE_FILTER,
   DEFAULT_SOURCE_FILTER,
-  DEFAULT_COPYRIGHT_FILTER,
   LEAD_STATUS_FILTER_LABEL,
   SCORE_FILTER_LABEL,
   SOURCE_FILTER_LABEL,
@@ -35,7 +30,6 @@ import {
   type ScoreFilter,
   type SourceFilter,
   type TechStackFilter,
-  type CopyrightFilter,
 } from "@/presentation/features/admin/leads/lead-filters";
 
 /** Serializable shape of a job passed down from the server page. Structurally
@@ -61,9 +55,10 @@ interface LeadFilterBarProps {
   jobs: ToolbarJob[];
   activeJobId: string | undefined;
   techStack: TechStackFilter;
-  copyright: CopyrightFilter;
+  copyrightFrom: number | undefined;
+  copyrightTo: number | undefined;
   availableTechStacks: string[];
-  availableCopyrights: string[];
+  availableYears: number[];
 }
 
 const ALL_STATUSES: LeadStatusFilter[] = [
@@ -96,9 +91,10 @@ export function LeadFilterBar({
   jobs,
   activeJobId,
   techStack,
-  copyright,
+  copyrightFrom,
+  copyrightTo,
   availableTechStacks,
-  availableCopyrights,
+  availableYears,
 }: LeadFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -106,6 +102,11 @@ export function LeadFilterBar({
   const [isPending, startTransition] = useTransition();
   const [draftQ, setDraftQ] = useState(q);
   const [jobDrawerOpen, setJobDrawerOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const panelMotion = reduceMotion
+    ? { initial: { height: "auto", opacity: 1 }, exit: { height: "auto", opacity: 1 } }
+    : { initial: { height: 0, opacity: 0 }, exit: { height: 0, opacity: 0 } };
 
   const push = useCallback(
     (patch: Record<string, string>, deletes: string[] = []) => {
@@ -170,13 +171,21 @@ export function LeadFilterBar({
         ? { tech: "" }
         : { tech: serializeTechStackFilter(value) }
     );
-  const setCopyright = (value: CopyrightFilter) =>
-    push(
-      value === DEFAULT_COPYRIGHT_FILTER ? { copyright: "" } : { copyright: value }
-    );
+  const setCopyrightFrom = (value: string) =>
+    push(value === "" ? { "year-from": "" } : { "year-from": value });
+  const setCopyrightTo = (value: string) =>
+    push(value === "" ? { "year-to": "" } : { "year-to": value });
 
   const clearAll = () =>
-    push({ status: "", score: "", source: "", q: "", tech: "", copyright: "" });
+    push({
+      status: "",
+      score: "",
+      source: "",
+      q: "",
+      tech: "",
+      "year-from": "",
+      "year-to": "",
+    });
 
   const clearSearch = () => {
     setDraftQ("");
@@ -189,15 +198,17 @@ export function LeadFilterBar({
     score !== DEFAULT_SCORE_FILTER ||
     source !== DEFAULT_SOURCE_FILTER ||
     techStack.length > 0 ||
-    copyright !== DEFAULT_COPYRIGHT_FILTER ||
+    copyrightFrom !== undefined ||
+    copyrightTo !== undefined ||
     q !== "";
 
   const qActive = q !== "";
   const scoreActive = score !== DEFAULT_SCORE_FILTER;
   const sourceActive = source !== DEFAULT_SOURCE_FILTER;
   const techStackActive = techStack.length > 0;
-  const copyrightActive = copyright !== DEFAULT_COPYRIGHT_FILTER;
-  // Hidden filters live in the popover: badge shows how many are active.
+  const copyrightActive = copyrightFrom !== undefined || copyrightTo !== undefined;
+  // Hidden filters live in the collapsible panel: the chevron turns accent
+  // when any is active.
   const advancedActive =
     (scoreActive ? 1 : 0) +
     (sourceActive ? 1 : 0) +
@@ -207,9 +218,17 @@ export function LeadFilterBar({
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
   // The CSV export mirrors the current filter context (job, status, source,
-  // free-text), forwarding the same params the server page reads.
+  // free-text, tech, year range), forwarding the same params the server reads.
   const exportHref = useMemo(() => {
-    const keep = ["status", "source", "q", "job", "tech", "copyright"];
+    const keep = [
+      "status",
+      "source",
+      "q",
+      "job",
+      "tech",
+      "year-from",
+      "year-to",
+    ];
     const params = new URLSearchParams(searchParams.toString());
     for (const key of [...params.keys()]) {
       if (!keep.includes(key)) params.delete(key);
@@ -224,7 +243,7 @@ export function LeadFilterBar({
         role="toolbar"
         aria-label="Filtri lead"
         data-pending={isPending ? "" : undefined}
-        className="-mx-8 px-8 pt-8 pb-6 flex flex-col gap-3 border-b border-border transition-opacity data-[pending]:opacity-60"
+        className="-mx-8 px-8 pt-8 flex flex-col gap-3 transition-opacity data-[pending]:opacity-60"
       >
       {/* Row 1: action header (title + job selector | global actions) */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
@@ -274,7 +293,7 @@ export function LeadFilterBar({
         </div>
       </div>
 
-      {/* Row 2: operational filter band (search | status | advanced filters) */}
+      {/* Row 2: operational filter band (search | status | clear) */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-center gap-2">
           <input
@@ -338,119 +357,161 @@ export function LeadFilterBar({
             Azzera filtri
           </button>
         )}
-
-        <div className="flex items-center gap-2 ml-auto">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                aria-label="Filtri avanzati"
-                aria-pressed={advancedActive > 0}
-                title="Filtri avanzati"
-                className={cn(
-                  "inline-flex items-center gap-1.5 h-9 rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
-                  advancedActive > 0
-                    ? "text-accent border-accent bg-accent/[0.06]"
-                    : "text-soft hover:text-foreground"
-                )}
-              >
-                <HugeiconsIcon icon={FilterHorizontalIcon} size={14} aria-hidden />
-                Filtri avanzati
-                {advancedActive > 0 && (
-                  <span className="font-mono text-[10px] leading-none px-1.5 py-[3px] rounded-full bg-accent text-[#0a0b0d] font-bold">
-                    {advancedActive}
-                  </span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-64 p-2.5">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
-                    Score
-                  </span>
-                  <select
-                    value={score}
-                    onChange={(e) => setScore(e.target.value as ScoreFilter)}
-                    className={cn(
-                      selectBase,
-                      "w-full",
-                      scoreActive && selectActive
-                    )}
-                    aria-label="Filtro per score"
-                  >
-                    {(Object.keys(SCORE_FILTER_LABEL) as ScoreFilter[]).map(
-                      (value) => (
-                        <option key={value} value={value}>
-                          {SCORE_FILTER_LABEL[value]}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
-                    Sorgente
-                  </span>
-                  <select
-                    value={source}
-                    onChange={(e) => setSource(e.target.value as SourceFilter)}
-                    className={cn(
-                      selectBase,
-                      "w-full",
-                      sourceActive && selectActive
-                    )}
-                    aria-label="Filtro per sorgente"
-                  >
-                    {(Object.keys(SOURCE_FILTER_LABEL) as SourceFilter[]).map(
-                      (value) => (
-                        <option key={value} value={value}>
-                          {SOURCE_FILTER_LABEL[value]}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
-                    Tech Stack
-                  </span>
-                  <TechStackMultiselect
-                    value={techStack}
-                    onChange={setTechStack}
-                    options={availableTechStacks}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
-                    Copyright
-                  </span>
-                  <select
-                    value={copyright}
-                    onChange={(e) => setCopyright(e.target.value)}
-                    className={cn(
-                      selectBase,
-                      "w-full",
-                      copyrightActive && selectActive
-                    )}
-                    aria-label="Filtro per copyright"
-                  >
-                    <option value="">tutti</option>
-                    {availableCopyrights.map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
       </div>
+
+      {/* Advanced filters toggle: centered chevron on a divider line */}
+      <div className="relative flex items-center my-3">
+        <div className="flex-1 border-t border-border" />
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen((prev) => !prev)}
+          aria-expanded={advancedOpen}
+          aria-label={advancedOpen ? "Chiudi filtri avanzati" : "Apri filtri avanzati"}
+          className={cn(
+            "mx-3 flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-150 cursor-pointer",
+            advancedActive > 0
+              ? "border-accent bg-accent/[0.08] text-accent hover:bg-accent/[0.14]"
+              : "border-border bg-surface text-soft hover:text-foreground hover:bg-accent/[0.06]"
+          )}
+        >
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            size={14}
+            aria-hidden
+            className={cn(
+              "transition-transform duration-200",
+              advancedOpen && "rotate-180"
+            )}
+          />
+        </button>
+        <div className="flex-1 border-t border-border" />
+      </div>
+
+      {/* Advanced filters panel (collapsible) */}
+      <AnimatePresence initial={false}>
+      {advancedOpen && (
+        <motion.div
+          key="advanced-filters-panel"
+          className="overflow-hidden"
+          initial={panelMotion.initial}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={panelMotion.exit}
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : { duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }
+          }
+        >
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                Score
+              </span>
+              <select
+                value={score}
+                onChange={(e) => setScore(e.target.value as ScoreFilter)}
+                className={cn(
+                  selectBase,
+                  "w-full",
+                  scoreActive && selectActive
+                )}
+                aria-label="Filtro per score"
+              >
+                {(Object.keys(SCORE_FILTER_LABEL) as ScoreFilter[]).map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {SCORE_FILTER_LABEL[value]}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                Sorgente
+              </span>
+              <select
+                value={source}
+                onChange={(e) => setSource(e.target.value as SourceFilter)}
+                className={cn(
+                  selectBase,
+                  "w-full",
+                  sourceActive && selectActive
+                )}
+                aria-label="Filtro per sorgente"
+              >
+                {(Object.keys(SOURCE_FILTER_LABEL) as SourceFilter[]).map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {SOURCE_FILTER_LABEL[value]}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                Copyright
+              </span>
+              <div className="flex items-center gap-2">
+                <select
+                  value={copyrightFrom ?? ""}
+                  onChange={(e) => setCopyrightFrom(e.target.value)}
+                  aria-label="Anno copyright minimo"
+                  className={cn(
+                    selectBase,
+                    "flex-1 min-w-0",
+                    copyrightActive && selectActive
+                  )}
+                >
+                  <option value="">da</option>
+                  {availableYears.map((year) => (
+                    <option key={year} value={String(year)}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+                <span className="shrink-0 font-mono text-[11px] text-muted">
+                  –
+                </span>
+                <select
+                  value={copyrightTo ?? ""}
+                  onChange={(e) => setCopyrightTo(e.target.value)}
+                  aria-label="Anno copyright massimo"
+                  className={cn(
+                    selectBase,
+                    "flex-1 min-w-0",
+                    copyrightActive && selectActive
+                  )}
+                >
+                  <option value="">a</option>
+                  {availableYears.map((year) => (
+                    <option key={year} value={String(year)}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+              Tech Stack
+            </span>
+            <TechStackMultiselect
+              value={techStack}
+              onChange={setTechStack}
+              options={availableTechStacks}
+            />
+          </div>
+        </div>
+        </motion.div>
+      )}
+      </AnimatePresence>
       </div>
 
       <LeadJobDrawer
@@ -469,7 +530,7 @@ interface TechStackMultiselectProps {
   options: string[];
 }
 
-/** Multi-select checkbox list for tech-stack filtering. */
+/** Compact chip row for tech-stack filtering — one line of selectable pills. */
 function TechStackMultiselect({
   value,
   onChange,
@@ -484,57 +545,46 @@ function TechStackMultiselect({
   };
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-wrap items-center justify-between gap-1.5">
       {options.length === 0 ? (
         <span className="font-mono text-[11px] text-dim">
           Nessun tech rilevato
         </span>
       ) : (
-        <div className="flex max-h-40 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border p-1">
-          {options.map((option) => {
-            const checked = value.includes(option);
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => toggle(option)}
-                aria-pressed={checked}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2 py-1.5 text-left font-mono text-[12px] transition-colors cursor-pointer",
-                  checked
-                    ? "text-accent bg-accent/[0.08]"
-                    : "text-soft hover:text-foreground hover:bg-surface"
-                )}
-              >
-                <span
+        options.map((option) => {
+          const checked = value.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggle(option)}
+              aria-pressed={checked}
+              className={cn(
+                "inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 font-mono text-[11.5px] transition-colors cursor-pointer",
+                checked
+                  ? "border-accent bg-accent/[0.08] text-accent"
+                  : "border-border bg-surface text-soft hover:text-foreground hover:border-accent/40"
+              )}
+            >
+              {checked && (
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   aria-hidden
-                  className={cn(
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
-                    checked
-                      ? "border-accent bg-accent text-[#0a0b0d]"
-                      : "border-border"
-                  )}
                 >
-                  {checked && (
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </span>
-                <span className="truncate">{option}</span>
-              </button>
-            );
-          })}
-        </div>
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              <span className="truncate">{option}</span>
+            </button>
+          );
+        })
       )}
     </div>
   );

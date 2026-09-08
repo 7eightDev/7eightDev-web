@@ -3,6 +3,7 @@ import {
   hasCriteria,
   leadMatchesCriteria
 } from '@/domain/lead/lead.criteria';
+import { leadMatchesYearRange } from '@/domain/lead/lead.copyright';
 import type { Lead, LeadAnalysis } from '@/domain/lead/lead.types';
 export const LEAD_CSV_HEADER = [
   'company',
@@ -22,14 +23,16 @@ export const LEAD_CSV_HEADER = [
 ].join(',');
 
 /** Mirrors the filter dimensions of the leads page (job, status, source, q,
- *  tech, copyright), so the export matches exactly what is visible on screen. */
+ *  tech, copyright year range), so the export matches exactly what is visible
+ *  on screen. */
 export interface LeadExportFilters {
   readonly status?: string;
   readonly source?: string;
   readonly q?: string;
   readonly jobId?: string;
   readonly techStack?: string[];
-  readonly copyright?: string;
+  readonly copyrightFrom?: number;
+  readonly copyrightTo?: number;
 }
 
 /**
@@ -58,7 +61,8 @@ export async function exportLeadsCsv(
       ? leads.filter((lead) => leadMatchesCriteria(lead, job))
       : leads;
 
-  // Additional in-memory filters: tech-stack multiselect (any-of) and copyright.
+  // Additional in-memory filters: tech-stack multiselect (any-of) and the
+  // copyright year range.
   const criteriaLeads = jobCriteriaLeads.filter((lead) => {
     if (filters.techStack && filters.techStack.length > 0) {
       const leadTechs = (lead.techStack ?? []).map((t) => t.toLowerCase());
@@ -67,14 +71,14 @@ export async function exportLeadsCsv(
       );
       if (!hit) return false;
     }
-    if (filters.copyright) {
-      if (
-        !lead.copyright
-          ?.toLowerCase()
-          .includes(filters.copyright.toLowerCase())
-      ) {
-        return false;
-      }
+    if (
+      !leadMatchesYearRange(
+        lead,
+        filters.copyrightFrom,
+        filters.copyrightTo
+      )
+    ) {
+      return false;
     }
     return true;
   });

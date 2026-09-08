@@ -1,3 +1,4 @@
+import { extractCopyrightYear, leadMatchesYearRange } from '@/domain/lead/lead.copyright';
 import type { Lead } from '@/domain/lead/lead.types';
 
 /** Extract unique tech-stack names (sorted) from a list of leads. */
@@ -11,13 +12,14 @@ export function uniqueTechStacks(leads: readonly Lead[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 
-/** Extract unique copyright strings (sorted) from a list of leads. */
-export function uniqueCopyrights(leads: readonly Lead[]): string[] {
-  const set = new Set<string>();
+/** Extract unique footer years (sorted ascending) from a list of leads. */
+export function uniqueCopyrightYears(leads: readonly Lead[]): number[] {
+  const set = new Set<number>();
   for (const lead of leads) {
-    if (lead.copyright) set.add(lead.copyright);
+    const year = extractCopyrightYear(lead.copyright);
+    if (year !== undefined) set.add(year);
   }
-  return [...set].sort((a, b) => a.localeCompare(b));
+  return [...set].sort((a, b) => a - b);
 }
 
 /**
@@ -135,16 +137,14 @@ export function serializeTechStackFilter(techs: TechStackFilter): string {
   return techs.join(',');
 }
 
-/* ----------------------------- Copyright (select) --------------- */
+/* ----------------------------- Copyright (year range) ------------ */
 
-export type CopyrightFilter = string;
-
-export const DEFAULT_COPYRIGHT_FILTER: CopyrightFilter = '';
-
-export function parseCopyrightFilter(
-  raw: string | undefined
-): CopyrightFilter {
-  return raw?.trim() ?? DEFAULT_COPYRIGHT_FILTER;
+/** Parse a "YYYY" URL value; undefined when absent or not a plausible year. */
+export function parseYearFilter(raw: string | undefined): number | undefined {
+  if (!raw) return undefined;
+  if (!/^\d{4}$/.test(raw)) return undefined;
+  const year = Number(raw);
+  return year >= 1900 && year <= 2100 ? year : undefined;
 }
 
 /* ----------------------------- Sort ----------------------------- */
@@ -229,7 +229,8 @@ export interface LeadFilters {
   readonly q: string;
   readonly sort: SortOption;
   readonly techStack?: TechStackFilter;
-  readonly copyright?: CopyrightFilter;
+  readonly copyrightFrom?: number;
+  readonly copyrightTo?: number;
 }
 
 /**
@@ -288,14 +289,8 @@ export function filterLeads(
       );
       if (!match) return false;
     }
-    if (filters.copyright) {
-      if (
-        !lead.copyright
-          ?.toLowerCase()
-          .includes(filters.copyright.toLowerCase())
-      ) {
-        return false;
-      }
+    if (!leadMatchesYearRange(lead, filters.copyrightFrom, filters.copyrightTo)) {
+      return false;
     }
     return true;
   });

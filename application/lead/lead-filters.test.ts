@@ -6,6 +6,8 @@ import {
   parseScoreFilter,
   parseSourceFilter,
   parseSortOption,
+  parseYearFilter,
+  uniqueCopyrightYears,
   toggleColumnSort,
   type LeadReadModel,
   type LeadStatusFilter,
@@ -83,6 +85,34 @@ describe('lead-filters parsers', () => {
   it('parseSortOption accepts valid sort options', () => {
     expect(parseSortOption('name-asc')).toBe('name-asc');
     expect(parseSortOption('score-desc')).toBe('score-desc');
+  });
+
+  it('parseYearFilter returns undefined for absent or implausible values', () => {
+    expect(parseYearFilter(undefined)).toBeUndefined();
+    expect(parseYearFilter('bogus')).toBeUndefined();
+    expect(parseYearFilter('201')).toBeUndefined();
+    expect(parseYearFilter('1800')).toBeUndefined();
+  });
+
+  it('parseYearFilter accepts a 4-digit year', () => {
+    expect(parseYearFilter('2016')).toBe(2016);
+    expect(parseYearFilter('2026')).toBe(2026);
+  });
+});
+
+describe('uniqueCopyrightYears — extracts distinct footer years', () => {
+  it('collects years from lead copyrights, sorted ascending', () => {
+    const leads = [
+      makeLead({ id: '1', companyName: 'A', copyright: '© 2024 Studio' }),
+      makeLead({ id: '2', companyName: 'B', copyright: 'Grant 2019 srl' }),
+      makeLead({ id: '3', companyName: 'C', copyright: '© 2025 Studio' }),
+      makeLead({ id: '4', companyName: 'D' })
+    ];
+    expect(uniqueCopyrightYears(leads)).toEqual([2019, 2024, 2025]);
+  });
+
+  it('returns an empty list when no copyright carries a year', () => {
+    expect(uniqueCopyrightYears([makeLead({ id: '1', companyName: 'A' })])).toEqual([]);
   });
 });
 
@@ -297,9 +327,7 @@ describe('filterLeads — tech stack', () => {
         source: ALL_SOURCE,
         q: NO_Q,
         sort: ALL_SORT,
-        techStack: [],
-        copyright: ''
-      })
+        techStack: []})
     ).toHaveLength(3);
   });
 
@@ -310,9 +338,7 @@ describe('filterLeads — tech stack', () => {
       source: ALL_SOURCE,
       q: NO_Q,
       sort: ALL_SORT,
-      techStack: ['WordPress', 'React'],
-      copyright: ''
-    });
+      techStack: ['WordPress', 'React']});
     expect(result.map((r) => r.lead.id).sort()).toEqual(['1', '2']);
   });
 
@@ -323,9 +349,7 @@ describe('filterLeads — tech stack', () => {
       source: ALL_SOURCE,
       q: NO_Q,
       sort: ALL_SORT,
-      techStack: ['Next.js'],
-      copyright: ''
-    });
+      techStack: ['Next.js']});
     expect(result.map((r) => r.lead.id)).toEqual(['2']);
   });
 
@@ -336,9 +360,7 @@ describe('filterLeads — tech stack', () => {
       source: ALL_SOURCE,
       q: NO_Q,
       sort: ALL_SORT,
-      techStack: ['wordpress'],
-      copyright: ''
-    });
+      techStack: ['wordpress']});
     expect(result.map((r) => r.lead.id)).toEqual(['1']);
   });
 
@@ -349,58 +371,61 @@ describe('filterLeads — tech stack', () => {
       source: ALL_SOURCE,
       q: NO_Q,
       sort: ALL_SORT,
-      techStack: ['WordPress'],
-      copyright: ''
-    });
+      techStack: ['WordPress']});
     expect(result.some((r) => r.lead.id === '3')).toBe(false);
   });
 });
 
-describe('filterLeads — copyright', () => {
+describe('filterLeads — copyright year range', () => {
   const rows: LeadReadModel[] = [
-    row(makeLead({ id: '1', companyName: 'A', copyright: '© 2024' })),
-    row(makeLead({ id: '2', companyName: 'B', copyright: '© 2025' })),
+    row(makeLead({ id: '1', companyName: 'A', copyright: '© 2024 Studio' })),
+    row(makeLead({ id: '2', companyName: 'B', copyright: '© 2025 Studio' })),
     row(makeLead({ id: '3', companyName: 'C' }))
   ];
 
-  it('no filter shows all', () => {
-    expect(
-      filterLeads(rows, {
-        status: ALL,
-        score: ALL_SCORE,
-        source: ALL_SOURCE,
-        q: NO_Q,
-        sort: ALL_SORT,
-        techStack: [],
-        copyright: ''
-      })
-    ).toHaveLength(3);
+  const base: {
+    status: LeadStatusFilter;
+    score: ScoreFilter;
+    source: SourceFilter;
+    q: string;
+    sort: SortOption;
+    techStack: string[];
+  } = {
+    status: ALL,
+    score: ALL_SCORE,
+    source: ALL_SOURCE,
+    q: NO_Q,
+    sort: ALL_SORT,
+    techStack: []
+  };
+
+  it('no range shows all', () => {
+    expect(filterLeads(rows, base)).toHaveLength(3);
   });
 
-  it('matches an exact copyright value', () => {
+  it('matches leads up to a year (before 2016 case)', () => {
+    const result = filterLeads(rows, { ...base, copyrightTo: 2024 });
+    expect(result.map((r) => r.lead.id)).toEqual(['1']);
+  });
+
+  it('matches leads from a year onward', () => {
+    const result = filterLeads(rows, { ...base, copyrightFrom: 2025 });
+    expect(result.map((r) => r.lead.id)).toEqual(['2']);
+  });
+
+  it('supports a from/to range', () => {
     const result = filterLeads(rows, {
-      status: ALL,
-      score: ALL_SCORE,
-      source: ALL_SOURCE,
-      q: NO_Q,
-      sort: ALL_SORT,
-      techStack: [],
-      copyright: '© 2024'
+      ...base,
+      copyrightFrom: 2024,
+      copyrightTo: 2024
     });
     expect(result.map((r) => r.lead.id)).toEqual(['1']);
   });
 
-  it('empty copyright is not matched', () => {
-    const result = filterLeads(rows, {
-      status: ALL,
-      score: ALL_SCORE,
-      source: ALL_SOURCE,
-      q: NO_Q,
-      sort: ALL_SORT,
-      techStack: [],
-      copyright: '2024'
-    });
+  it('leads without a year never match an active range', () => {
+    const result = filterLeads(rows, { ...base, copyrightTo: 2026 });
     expect(result.some((r) => r.lead.id === '3')).toBe(false);
+    expect(result).toHaveLength(2);
   });
 });
 
