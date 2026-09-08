@@ -20,6 +20,10 @@ import {
   parseScoreFilter,
   parseSourceFilter,
   parseSortOption,
+  parseTechStackFilter,
+  parseCopyrightFilter,
+  uniqueCopyrights,
+  uniqueTechStacks,
 } from "@/presentation/features/admin/leads/lead-filters";
 import {
   LeadTable,
@@ -44,6 +48,8 @@ export default async function LeadsPage({
     source: parseSourceFilter(param("source")),
     q: (param("q") ?? "").trim(),
     sort: parseSortOption(param("sort")),
+    techStack: parseTechStackFilter(param("tech")),
+    copyright: parseCopyrightFilter(param("copyright")),
   };
 
   const rawPage = parseInt(param("page") ?? "1", 10);
@@ -104,6 +110,11 @@ export default async function LeadsPage({
     };
   });
 
+  // Distinct options for the advanced filters (tech stack multiselect and
+  // copyright select), derived from the lead set the user can actually reach.
+  const availableTechStacks = uniqueTechStacks(criteriaLeads);
+  const availableCopyrights = uniqueCopyrights(criteriaLeads);
+
   // Score filter and column sort run on the FULL matching set, so the order is
   // stable across pages and the count reflects every active filter — not just
   // the current page loaded by the repository.
@@ -122,6 +133,10 @@ export default async function LeadsPage({
       ...(filters.status !== "all" && { status: filters.status }),
       ...(filters.score !== "all" && { score: filters.score }),
       ...(filters.source !== "all" && { source: filters.source }),
+      ...(filters.techStack.length > 0 && {
+        tech: filters.techStack.join(","),
+      }),
+      ...(filters.copyright !== "" && { copyright: filters.copyright }),
       ...(filters.q && { q: filters.q }),
       ...(filters.sort !== "date-desc" && { sort: filters.sort }),
       ...(jobId && { job: jobId }),
@@ -135,6 +150,8 @@ export default async function LeadsPage({
     filters.status !== "all" ||
     filters.score !== "all" ||
     filters.source !== "all" ||
+    filters.techStack.length > 0 ||
+    filters.copyright !== "" ||
     filters.q !== "" ||
     jobId !== undefined;
 
@@ -163,6 +180,10 @@ export default async function LeadsPage({
           q={filters.q}
           jobs={toolbarJobs}
           activeJobId={jobId}
+          techStack={filters.techStack}
+          copyright={filters.copyright}
+          availableTechStacks={availableTechStacks}
+          availableCopyrights={availableCopyrights}
         />
 
         {activeJob && (

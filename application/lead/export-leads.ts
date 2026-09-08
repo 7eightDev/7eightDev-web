@@ -4,7 +4,6 @@ import {
   leadMatchesCriteria
 } from '@/domain/lead/lead.criteria';
 import type { Lead, LeadAnalysis } from '@/domain/lead/lead.types';
-
 export const LEAD_CSV_HEADER = [
   'company',
   'category',
@@ -22,13 +21,15 @@ export const LEAD_CSV_HEADER = [
   'source'
 ].join(',');
 
-/** Mirrors the filter dimensions of the leads page (job, status, source, q),
- *  so the export matches exactly what is visible on screen. */
+/** Mirrors the filter dimensions of the leads page (job, status, source, q,
+ *  tech, copyright), so the export matches exactly what is visible on screen. */
 export interface LeadExportFilters {
   readonly status?: string;
   readonly source?: string;
   readonly q?: string;
   readonly jobId?: string;
+  readonly techStack?: string[];
+  readonly copyright?: string;
 }
 
 /**
@@ -52,10 +53,31 @@ export async function exportLeadsCsv(
   // A job's tech/copyright criteria act as a view filter (never destructive):
   // the export mirrors the on-screen list, non-matching leads stay stored.
   const job = filters.jobId ? await repo.findJobById(filters.jobId) : null;
-  const criteriaLeads =
+  const jobCriteriaLeads =
     job && hasCriteria(job)
       ? leads.filter((lead) => leadMatchesCriteria(lead, job))
       : leads;
+
+  // Additional in-memory filters: tech-stack multiselect (any-of) and copyright.
+  const criteriaLeads = jobCriteriaLeads.filter((lead) => {
+    if (filters.techStack && filters.techStack.length > 0) {
+      const leadTechs = (lead.techStack ?? []).map((t) => t.toLowerCase());
+      const hit = filters.techStack.some((t) =>
+        leadTechs.some((lt) => lt.includes(t.toLowerCase()))
+      );
+      if (!hit) return false;
+    }
+    if (filters.copyright) {
+      if (
+        !lead.copyright
+          ?.toLowerCase()
+          .includes(filters.copyright.toLowerCase())
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   const rows = await Promise.all(
     criteriaLeads.map(async (lead) => {

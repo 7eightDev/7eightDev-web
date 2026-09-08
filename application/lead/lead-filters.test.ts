@@ -267,6 +267,144 @@ describe('filterLeads — source', () => {
 });
 
 /* ------------------------------------------------------------------ */
+/*  filterLeads — tech stack & copyright                              */
+/* ------------------------------------------------------------------ */
+
+describe('filterLeads — tech stack', () => {
+  const rows: LeadReadModel[] = [
+    row(
+      makeLead({
+        id: '1',
+        companyName: 'A',
+        techStack: ['WordPress', 'jQuery']
+      })
+    ),
+    row(
+      makeLead({
+        id: '2',
+        companyName: 'B',
+        techStack: ['React', 'Next.js']
+      })
+    ),
+    row(makeLead({ id: '3', companyName: 'C', techStack: [] }))
+  ];
+
+  it('no filter shows all', () => {
+    expect(
+      filterLeads(rows, {
+        status: ALL,
+        score: ALL_SCORE,
+        source: ALL_SOURCE,
+        q: NO_Q,
+        sort: ALL_SORT,
+        techStack: [],
+        copyright: ''
+      })
+    ).toHaveLength(3);
+  });
+
+  it('matches any-of selected tech (OR)', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT,
+      techStack: ['WordPress', 'React'],
+      copyright: ''
+    });
+    expect(result.map((r) => r.lead.id).sort()).toEqual(['1', '2']);
+  });
+
+  it('matches a single tech', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT,
+      techStack: ['Next.js'],
+      copyright: ''
+    });
+    expect(result.map((r) => r.lead.id)).toEqual(['2']);
+  });
+
+  it('partial (substring) match is case-insensitive', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT,
+      techStack: ['wordpress'],
+      copyright: ''
+    });
+    expect(result.map((r) => r.lead.id)).toEqual(['1']);
+  });
+
+  it('no tech on the lead never matches', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT,
+      techStack: ['WordPress'],
+      copyright: ''
+    });
+    expect(result.some((r) => r.lead.id === '3')).toBe(false);
+  });
+});
+
+describe('filterLeads — copyright', () => {
+  const rows: LeadReadModel[] = [
+    row(makeLead({ id: '1', companyName: 'A', copyright: '© 2024' })),
+    row(makeLead({ id: '2', companyName: 'B', copyright: '© 2025' })),
+    row(makeLead({ id: '3', companyName: 'C' }))
+  ];
+
+  it('no filter shows all', () => {
+    expect(
+      filterLeads(rows, {
+        status: ALL,
+        score: ALL_SCORE,
+        source: ALL_SOURCE,
+        q: NO_Q,
+        sort: ALL_SORT,
+        techStack: [],
+        copyright: ''
+      })
+    ).toHaveLength(3);
+  });
+
+  it('matches an exact copyright value', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT,
+      techStack: [],
+      copyright: '© 2024'
+    });
+    expect(result.map((r) => r.lead.id)).toEqual(['1']);
+  });
+
+  it('empty copyright is not matched', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT,
+      techStack: [],
+      copyright: '2024'
+    });
+    expect(result.some((r) => r.lead.id === '3')).toBe(false);
+  });
+});
+
+/* ------------------------------------------------------------------ */
 /*  filterLeads — text search                                         */
 /* ------------------------------------------------------------------ */
 
@@ -346,7 +484,6 @@ describe('filterLeads — text search', () => {
 /* ------------------------------------------------------------------ */
 /*  filterLeads — composition                                         */
 /* ------------------------------------------------------------------ */
-
 describe('filterLeads — composition', () => {
   const rows: LeadReadModel[] = [
     row(

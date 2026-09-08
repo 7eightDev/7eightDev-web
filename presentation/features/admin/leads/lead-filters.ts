@@ -1,5 +1,25 @@
 import type { Lead } from '@/domain/lead/lead.types';
 
+/** Extract unique tech-stack names (sorted) from a list of leads. */
+export function uniqueTechStacks(leads: readonly Lead[]): string[] {
+  const set = new Set<string>();
+  for (const lead of leads) {
+    for (const tech of lead.techStack ?? []) {
+      set.add(tech);
+    }
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+/** Extract unique copyright strings (sorted) from a list of leads. */
+export function uniqueCopyrights(leads: readonly Lead[]): string[] {
+  const set = new Set<string>();
+  for (const lead of leads) {
+    if (lead.copyright) set.add(lead.copyright);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 /**
  * Pure, framework-agnostic filtering and sorting for the leads list view.
  *
@@ -93,6 +113,40 @@ export const SOURCE_FILTER_LABEL: Record<SourceFilter, string> = {
   serpapi: 'SerpAPI',
 };
 
+/* ----------------------------- Tech Stack (multiselect) ---------- */
+
+/** Comma-separated tech names in the URL, e.g. "WordPress,React". */
+export type TechStackFilter = string[];
+
+export const DEFAULT_TECH_STACK_FILTER: TechStackFilter = [];
+
+export function parseTechStackFilter(
+  raw: string | undefined
+): TechStackFilter {
+  if (!raw) return DEFAULT_TECH_STACK_FILTER;
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Serialise a tech-stack filter array back to a URL-safe comma string. */
+export function serializeTechStackFilter(techs: TechStackFilter): string {
+  return techs.join(',');
+}
+
+/* ----------------------------- Copyright (select) --------------- */
+
+export type CopyrightFilter = string;
+
+export const DEFAULT_COPYRIGHT_FILTER: CopyrightFilter = '';
+
+export function parseCopyrightFilter(
+  raw: string | undefined
+): CopyrightFilter {
+  return raw?.trim() ?? DEFAULT_COPYRIGHT_FILTER;
+}
+
 /* ----------------------------- Sort ----------------------------- */
 
 export const SORT_VALUES = [
@@ -174,6 +228,8 @@ export interface LeadFilters {
   readonly source: SourceFilter;
   readonly q: string;
   readonly sort: SortOption;
+  readonly techStack?: TechStackFilter;
+  readonly copyright?: CopyrightFilter;
 }
 
 /**
@@ -221,6 +277,23 @@ export function filterLeads(
       } else if (filters.score === 'medium' && (score < 50 || score >= 90)) {
         return false;
       } else if (filters.score === 'low' && score >= 50) {
+        return false;
+      }
+    }
+    const techStack = filters.techStack ?? [];
+    if (techStack.length > 0) {
+      const leadTechs = (lead.techStack ?? []).map((t) => t.toLowerCase());
+      const match = techStack.some((t) =>
+        leadTechs.some((lt) => lt.includes(t.toLowerCase()))
+      );
+      if (!match) return false;
+    }
+    if (filters.copyright) {
+      if (
+        !lead.copyright
+          ?.toLowerCase()
+          .includes(filters.copyright.toLowerCase())
+      ) {
         return false;
       }
     }

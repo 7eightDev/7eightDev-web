@@ -26,12 +26,16 @@ import {
   DEFAULT_LEAD_STATUS_FILTER,
   DEFAULT_SCORE_FILTER,
   DEFAULT_SOURCE_FILTER,
+  DEFAULT_COPYRIGHT_FILTER,
   LEAD_STATUS_FILTER_LABEL,
   SCORE_FILTER_LABEL,
   SOURCE_FILTER_LABEL,
+  serializeTechStackFilter,
   type LeadStatusFilter,
   type ScoreFilter,
   type SourceFilter,
+  type TechStackFilter,
+  type CopyrightFilter,
 } from "@/presentation/features/admin/leads/lead-filters";
 
 /** Serializable shape of a job passed down from the server page. Structurally
@@ -56,6 +60,10 @@ interface LeadFilterBarProps {
   q: string;
   jobs: ToolbarJob[];
   activeJobId: string | undefined;
+  techStack: TechStackFilter;
+  copyright: CopyrightFilter;
+  availableTechStacks: string[];
+  availableCopyrights: string[];
 }
 
 const ALL_STATUSES: LeadStatusFilter[] = [
@@ -87,6 +95,10 @@ export function LeadFilterBar({
   q,
   jobs,
   activeJobId,
+  techStack,
+  copyright,
+  availableTechStacks,
+  availableCopyrights,
 }: LeadFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -152,9 +164,19 @@ export function LeadFilterBar({
     push(
       value === DEFAULT_SOURCE_FILTER ? { source: "" } : { source: value }
     );
+  const setTechStack = (value: TechStackFilter) =>
+    push(
+      value.length === 0
+        ? { tech: "" }
+        : { tech: serializeTechStackFilter(value) }
+    );
+  const setCopyright = (value: CopyrightFilter) =>
+    push(
+      value === DEFAULT_COPYRIGHT_FILTER ? { copyright: "" } : { copyright: value }
+    );
 
   const clearAll = () =>
-    push({ status: "", score: "", source: "", q: "" });
+    push({ status: "", score: "", source: "", q: "", tech: "", copyright: "" });
 
   const clearSearch = () => {
     setDraftQ("");
@@ -166,21 +188,28 @@ export function LeadFilterBar({
     status !== DEFAULT_LEAD_STATUS_FILTER ||
     score !== DEFAULT_SCORE_FILTER ||
     source !== DEFAULT_SOURCE_FILTER ||
+    techStack.length > 0 ||
+    copyright !== DEFAULT_COPYRIGHT_FILTER ||
     q !== "";
 
   const qActive = q !== "";
   const scoreActive = score !== DEFAULT_SCORE_FILTER;
   const sourceActive = source !== DEFAULT_SOURCE_FILTER;
+  const techStackActive = techStack.length > 0;
+  const copyrightActive = copyright !== DEFAULT_COPYRIGHT_FILTER;
   // Hidden filters live in the popover: badge shows how many are active.
   const advancedActive =
-    (scoreActive ? 1 : 0) + (sourceActive ? 1 : 0);
+    (scoreActive ? 1 : 0) +
+    (sourceActive ? 1 : 0) +
+    (techStackActive ? 1 : 0) +
+    (copyrightActive ? 1 : 0);
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
   // The CSV export mirrors the current filter context (job, status, source,
   // free-text), forwarding the same params the server page reads.
   const exportHref = useMemo(() => {
-    const keep = ["status", "source", "q", "job"];
+    const keep = ["status", "source", "q", "job", "tech", "copyright"];
     const params = new URLSearchParams(searchParams.toString());
     for (const key of [...params.keys()]) {
       if (!keep.includes(key)) params.delete(key);
@@ -383,6 +412,40 @@ export function LeadFilterBar({
                     )}
                   </select>
                 </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                    Tech Stack
+                  </span>
+                  <TechStackMultiselect
+                    value={techStack}
+                    onChange={setTechStack}
+                    options={availableTechStacks}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                    Copyright
+                  </span>
+                  <select
+                    value={copyright}
+                    onChange={(e) => setCopyright(e.target.value)}
+                    className={cn(
+                      selectBase,
+                      "w-full",
+                      copyrightActive && selectActive
+                    )}
+                    aria-label="Filtro per copyright"
+                  >
+                    <option value="">tutti</option>
+                    {availableCopyrights.map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
@@ -397,5 +460,82 @@ export function LeadFilterBar({
         activeJobId={activeJobId}
       />
     </>
+  );
+}
+
+interface TechStackMultiselectProps {
+  value: TechStackFilter;
+  onChange: (value: TechStackFilter) => void;
+  options: string[];
+}
+
+/** Multi-select checkbox list for tech-stack filtering. */
+function TechStackMultiselect({
+  value,
+  onChange,
+  options,
+}: TechStackMultiselectProps) {
+  const toggle = (option: string) => {
+    if (value.includes(option)) {
+      onChange(value.filter((v) => v !== option));
+    } else {
+      onChange([...value, option]);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      {options.length === 0 ? (
+        <span className="font-mono text-[11px] text-dim">
+          Nessun tech rilevato
+        </span>
+      ) : (
+        <div className="flex max-h-40 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border p-1">
+          {options.map((option) => {
+            const checked = value.includes(option);
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => toggle(option)}
+                aria-pressed={checked}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-2 py-1.5 text-left font-mono text-[12px] transition-colors cursor-pointer",
+                  checked
+                    ? "text-accent bg-accent/[0.08]"
+                    : "text-soft hover:text-foreground hover:bg-surface"
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                    checked
+                      ? "border-accent bg-accent text-[#0a0b0d]"
+                      : "border-border"
+                  )}
+                >
+                  {checked && (
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </span>
+                <span className="truncate">{option}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,7 +1,9 @@
 import { exportLeadsCsv } from "@/application/lead/export-leads";
 import {
+  parseCopyrightFilter,
   parseLeadStatusFilter,
   parseSourceFilter,
+  parseTechStackFilter,
 } from "@/presentation/features/admin/leads/lead-filters";
 import { leadRepository, exportRateLimiter } from "@/infrastructure/container";
 
@@ -26,6 +28,8 @@ export async function GET(request: Request): Promise<Response> {
     source: parseSourceFilter(params.get("source") ?? undefined),
     q: (params.get("q") ?? "").trim(),
     jobId: params.get("job") ?? undefined,
+    techStack: parseTechStackFilter(params.get("tech") ?? undefined),
+    copyright: parseCopyrightFilter(params.get("copyright") ?? undefined),
   });
 
   return new Response(csv, {
