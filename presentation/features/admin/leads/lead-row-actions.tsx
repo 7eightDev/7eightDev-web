@@ -45,7 +45,7 @@ const iconBtn =
   "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const toggleBtn =
-  "relative z-20 inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "relative z-[5] inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const dangerIconBtn =
   "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-[var(--coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
@@ -108,7 +108,7 @@ export function LeadRowActions({
       <div ref={cellRef} className="relative inline-flex items-center justify-end self-stretch">
         <div
           inert={!menuOpen}
-          className={`absolute top-1/2 right-0 z-10 flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-14 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+          className={`absolute top-1/2 right-0 z-[5] flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-14 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
             menuOpen
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"
