@@ -4,6 +4,13 @@ import type {
   LeadDiscoveryPort
 } from '@/domain/lead/lead.discovery';
 import { withRetry, HttpError } from '@/infrastructure/shared/retry';
+import {
+  QUOTA_BUCKET_PLACES_TEXT_SEARCH,
+  type DailyQuotaGuard,
+} from '@/infrastructure/shared/daily-quota-guard';
+import { createLogger } from '@/infrastructure/logging/logger';
+
+const log = createLogger('places-discovery');
 
 interface GooglePlacesLeadDiscoveryConfig {
   readonly apiKey?: string;
@@ -13,6 +20,7 @@ interface GooglePlacesLeadDiscoveryConfig {
   readonly maxRetries?: number;
   readonly pageSize?: number;
   readonly maxPages?: number;
+  readonly quotaGuard?: DailyQuotaGuard;
 }
 
 interface TextSearchRequest {
@@ -59,6 +67,7 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
   private readonly maxRetries: number;
   private readonly pageSize: number;
   private readonly maxPages: number;
+  private readonly quotaGuard?: DailyQuotaGuard;
 
   constructor(config: GooglePlacesLeadDiscoveryConfig = {}) {
     this.apiKey = config.apiKey;
@@ -68,6 +77,7 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
     this.maxRetries = config.maxRetries ?? 2;
     this.pageSize = config.pageSize ?? DEFAULT_PAGE_SIZE;
     this.maxPages = config.maxPages ?? DEFAULT_MAX_PAGES;
+    this.quotaGuard = config.quotaGuard;
   }
 
   async search(input: LeadSearchInput): Promise<DiscoveredLead[]> {
@@ -81,6 +91,20 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
 
     do {
       pages += 1;
+
+      if (this.quotaGuard) {
+        const quota = await this.quotaGuard.checkAndIncrement(
+          QUOTA_BUCKET_PLACES_TEXT_SEARCH
+        );
+        if (!quota.allowed) {
+          log.warn('Places API quota esaurita – interrompo la discovery', {
+            used: quota.used,
+            limit: quota.limit,
+            pages,
+          });
+          break;
+        }
+      }
 
       const request: TextSearchRequest = {
         textQuery: `${input.query} ${input.location}`,

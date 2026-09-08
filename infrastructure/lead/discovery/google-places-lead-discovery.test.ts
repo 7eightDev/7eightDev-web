@@ -2,6 +2,7 @@ import {
   GooglePlacesLeadDiscovery,
   parseSearchResponse
 } from '@/infrastructure/lead/discovery/google-places-lead-discovery';
+import { DailyQuotaGuard } from '@/infrastructure/shared/daily-quota-guard';
 
 const placeResponse = {
   places: [
@@ -259,5 +260,37 @@ describe('GooglePlacesLeadDiscovery', () => {
     await expectation;
 
     jest.useRealTimers();
+  });
+
+  it('stops early without calling the network when quota is exhausted', async () => {
+    const { mkdtempSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+
+    try {
+      const fetchFn = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(placeResponse)
+      });
+
+      const quotaGuard = new DailyQuotaGuard({
+        limits: { 'places-text-search': 1 },
+        trackerFilePath: join(tmpDir, 'tracker.json')
+      });
+
+      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
+
+      // First search consumes the only quota unit.
+      await discovery.search(input);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+
+      // Quota exhausted: second run must not hit the network and returns [].
+      const results = await discovery.search(input);
+      expect(results).toHaveLength(0);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

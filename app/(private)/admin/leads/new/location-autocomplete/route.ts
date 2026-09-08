@@ -1,4 +1,6 @@
 import { HttpError } from "@/infrastructure/shared/retry";
+import { googleApiQuotaGuard } from "@/infrastructure/container";
+import { QUOTA_BUCKET_PLACES_AUTOCOMPLETE } from "@/infrastructure/shared/daily-quota-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,18 @@ export async function GET(request: Request): Promise<Response> {
   const q = new URL(request.url).searchParams.get("q")?.trim();
   if (!q || q.length < 2) {
     return Response.json({ suggestions: [] });
+  }
+
+  // Safety: block autocomplete calls when the daily free allowance for the
+  // Autocomplete SKU is exhausted to avoid unexpected costs.
+  const quota = await googleApiQuotaGuard.checkAndIncrement(
+    QUOTA_BUCKET_PLACES_AUTOCOMPLETE,
+  );
+  if (!quota.allowed) {
+    return Response.json(
+      { error: "Quota API Google esaurita per oggi. Riprova domani." },
+      { status: 429 },
+    );
   }
 
   try {

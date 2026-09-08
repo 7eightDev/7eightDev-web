@@ -8,6 +8,7 @@ import { ArrowUpRight, Menu, X } from "lucide-react";
 import { cn } from "@/presentation/lib/utils";
 import { Container } from "@/presentation/components/shared/container";
 import { LogoLockup } from "@/presentation/components/shared/logo";
+import { GoogleQuotaBadge } from "@/presentation/features/admin/google-quota-badge";
 
 interface NavItem {
   href: string;
@@ -70,8 +71,9 @@ export function AdminHeader({ showEmailLink = false }: AdminHeaderProps) {
           </nav>
         </div>
 
-        {/* Right: desktop home + user, mobile user + hamburger */}
+        {/* Right: quota badge + desktop home + user, mobile user + hamburger */}
         <div className="flex items-center gap-3 shrink-0">
+          <GoogleQuotaBadge />
           <Link
             href="/"
             aria-label="Vai al sito pubblico"

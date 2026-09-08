@@ -18,6 +18,7 @@ import {
   ResendQuoteNotificationAdapter,
   type ResendQuoteNotificationConfig,
 } from "@/infrastructure/quote/resend-quote-notification.adapter";
+import { DailyQuotaGuard } from "@/infrastructure/shared/daily-quota-guard";
 import { RateLimiter } from "@/infrastructure/shared/rate-limiter";
 import { createLogger } from "@/infrastructure/logging/logger";
 
@@ -37,6 +38,16 @@ export const catalogRepository: CatalogRepository =
 export const leadRepository: LeadRepository = new PrismaLeadRepository();
 
 /**
+ * Google API daily quota guard (per-SKU buckets).
+ * Blocks calls when a daily limit is reached so the account never exceeds
+ * Google's monthly free allowance (Text Search ~1000/mo, Autocomplete
+ * ~10000/mo). PageSpeed is free and is not gated.
+ * Configure via GOOGLE_PLACES_DAILY_QUOTA_LIMIT, GOOGLE_AUTOCOMPLETE_DAILY_QUOTA_LIMIT
+ * and GOOGLE_API_QUOTA_TRACKER_PATH.
+ */
+export const googleApiQuotaGuard = new DailyQuotaGuard();
+
+/**
  * Lead discovery. Uses the Google Places Text Search API to find businesses
  * in a niche/location and extract their website (analyzed by PageSpeed) plus
  * contact data. Requires GOOGLE_PLACES_API_KEY in the environment.
@@ -47,6 +58,7 @@ export const leadRepository: LeadRepository = new PrismaLeadRepository();
 export const leadDiscovery: LeadDiscoveryPort = new GooglePlacesLeadDiscovery(
   {
     apiKey: process.env.GOOGLE_PLACES_API_KEY,
+    quotaGuard: googleApiQuotaGuard,
   },
 );
 
@@ -56,7 +68,7 @@ export const leadDiscovery: LeadDiscoveryPort = new GooglePlacesLeadDiscovery(
  */
 export const quoteNotifier: QuoteNotificationPort = buildQuoteNotifier();
 
-/** PageSpeed analysis for lead qualification. */
+/** PageSpeed analysis for lead qualification. API gratuita, nessun addebito. */
 export const pageSpeedAnalyzer: PageSpeedPort = new GooglePageSpeedInsights({
   apiKey: process.env.GOOGLE_PAGESPEED_API_KEY,
 });
