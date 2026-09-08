@@ -37,7 +37,7 @@ export default async function CatalogPage() {
   const tiers: CatalogTier[] = ["web_assets", "enterprise"];
 
   return (
-    <Container className="max-w-[1280px] py-12">
+    <Container className="max-w-[1400px] py-12">
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground">
           Catalogo servizi
