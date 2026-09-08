@@ -36,26 +36,54 @@ function formatWebVital(value: number): string {
   return String(Math.round(value * 100) / 100);
 }
 
+type WebVitalTone = "ok" | "warn" | "bad";
+
 interface WebVitalProps {
   label: string;
   value: number | undefined;
   unit?: string;
   /** Good/reference threshold (e.g. "≤ 2.5 s") so the gap is readable at a glance. */
   ideal: string;
+  /**
+   * Ideal (best) value, lower is better. Used to colour the metric by how far
+   * the actual value drifts above it.
+   */
+  good: number;
+  /** Poor threshold: a value at/above this reads as red. */
+  poor: number;
 }
+
+const WEBVITAL_TONE: Record<WebVitalTone, string> = {
+  ok: "text-[var(--accent)]",
+  warn: "text-[var(--accent-amber)]",
+  bad: "text-[var(--coral)]",
+};
 
 /**
  * A single Web-Vital metric. Value is formatted (max 2 decimals) and clamped
  * to the cell with `truncate` so a long number never bleeds into the metric
- * next to it; the ideal value sits on its own line underneath.
+ * next to it; the ideal value sits on its own line underneath. The metric is
+ * coloured by how far the real value drifts above the ideal: green at or below
+ * `good`, amber in the warning band, red once past `poor`.
  */
-function WebVital({ label, value, unit, ideal }: WebVitalProps) {
+function WebVital({ label, value, unit, ideal, good, poor }: WebVitalProps) {
+  let tone: WebVitalTone = "ok";
+  if (value !== undefined && value !== null) {
+    if (value >= poor) tone = "bad";
+    else if (value > good) tone = "warn";
+  }
+
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
         {label}
       </span>
-      <span className="font-mono tabular-nums text-[15px] text-foreground truncate min-w-0">
+      <span
+        className={cn(
+          "font-mono tabular-nums text-[15px] truncate min-w-0",
+          value === undefined || value === null ? "text-dim" : WEBVITAL_TONE[tone]
+        )}
+      >
         {value === undefined || value === null ? (
           <span className="text-dim">—</span>
         ) : (
@@ -151,10 +179,10 @@ function PageSpeedSection({
         <LeadScoreBadge score={latest.performanceScore} />
       </div>
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-5">
-        <WebVital label="LCP" value={latest.lcp} unit="s" ideal="≤ 2.5 s" />
-        <WebVital label="FCP" value={latest.fcp} unit="s" ideal="≤ 1.8 s" />
-        <WebVital label="CLS" value={latest.cls} ideal="≤ 0.1" />
-        <WebVital label="TBT" value={latest.tbt} unit="ms" ideal="≤ 200 ms" />
+        <WebVital label="LCP" value={latest.lcp} unit="s" ideal="≤ 2.5 s" good={2.5} poor={4} />
+        <WebVital label="FCP" value={latest.fcp} unit="s" ideal="≤ 1.8 s" good={1.8} poor={3} />
+        <WebVital label="CLS" value={latest.cls} ideal="≤ 0.1" good={0.1} poor={0.25} />
+        <WebVital label="TBT" value={latest.tbt} unit="ms" ideal="≤ 200 ms" good={200} poor={600} />
       </div>
       <p className="font-mono text-[11px] text-muted m-0">
         Strumento: <span className="text-soft">{latest.strategy}</span>
