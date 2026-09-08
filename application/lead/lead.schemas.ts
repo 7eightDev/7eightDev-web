@@ -17,6 +17,18 @@ export const startLeadGenerationSchema = z.object({
     .min(1, "La quantità minima è 1")
     .max(100, "La quantità massima è 100")
     .optional(),
+  techStack: z
+    .string()
+    .trim()
+    .max(100, "Il tech/stack non può superare 100 caratteri")
+    .optional()
+    .transform((value) => (value ? value : undefined)),
+  copyright: z
+    .string()
+    .trim()
+    .max(200, "Il copyright non può superare 200 caratteri")
+    .optional()
+    .transform((value) => (value ? value : undefined)),
 });
 
 export type StartLeadGenerationInput = z.infer<

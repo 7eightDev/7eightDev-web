@@ -177,6 +177,27 @@ function TechStackCell({ techStack }: { techStack: readonly string[] }) {
   );
 }
 
+function CopyrightCell({ copyright }: { copyright: string | undefined }) {
+  if (!copyright) {
+    return <span className="font-mono text-[11px] text-muted-foreground/40">—</span>;
+  }
+
+  // The column shows only the year — the staleness signal — the full footer
+  // line stays available on hover.
+  const year = copyright.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
+
+  return (
+    <div className="min-w-0 max-w-full">
+      <span
+        className="block font-mono text-[10.5px] text-soft truncate"
+        title={copyright}
+      >
+        {year ?? copyright}
+      </span>
+    </div>
+  );
+}
+
 /**
  * Dense enterprise data table of leads. One lead per row; the row's action
  * cell slides an icon cluster in (quotas pattern) to open the detail Sheet or
@@ -196,33 +217,34 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
               <SortableHeader
                 column="company"
                 label="Azienda / Dominio"
-                className="w-[35%]"
+                className="w-[33%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
               <SortableHeader
                 column="city"
                 label="Città"
-                className="w-[11%]"
+                className="w-[9%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[22%]")}>Tech Stack</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[17%]")}>Tech Stack</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[15%]")}>Copyright</TableHead>
               <SortableHeader
                 column="score"
                 label="PageSpeed"
-                className="w-[10%]"
+                className="w-[8%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
               <SortableHeader
                 column="status"
                 label="Stato"
-                className="w-[12%]"
+                className="w-[10%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[10%] text-right")}>Azioni</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[8%] text-right")}>Azioni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -247,6 +269,9 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
                 </TableCell>
                 <TableCell className="overflow-hidden">
                   <TechStackCell techStack={lead.techStack ?? []} />
+                </TableCell>
+                <TableCell className="overflow-hidden">
+                  <CopyrightCell copyright={lead.copyright} />
                 </TableCell>
                 <TableCell>
                   <LeadScoreBadge score={score} />

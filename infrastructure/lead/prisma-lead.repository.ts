@@ -38,6 +38,7 @@ export class PrismaLeadRepository implements LeadRepository {
       status: row.status,
       analysisError: row.analysisError,
       techStack: row.techStack,
+      copyright: row.copyright,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     };
@@ -287,6 +288,8 @@ export class PrismaLeadRepository implements LeadRepository {
         query: job.query,
         location: job.location,
         quantity: job.quantity ?? null,
+        techStack: job.techStack ?? null,
+        copyright: job.copyright ?? null,
         status: job.status,
         totalFound: job.totalFound,
         analyzed: job.analyzed,
@@ -304,6 +307,8 @@ export class PrismaLeadRepository implements LeadRepository {
         query: job.query,
         location: job.location,
         quantity: job.quantity ?? null,
+        techStack: job.techStack ?? null,
+        copyright: job.copyright ?? null,
         status: job.status,
         totalFound: job.totalFound,
         analyzed: job.analyzed,

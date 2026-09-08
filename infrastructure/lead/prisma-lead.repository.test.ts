@@ -72,6 +72,7 @@ describe('PrismaLeadRepository', () => {
         status: 'new',
         analysisError: null,
         techStack: [],
+        copyright: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -89,6 +90,7 @@ describe('PrismaLeadRepository', () => {
         status: 'new',
         analysisError: null,
         techStack: [],
+        copyright: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -124,6 +126,7 @@ describe('PrismaLeadRepository', () => {
       status: 'new',
       analysisError: null,
       techStack: [],
+      copyright: null,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -151,6 +154,7 @@ describe('PrismaLeadRepository', () => {
       status: 'new',
       analysisError: null,
       techStack: [],
+      copyright: null,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -193,6 +197,7 @@ describe('PrismaLeadRepository', () => {
         status: 'new',
         analysisError: null,
         techStack: [],
+        copyright: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -211,6 +216,7 @@ describe('PrismaLeadRepository', () => {
         status: 'new',
         analysisError: null,
         techStack: [],
+        copyright: null,
         createdAt: new Date('2026-01-02T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z')
       }
@@ -335,6 +341,8 @@ describe('PrismaLeadRepository', () => {
       query: 'web agencies',
       location: 'Padova',
       quantity: null,
+      techStack: null,
+      copyright: null,
       status: LeadGenerationJobStatus.pending,
       totalFound: 10,
       analyzed: 5,
@@ -378,6 +386,8 @@ describe('PrismaLeadRepository', () => {
         query: 'web agencies',
         location: 'Padova',
         quantity: null,
+        techStack: null,
+        copyright: null,
         status: LeadGenerationJobStatus.completed,
         totalFound: 10,
         analyzed: 5,
@@ -393,6 +403,8 @@ describe('PrismaLeadRepository', () => {
         query: 'dentists',
         location: 'Milano',
         quantity: null,
+        techStack: null,
+        copyright: null,
         status: LeadGenerationJobStatus.pending,
         totalFound: 0,
         analyzed: 0,
@@ -469,6 +481,8 @@ describe('PrismaLeadRepository', () => {
         query: 'dentist',
         location: 'Padova',
         quantity: null,
+        techStack: null,
+        copyright: null,
         status: 'pending',
         totalFound: 0,
         analyzed: 0,
@@ -483,6 +497,8 @@ describe('PrismaLeadRepository', () => {
         query: 'dentist',
         location: 'Padova',
         quantity: null,
+        techStack: null,
+        copyright: null,
         status: 'pending',
         totalFound: 0,
         analyzed: 0,
@@ -532,6 +548,7 @@ describe('PrismaLeadRepository', () => {
         status: 'new',
         analysisError: null,
         techStack: [],
+        copyright: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -751,6 +768,7 @@ const result = await repository.findPaginated({
       status: 'qualified',
       analysisError: null,
       techStack: [],
+      copyright: null,
       createdAt: new Date('2026-08-28T10:00:00.000Z'),
       updatedAt: new Date('2026-08-28T10:00:00.000Z')
     };

@@ -7,6 +7,8 @@ import type {
   PageSpeedPort,
   PageSpeedResult
 } from '@/domain/lead/lead.pagespeed';
+import type { CopyrightPort } from '@/domain/lead/lead.copyright';
+import { isCopyrightPayload } from '@/domain/lead/lead.copyright';
 import type { LeadRepository } from '@/domain/lead/lead.repository';
 import type { TechStackPort } from '@/domain/lead/lead.tech';
 import { calculateLeadQualification } from '@/domain/lead/lead.score';
@@ -26,6 +28,7 @@ export interface RunLeadGenerationPipelineDeps {
   readonly pageSpeed: PageSpeedPort;
   readonly repository: LeadRepository;
   readonly techStack?: TechStackPort;
+  readonly copyright?: CopyrightPort;
   readonly now?: () => Date;
   readonly generateId?: () => string;
   readonly source?: LeadSource;
@@ -65,6 +68,8 @@ export async function runLeadGenerationPipeline(
     query: input.query,
     location: input.location,
     quantity: input.quantity,
+    techStack: input.techStack,
+    copyright: input.copyright,
     status: 'running',
     totalFound: 0,
     analyzed: 0,
@@ -172,12 +177,13 @@ export async function runLeadGenerationPipeline(
       status: 'new'
     });
 
-    await deps.repository.save(lead);
-
     if (!discoveredLead.website) {
+      await deps.repository.save(lead);
       persistedLeads.push(lead);
       continue;
     }
+
+    await deps.repository.save(lead);
 
     const refreshed = await analyzeLead({
       deps,
@@ -293,10 +299,22 @@ async function analyzeLead(input: {
       input.deps.techStack && input.lead.website
         ? await input.deps.techStack.detect(input.lead.website)
         : [];
+    const copyright =
+      input.deps.copyright && input.lead.website
+        ? await input.deps.copyright.detect(input.lead.website)
+        : undefined;
     const analyzedLead = {
       ...input.lead,
       status,
       techStack: techStack.length > 0 ? techStack : input.lead.techStack,
+      // Keep a previously captured copyright when the site no longer exposes
+      // one (e.g. moved the text to an image): the criterion already matched.
+      // Payload values from older detectors are never retained on re-run.
+      copyright:
+        copyright ??
+        (isCopyrightPayload(input.lead.copyright)
+          ? undefined
+          : input.lead.copyright),
       // A successful re-analysis supersedes any earlier failure, so the
       // stale `analysisError` from a previous run must not persist.
       analysisError: undefined,

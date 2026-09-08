@@ -24,6 +24,8 @@ export function LeadSearchForm() {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [techStack, setTechStack] = useState("");
+  const [copyright, setCopyright] = useState("");
 
   const submit = () => {
     setError(null);
@@ -32,6 +34,8 @@ export function LeadSearchForm() {
         query,
         location,
         quantity: quantity ? Number(quantity) : undefined,
+        techStack: techStack || undefined,
+        copyright: copyright || undefined,
       });
       // On success the action returns without redirecting (the job runs in the
       // background); we go to the list where polling tracks the job progress.
@@ -93,6 +97,42 @@ export function LeadSearchForm() {
           <p className="font-mono text-[10.5px] text-muted mt-1">
             Limite di lead da cercare (opzionale).
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass} htmlFor="lead-tech">
+              Tech / Stack
+            </label>
+            <input
+              id="lead-tech"
+              className={inputClass}
+              value={techStack}
+              placeholder="es. WordPress"
+              disabled={pending}
+              onChange={(e) => setTechStack(e.target.value)}
+            />
+            <p className="font-mono text-[10.5px] text-muted mt-1">
+              Tiene solo i siti che usano questa tecnologia.
+            </p>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="lead-copyright">
+              Copyright nel footer
+            </label>
+            <input
+              id="lead-copyright"
+              className={inputClass}
+              value={copyright}
+              placeholder="es. © 2019"
+              disabled={pending}
+              onChange={(e) => setCopyright(e.target.value)}
+            />
+            <p className="font-mono text-[10.5px] text-muted mt-1">
+              Tiene solo i siti con questo testo nel footer.
+            </p>
+          </div>
         </div>
       </section>
 

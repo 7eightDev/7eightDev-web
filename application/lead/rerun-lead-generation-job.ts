@@ -30,7 +30,9 @@ export async function rerunLeadGenerationJob(
     {
       query: job.query,
       location: job.location,
-      quantity: job.quantity ?? undefined
+      quantity: job.quantity ?? undefined,
+      techStack: job.techStack ?? undefined,
+      copyright: job.copyright ?? undefined
     },
     { jobId: job.id }
   );

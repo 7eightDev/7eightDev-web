@@ -1,4 +1,8 @@
 import type { LeadRepository } from '@/domain/lead/lead.repository';
+import {
+  hasCriteria,
+  leadMatchesCriteria
+} from '@/domain/lead/lead.criteria';
 import type { Lead, LeadAnalysis } from '@/domain/lead/lead.types';
 
 export const LEAD_CSV_HEADER = [
@@ -45,8 +49,16 @@ export async function exportLeadsCsv(
     jobId: filters.jobId
   });
 
+  // A job's tech/copyright criteria act as a view filter (never destructive):
+  // the export mirrors the on-screen list, non-matching leads stay stored.
+  const job = filters.jobId ? await repo.findJobById(filters.jobId) : null;
+  const criteriaLeads =
+    job && hasCriteria(job)
+      ? leads.filter((lead) => leadMatchesCriteria(lead, job))
+      : leads;
+
   const rows = await Promise.all(
-    leads.map(async (lead) => {
+    criteriaLeads.map(async (lead) => {
       const analyses = await repo.findAnalysesByLeadId(lead.id);
       const latest = mostRecent(analyses);
       return toRow(lead, latest);

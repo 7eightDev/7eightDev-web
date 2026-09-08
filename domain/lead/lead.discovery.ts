@@ -2,6 +2,10 @@ export interface LeadSearchInput {
   readonly query: string;
   readonly location: string;
   readonly quantity?: number;
+  /** Optional tech/stack term a site must match (e.g. "wordpress"). */
+  readonly techStack?: string;
+  /** Optional free-text footer copyright the site must contain. */
+  readonly copyright?: string;
 }
 
 export interface DiscoveredLead {

@@ -132,6 +132,9 @@ model Lead {
   // surfaced in the admin data table. Archived from the pipeline as a bonus
   // signal of how hard the site is to outrank.
   techStack   String[]   @default([])
+  // Footer copyright line detected on the lead's website (e.g. "© 2019"), a
+  // signal of when the site was built/resold and thus how stale it is.
+  copyright   String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -167,6 +170,11 @@ model LeadGenerationJob {
   // How many leads were requested for this search (nil = adapter default).
   // Persisted so a job can be re-run with the same options.
   quantity    Int?
+  // Optional search criteria narrowing the results: a tech/stack term the site
+  // must match and a free-text copyright line the footer should contain.
+  // Persisted so a re-run repeats the same constraints.
+  techStack   String?
+  copyright   String?
   status      LeadGenerationJobStatus
   totalFound  Int                     @default(0)
   analyzed    Int                     @default(0)

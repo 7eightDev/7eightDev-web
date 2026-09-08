@@ -3,6 +3,7 @@ import type {
   LeadAnalysis,
   LeadGenerationJob
 } from '@/domain/lead/lead.types';
+import { isCopyrightPayload } from '@/domain/lead/lead.copyright';
 
 export interface LeadRow {
   id: string;
@@ -18,6 +19,7 @@ export interface LeadRow {
   status: Lead['status'];
   analysisError: string | null;
   techStack: string[];
+  copyright: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +41,8 @@ export interface LeadGenerationJobRow {
   query: string;
   location: string;
   quantity: number | null;
+  techStack: string | null;
+  copyright: string | null;
   status: LeadGenerationJob['status'];
   totalFound: number;
   analyzed: number;
@@ -68,6 +72,10 @@ export function rowToLead(row: LeadRow): Lead {
       row.techStack !== undefined && row.techStack.length > 0
         ? row.techStack
         : undefined,
+    // Values captured by older detectors can be JS/CSS payloads (RSC flight
+    // data, style blocks): never surface those as a "copyright".
+    copyright:
+      !isCopyrightPayload(row.copyright) ? row.copyright ?? undefined : undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString()
   };
@@ -88,6 +96,7 @@ export function leadToRow(lead: Lead): LeadRow {
     status: lead.status,
     analysisError: lead.analysisError ?? null,
     techStack: lead.techStack ? [...lead.techStack] : [],
+    copyright: lead.copyright ?? null,
     createdAt: new Date(lead.createdAt),
     updatedAt: new Date(lead.updatedAt)
   };
@@ -129,6 +138,8 @@ export function rowToLeadGenerationJob(
     query: row.query,
     location: row.location,
     quantity: row.quantity ?? undefined,
+    techStack: row.techStack ?? undefined,
+    copyright: row.copyright ?? undefined,
     status: row.status,
     totalFound: row.totalFound,
     analyzed: row.analyzed,
@@ -149,6 +160,8 @@ export function leadGenerationJobToRow(
     query: job.query,
     location: job.location,
     quantity: job.quantity ?? null,
+    techStack: job.techStack ?? null,
+    copyright: job.copyright ?? null,
     status: job.status,
     totalFound: job.totalFound,
     analyzed: job.analyzed,

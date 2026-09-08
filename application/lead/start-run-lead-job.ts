@@ -2,6 +2,7 @@ import type {
   LeadDiscoveryPort,
   LeadSearchInput
 } from '@/domain/lead/lead.discovery';
+import type { CopyrightPort } from '@/domain/lead/lead.copyright';
 import type { PageSpeedPort } from '@/domain/lead/lead.pagespeed';
 import type { LeadRepository } from '@/domain/lead/lead.repository';
 import type { TechStackPort } from '@/domain/lead/lead.tech';
@@ -19,6 +20,7 @@ export interface StartRunLeadJobDeps {
   readonly pageSpeed: PageSpeedPort;
   readonly repository: LeadRepository;
   readonly techStack?: TechStackPort;
+  readonly copyright?: CopyrightPort;
   readonly source?: LeadSource;
   readonly now?: () => Date;
   readonly generateId?: () => string;
@@ -57,6 +59,8 @@ export async function startRunLeadJob(
     query: input.query,
     location: input.location,
     quantity: input.quantity,
+    techStack: input.techStack,
+    copyright: input.copyright,
     status: 'running',
     totalFound: 0,
     analyzed: 0,
@@ -76,6 +80,7 @@ export async function startRunLeadJob(
       pageSpeed: deps.pageSpeed,
       repository: deps.repository,
       techStack: deps.techStack,
+      copyright: deps.copyright,
       now,
       generateId,
       source: deps.source,

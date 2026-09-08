@@ -90,6 +90,10 @@ export function LeadDetail({ lead, analyses }: LeadDetailProps) {
         <div className="flex flex-col">
           {field("Categoria", lead.category)}
           {field("Sito", lead.website)}
+          {lead.techStack && lead.techStack.length > 0 && (
+            field("Tech / Stack", lead.techStack.join(", "))
+          )}
+          {field("Copyright", lead.copyright)}
           {field("Telefono", lead.phone)}
           {field("Email", lead.email)}
           {field("Indirizzo", lead.address)}

@@ -5,6 +5,7 @@ import { leadRepository } from "@/infrastructure/container";
 import { Container } from "@/presentation/components/shared/container";
 import { Button } from "@/presentation/components/ui/button";
 import { resolveJobStatus } from "@/domain/lead/lead.job";
+import { hasCriteria, leadMatchesCriteria } from "@/domain/lead/lead.criteria";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import { reconcileStaleJobs } from "@/application/lead/reconcile-stale-jobs";
 import { LiveJobRefresher } from "@/presentation/features/admin/leads/live-job-refresher";
@@ -74,18 +75,28 @@ export default async function LeadsPage({
     jobId,
     q: filters.q || undefined,
   });
+  // The job's tech/copyright criteria never discard leads at save time: they
+  // only narrow what this view shows, while non-matching leads stay stored.
+  const activeCriteria =
+    activeJob && hasCriteria(activeJob)
+      ? { techStack: activeJob.techStack, copyright: activeJob.copyright }
+      : undefined;
+  const criteriaLeads = activeCriteria
+    ? matchingLeads.filter((lead) => leadMatchesCriteria(lead, activeCriteria))
+    : matchingLeads;
+  const hiddenByCriteria = matchingLeads.length - criteriaLeads.length;
   const hasActiveJob = jobs.some(
     (job) => job.status === "pending" || job.status === "running"
   );
 
   const latestAnalyses = await leadRepository.findLatestAnalysesByLeadIds(
-    matchingLeads.map((l) => l.id)
+    criteriaLeads.map((l) => l.id)
   );
   const analysisByLeadId = new Map(
     latestAnalyses.map((a) => [a.leadId, a])
   );
 
-  const rows: LeadTableRow[] = matchingLeads.map((lead) => {
+  const rows: LeadTableRow[] = criteriaLeads.map((lead) => {
     const analysis = analysisByLeadId.get(lead.id);
     return {
       lead,
@@ -175,12 +186,28 @@ export default async function LeadsPage({
                     {activeJob.location}
                   </span>
                 )}
+                {activeCriteria && (
+                  <span className="font-mono text-[11px] text-muted truncate">
+                    Criteri:{" "}
+                    {activeCriteria.techStack &&
+                      `tech "${activeCriteria.techStack}"`}
+                    {activeCriteria.techStack && activeCriteria.copyright && " · "}
+                    {activeCriteria.copyright &&
+                      `footer "${activeCriteria.copyright}"`}
+                  </span>
+                )}
                 <span className="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-muted">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
                     <circle cx="11" cy="11" r="8" />
                     <path d="M21 21l-4.35-4.35" />
                   </svg>
-                  {total} lead trovati da questa ricerca
+                  {activeCriteria
+                    ? `${total} lead corrispondono ai criteri${
+                        hiddenByCriteria > 0
+                          ? ` · ${hiddenByCriteria} salvati ma non corrispondono`
+                          : ""
+                      }`
+                    : `${total} lead trovati da questa ricerca`}
                 </span>
               </div>
             </div>

@@ -26,6 +26,10 @@ export interface Lead {
   /** Technologies detected on the lead's website, e.g. ['WordPress', jQuery'] */
   readonly techStack?: readonly string[];
 
+  /** Footer copyright line detected on the lead's website (e.g. "© 2019"),
+   *  a signal of when the site was built and thus how stale it is. */
+  readonly copyright?: string;
+
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -57,6 +61,11 @@ export interface LeadGenerationJob {
   readonly query: string;
   readonly location: string;
   readonly quantity?: number;
+
+  /** Optional tech/stack term the search was narrowed by (e.g. "wordpress"). */
+  readonly techStack?: string;
+  /** Optional free-text copyright criterion the site footer should contain. */
+  readonly copyright?: string;
 
   readonly status: LeadGenerationJobStatus;
 

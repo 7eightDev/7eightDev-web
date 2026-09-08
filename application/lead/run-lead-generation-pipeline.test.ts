@@ -1,4 +1,5 @@
 import { runLeadGenerationPipeline } from '@/application/lead/run-lead-generation-pipeline';
+import type { CopyrightPort } from '@/domain/lead/lead.copyright';
 import type { LeadDiscoveryPort } from '@/domain/lead/lead.discovery';
 import type { PageSpeedPort, PageSpeedResult } from '@/domain/lead/lead.pagespeed';
 import type { LeadRepository } from '@/domain/lead/lead.repository';
@@ -149,6 +150,12 @@ function makeDiscovery(
 function makePageSpeed(result: PageSpeedResult): PageSpeedPort {
   return {
     analyze: jest.fn().mockResolvedValue(result)
+  };
+}
+
+function makeCopyright(value: string | undefined): CopyrightPort {
+  return {
+    detect: jest.fn().mockResolvedValue(value)
   };
 }
 
@@ -819,5 +826,245 @@ describe('runLeadGenerationPipeline', () => {
       expect(result.leads).toHaveLength(2);
       expect(result.leads.every((lead) => lead.jobId === 'job-7')).toBe(true);
     }
+  });
+
+  it('detects and persists copyright on analyzed leads when the port is wired', async () => {
+    const repository = makeRepository();
+    const copyright = makeCopyright('© 2019 Studio Rossi');
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme', website: 'https://acme.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 30,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        copyright,
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(copyright.detect).toHaveBeenCalledWith('https://acme.example');
+    expect(result.leads[0].copyright).toBe('© 2019 Studio Rossi');
+    expect((await repository.findById('lead-1'))?.copyright).toBe(
+      '© 2019 Studio Rossi'
+    );
+  });
+
+  it('keeps an already-matched copyright when the site stops exposing one', async () => {
+    const existingLead: Lead = {
+      id: 'existing-lead',
+      jobId: 'job-1',
+      companyName: 'Acme Studio',
+      website: 'https://acme.example',
+      source: 'outscraper',
+      status: 'analyzed',
+      copyright: '© 2018 Rotta & Figli',
+      createdAt: '2026-08-30T10:00:00.000Z',
+      updatedAt: '2026-08-30T10:00:00.000Z'
+    };
+    const repository = makeRepository([existingLead]);
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme Studio', website: 'https://acme.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 50,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        copyright: makeCopyright(undefined),
+        repository,
+        now: NOW,
+        generateId: jest.fn(),
+        jobId: 'job-1'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1, copyright: '© 2018' }
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.leads[0].copyright).toBe('© 2018 Rotta & Figli');
+    }
+  });
+
+  it('clears a payload-like copyright captured by an older detector on re-run', async () => {
+    const existingLead: Lead = {
+      id: 'existing-lead',
+      jobId: 'job-1',
+      companyName: 'Acme Studio',
+      website: 'https://acme.example',
+      source: 'outscraper',
+      status: 'analyzed',
+      copyright: 'self.__next_f.push([1,"footer",'
+    } as Lead;
+    const repository = makeRepository([existingLead]);
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme Studio', website: 'https://acme.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 50,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        copyright: makeCopyright(undefined),
+        repository,
+        now: NOW,
+        generateId: jest.fn(),
+        jobId: 'job-1'
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.leads[0].copyright).toBeUndefined();
+    }
+  });
+
+  it('keeps leads that do not match the techStack criterion', async () => {
+    const repository = makeRepository();
+    const techStack = {
+      detect: jest
+        .fn()
+        .mockResolvedValueOnce(['WordPress'])
+        .mockResolvedValueOnce(['Wix'])
+    };
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Con WP', website: 'https://wp.example' },
+          { companyName: 'Con Wix', website: 'https://wix.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 30,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        techStack,
+        copyright: makeCopyright('© 2019'),
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 2, techStack: 'wordpress' }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    // The criterion never discards leads: every discovered site is saved and
+    // analyzed, the job simply remembers the criterion for the list view.
+    expect(result.leads).toHaveLength(2);
+    expect(result.leads.map((l) => l.companyName).sort()).toEqual([
+      'Con WP',
+      'Con Wix'
+    ]);
+    expect((await repository.findAll()).map((l) => l.companyName).sort()).toEqual([
+      'Con WP',
+      'Con Wix'
+    ]);
+    expect((await repository.getLeadCountsByJobIds([result.job.id])).get(result.job.id)).toEqual({
+      analyzed: 0,
+      qualified: 2
+    });
+    expect(result.job.techStack).toBe('wordpress');
+  });
+
+  it('keeps leads that do not contain the copyright criterion text', async () => {
+    const repository = makeRepository();
+    const copyright = makeCopyright('© 2024 Pèz Orazio');
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Vecchio', website: 'https://old.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 30,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        copyright,
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1, copyright: '© 2019' }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.leads).toHaveLength(1);
+    expect(result.leads[0].copyright).toBe('© 2024 Pèz Orazio');
+    expect(await repository.findAll()).toHaveLength(1);
+    expect(result.job.copyright).toBe('© 2019');
+  });
+
+  it('saves leads without a website even when criteria narrow the search', async () => {
+    const repository = makeRepository();
+    const pageSpeed = makePageSpeed({
+      performanceScore: 80,
+      lcp: null,
+      fcp: null,
+      cls: null,
+      tbt: null
+    });
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Nessun Sito', category: 'Garage' },
+          { companyName: 'Con Sito', website: 'https://with.example' }
+        ]),
+        pageSpeed,
+        techStack: {
+          detect: jest.fn().mockResolvedValue(['WordPress'])
+        },
+        copyright: makeCopyright('© 2020'),
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'meccanico', location: 'Varese', quantity: 2, techStack: 'wordpress' }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.leads.map((l) => l.companyName)).toEqual([
+      'Nessun Sito',
+      'Con Sito'
+    ]);
+    expect((await repository.findAll()).map((l) => l.companyName)).toEqual([
+      'Nessun Sito',
+      'Con Sito'
+    ]);
   });
 });

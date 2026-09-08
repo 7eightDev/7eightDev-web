@@ -158,6 +158,42 @@ describe('exportLeadsCsv', () => {
     expect(lines).toEqual([CSV_HEADER]);
   });
 
+  it('excludes non-matching leads when the selected job has criteria, without deleting them', async () => {
+    const repo = new InMemoryLeadRepository();
+    await repo.saveJob({
+      id: 'job-1',
+      query: 'ottici',
+      location: 'Vicenza',
+      status: 'completed',
+      techStack: 'wordpress',
+      copyright: undefined,
+      totalFound: 3,
+      analyzed: 3,
+      qualified: 2,
+      createdAt: '2026-09-01T10:00:00.000Z'
+    });
+    await repo.save(
+      makeLead({ id: 'lead-wp', techStack: ['WordPress'], copyright: '© 2019' })
+    );
+    await repo.save(
+      makeLead({
+        id: 'lead-wix',
+        companyName: 'Sito Wix',
+        techStack: ['Wix'],
+        copyright: '© 2019'
+      })
+    );
+
+    const csv = await exportLeadsCsv(repo, { jobId: 'job-1' });
+
+    expect(csv).toContain('Studio Dentistico Rossi');
+    expect(csv).not.toContain('Sito Wix');
+    // Non-matching leads are only hidden from the view, not removed.
+    await expect(repo.findById('lead-wix')).resolves.toMatchObject({
+      companyName: 'Sito Wix'
+    });
+  });
+
   it('writes empty cells for missing optional fields', async () => {
     const repo = new InMemoryLeadRepository();
     await repo.save(

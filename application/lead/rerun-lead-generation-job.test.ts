@@ -95,6 +95,31 @@ describe('rerunLeadGenerationJob', () => {
     );
   });
 
+  it('forwards the stored criteria so the re-run keeps the same constraints', async () => {
+    const repository = await makeRepository(
+      makeJob({ techStack: 'wordpress', copyright: '© 2019' })
+    );
+    mockedStartRunLeadJob.mockResolvedValue({ ok: true, jobId: 'job-1' });
+
+    const result = await rerunLeadGenerationJob(
+      { ...DEPS, repository },
+      'job-1'
+    );
+
+    expect(result.ok).toBe(true);
+    expect(mockedStartRunLeadJob).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        query: 'autorimessa',
+        location: 'napoli',
+        quantity: 20,
+        techStack: 'wordpress',
+        copyright: '© 2019'
+      },
+      { jobId: 'job-1' }
+    );
+  });
+
   it('refuses to re-run a job that is still running', async () => {
     const repository = await makeRepository(
       makeJob({ status: 'running' })

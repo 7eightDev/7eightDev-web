@@ -13,6 +13,7 @@ import {
 } from "@/application/lead/lead.schemas";
 import {
   catalogRepository,
+  copyrightDetector,
   leadDiscovery,
   leadRepository,
   pageSpeedAnalyzer,
@@ -48,6 +49,7 @@ export async function startLeadGenerationAction(
       pageSpeed: pageSpeedAnalyzer,
       repository: leadRepository,
       techStack: techStackDetector,
+      copyright: copyrightDetector,
       source: "google_maps",
     },
     parsed.data
@@ -81,6 +83,7 @@ export async function rerunLeadGenerationAction(
       pageSpeed: pageSpeedAnalyzer,
       repository: leadRepository,
       techStack: techStackDetector,
+      copyright: copyrightDetector,
       source: "google_maps",
     },
     parsed.data
