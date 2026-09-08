@@ -286,7 +286,7 @@ export function LeadFilterBar({
           <Button
             size="sm"
             asChild
-            className="border-accent text-accent hover:bg-accent/[0.08] hover:text-accent"
+            className="rounded-full bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px hover:bg-accent"
           >
             <Link href="/admin/leads/new">+ Nuova ricerca</Link>
           </Button>
