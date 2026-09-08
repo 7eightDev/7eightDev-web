@@ -51,7 +51,7 @@ export function AdminHeader({ showEmailLink = false }: AdminHeaderProps) {
 
   return (
     <header className="sticky top-0 z-40 bg-[rgba(10,11,13,0.85)] backdrop-blur-[14px] border-b border-border">
-      <Container className="max-w-[1100px] h-16 flex items-center justify-between gap-4">
+      <Container className="max-w-none h-16 flex items-center justify-between gap-4">
         {/* Left: logo + desktop nav */}
         <div className="flex items-center gap-4 min-w-0">
           <Link href="/admin/quotes" className="shrink-0">
