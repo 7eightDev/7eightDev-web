@@ -24,7 +24,13 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button variant="default" size="sm" onClick={create} disabled={pending}>
+      <Button
+        variant="default"
+        size="sm"
+        onClick={create}
+        disabled={pending}
+        className="cursor-pointer bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px"
+      >
         <HugeiconsIcon
           icon={FileAddIcon}
           size={16}

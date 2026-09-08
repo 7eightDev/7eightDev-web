@@ -45,7 +45,7 @@ function makeRepo(quote: Quote | null): QuoteRepository & { saved?: Quote } {
       repo.saved = q;
     },
     async delete() {},
-    async countByYear() {
+    async nextSequenceForYear() {
       return 0;
     },
   };

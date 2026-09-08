@@ -40,7 +40,7 @@ function repoWith(quote: Quote | null): QuoteRepository & { deleted: string[] } 
     async delete(id: string) {
       repo.deleted.push(id);
     },
-    async countByYear() {
+    async nextSequenceForYear() {
       return 0;
     },
   };

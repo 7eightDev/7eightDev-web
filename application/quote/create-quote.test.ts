@@ -1,8 +1,9 @@
 import { createQuote } from "@/application/quote/create-quote";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import type { Quote } from "@/domain/quote/quote.types";
+import { QuoteNumberConflictError } from "@/domain/quote/quote.errors";
 
-function makeRepo(existingInYear = 0): QuoteRepository & { saved?: Quote } {
+function makeRepo(nextSequence = 0): QuoteRepository & { saved?: Quote } {
   const repo: QuoteRepository & { saved?: Quote } = {
     async findById() {
       return null;
@@ -14,8 +15,8 @@ function makeRepo(existingInYear = 0): QuoteRepository & { saved?: Quote } {
       repo.saved = q;
     },
     async delete() {},
-    async countByYear() {
-      return existingInYear;
+    async nextSequenceForYear() {
+      return nextSequence;
     },
   };
   return repo;
@@ -56,7 +57,7 @@ const validInput = {
 
 describe("createQuote use case", () => {
   it("creates a draft with progressive PREV-YYYY-NNN number", async () => {
-    const repo = makeRepo(13);
+    const repo = makeRepo(14);
     const result = await createQuote({ repository: repo, now: NOW }, validInput);
 
     expect(result.ok).toBe(true);
@@ -68,6 +69,31 @@ describe("createQuote use case", () => {
     expect(repo.saved?.metadata.phases).toEqual([
       { title: "Discovery", weeks: "Sett. 1" },
     ]);
+  });
+
+  it("retries with the next free number when the save hits a conflict", async () => {
+    let attempts = 0;
+    const repo: QuoteRepository & { saved?: Quote } = {
+      async findById() {
+        return null;
+      },
+      async findAll() {
+        return [];
+      },
+      async save(q: Quote) {
+        attempts++;
+        if (attempts === 1) throw new QuoteNumberConflictError();
+        repo.saved = q;
+      },
+      async delete() {},
+      async nextSequenceForYear() {
+        return attempts === 0 ? 14 : 15;
+      },
+    };
+
+    const result = await createQuote({ repository: repo, now: NOW }, validInput);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.quote.number).toBe("PREV-2026-015");
   });
 
   it("rejects invalid input with a readable error", async () => {

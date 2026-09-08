@@ -10,6 +10,10 @@ export interface QuoteRepository {
   save(quote: Quote): Promise<void>;
   /** Permanently remove a quote. No-op if it does not exist. */
   delete(id: string): Promise<void>;
-  /** Number of quotes issued in a calendar year (for PREV-YYYY-NNN numbering). */
-  countByYear(year: number): Promise<number>;
+  /**
+   * Next available sequence for the PREV-YYYY-NNN numbering: the largest NNN
+   * already issued in the given calendar year plus one (1 if none). Max-based
+   * rather than count-based so that deleting a quote never reuses a number.
+   */
+  nextSequenceForYear(year: number): Promise<number>;
 }

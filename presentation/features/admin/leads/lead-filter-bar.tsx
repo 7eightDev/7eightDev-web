@@ -11,7 +11,7 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ChevronDownIcon, FilterHorizontalIcon } from "@hugeicons/core-free-icons";
+import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
 import { ToggleGroup, ToggleGroupItem } from "@/presentation/components/ui/toggle-group";
 import { Button } from "@/presentation/components/ui/button";
 import {
@@ -218,7 +218,7 @@ export function LeadFilterBar({
                   : "Tutte le ricerche"
               }
               className={cn(
-                "max-w-[300px] font-mono text-[12.5px]",
+                "cursor-pointer max-w-[300px] font-mono text-[12.5px]",
                 jobDrawerOpen && "border-accent text-accent bg-accent/[0.06]"
               )}
             >
@@ -230,12 +230,6 @@ export function LeadFilterBar({
               <span className="shrink-0 text-muted">
                 ({activeJob ? activeJob.totalFound : jobs.length})
               </span>
-              <HugeiconsIcon
-                icon={ChevronDownIcon}
-                size={14}
-                aria-hidden
-                className="shrink-0 text-muted"
-              />
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>

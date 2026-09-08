@@ -31,21 +31,42 @@ const QUALIFICATION_LABEL: Record<Lead["status"], string> = {
   discarded: "Scartato",
 };
 
-function metric(label: string, value: number | undefined, hint?: string) {
+/** Rounds lab values that can carry float noise (e.g. 2.6500000000000001). */
+function formatWebVital(value: number): string {
+  return String(Math.round(value * 100) / 100);
+}
+
+interface WebVitalProps {
+  label: string;
+  value: number | undefined;
+  unit?: string;
+  /** Good/reference threshold (e.g. "≤ 2.5 s") so the gap is readable at a glance. */
+  ideal: string;
+}
+
+/**
+ * A single Web-Vital metric. Value is formatted (max 2 decimals) and clamped
+ * to the cell with `truncate` so a long number never bleeds into the metric
+ * next to it; the ideal value sits on its own line underneath.
+ */
+function WebVital({ label, value, unit, ideal }: WebVitalProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
         {label}
       </span>
-      <span className="font-mono text-[15px] text-foreground">
+      <span className="font-mono tabular-nums text-[15px] text-foreground truncate min-w-0">
         {value === undefined || value === null ? (
           <span className="text-dim">—</span>
         ) : (
           <>
-            {value}
-            {hint && <span className="text-dim text-[12px]">{hint}</span>}
+            {formatWebVital(value)}
+            {unit && <span className="text-dim text-[12px]"> {unit}</span>}
           </>
         )}
+      </span>
+      <span className="font-mono text-[10.5px] text-muted truncate min-w-0">
+        ideale {ideal}
       </span>
     </div>
   );
@@ -123,17 +144,17 @@ function PageSpeedSection({
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
-        <div className="flex flex-col gap-1">
-          <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
-            Performance
-          </span>
-          <LeadScoreBadge score={latest.performanceScore} />
-        </div>
-        {metric("LCP", latest.lcp, " s")}
-        {metric("FCP", latest.fcp, " s")}
-        {metric("CLS", latest.cls)}
-        {metric("TBT", latest.tbt, " ms")}
+      <div className="flex flex-col gap-1 mb-5">
+        <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
+          Performance
+        </span>
+        <LeadScoreBadge score={latest.performanceScore} />
+      </div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-5">
+        <WebVital label="LCP" value={latest.lcp} unit="s" ideal="≤ 2.5 s" />
+        <WebVital label="FCP" value={latest.fcp} unit="s" ideal="≤ 1.8 s" />
+        <WebVital label="CLS" value={latest.cls} ideal="≤ 0.1" />
+        <WebVital label="TBT" value={latest.tbt} unit="ms" ideal="≤ 200 ms" />
       </div>
       <p className="font-mono text-[11px] text-muted m-0">
         Strumento: <span className="text-soft">{latest.strategy}</span>
@@ -224,7 +245,7 @@ export function LeadDetailSheet({
             {error}
           </p>
         ) : (
-          <div className="flex flex-col gap-6 overflow-y-auto custom-scrollbar -mx-1 px-1">
+          <div className="flex flex-col gap-6 overflow-y-auto overflow-x-hidden custom-scrollbar -mx-1 px-1">
             {loading ? (
               <div className="space-y-4">
                 {[11, 7, 7, 7, 7, 7, 7, 7].map((w, i) => (

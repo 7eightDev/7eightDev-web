@@ -45,7 +45,7 @@ function repoWith(quote: Quote | null): QuoteRepository & {
     async delete(id: string) {
       repo.deleted.push(id);
     },
-    async countByYear() {
+    async nextSequenceForYear() {
       return 0;
     },
   };

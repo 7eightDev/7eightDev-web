@@ -1,5 +1,6 @@
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import type { Quote } from "@/domain/quote/quote.types";
+import { QuoteNumberConflictError } from "@/domain/quote/quote.errors";
 import {
   type CreateQuoteInput,
   createQuoteInputSchema,
@@ -46,30 +47,44 @@ export async function createQuote(
   const generateId = deps.generateId ?? (() => crypto.randomUUID());
 
   const issuedAt = now();
-  const year = issuedAt.getUTCFullYear();
-  const sequence = (await deps.repository.countByYear(year)) + 1;
-  const number = `PREV-${year}-${String(sequence).padStart(3, "0")}`;
 
   const validUntil = new Date(`${input.validUntil}T23:59:59.999Z`);
   if (validUntil <= issuedAt) {
     return { ok: false, error: "La scadenza deve essere futura." };
   }
 
-  const quote: Quote = {
-    id: generateId(),
-    number,
-    status: "draft",
-    client: buildClient(input),
-    project: input.project,
-    intro: input.intro,
-    issuedAt: issuedAt.toISOString(),
-    validUntil: validUntil.toISOString(),
-    fiscalRegime: input.fiscalRegime,
-    vatRate: buildVatRate(input),
-    lineItems: input.lineItems.map(buildLineItem),
-    metadata: buildMetadata(input),
-  };
+  // Persist with the max-based sequence for the year. If a concurrent create
+  // grabs the same number first, the adapter raises QuoteNumberConflictError
+  // and we pick the next free sequence and retry.
+  const year = issuedAt.getUTCFullYear();
+  const maxRetries = 5;
+  for (let attempt = 0; ; attempt++) {
+    const sequence = await deps.repository.nextSequenceForYear(year);
+    const number = `PREV-${year}-${String(sequence).padStart(3, "0")}`;
 
-  await deps.repository.save(quote);
-  return { ok: true, quote };
+    const quote: Quote = {
+      id: generateId(),
+      number,
+      status: "draft",
+      client: buildClient(input),
+      project: input.project,
+      intro: input.intro,
+      issuedAt: issuedAt.toISOString(),
+      validUntil: validUntil.toISOString(),
+      fiscalRegime: input.fiscalRegime,
+      vatRate: buildVatRate(input),
+      lineItems: input.lineItems.map(buildLineItem),
+      metadata: buildMetadata(input),
+    };
+
+    try {
+      await deps.repository.save(quote);
+      return { ok: true, quote };
+    } catch (error) {
+      if (error instanceof QuoteNumberConflictError && attempt < maxRetries) {
+        continue;
+      }
+      throw error;
+    }
+  }
 }

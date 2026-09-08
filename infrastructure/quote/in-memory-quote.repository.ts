@@ -31,10 +31,16 @@ class InMemoryQuoteRepository implements QuoteRepository {
     this.store.delete(id);
   }
 
-  async countByYear(year: number): Promise<number> {
-    return [...this.store.values()].filter(
-      (quote) => new Date(quote.issuedAt).getUTCFullYear() === year
-    ).length;
+  async nextSequenceForYear(year: number): Promise<number> {
+    const prefix = new RegExp(`^PREV-${year}-(\\d{3})$`);
+    let max = 0;
+    for (const quote of this.store.values()) {
+      const match = prefix.exec(quote.number);
+      if (new Date(quote.issuedAt).getUTCFullYear() === year && match) {
+        max = Math.max(max, Number(match[1]));
+      }
+    }
+    return max + 1;
   }
 }
 
