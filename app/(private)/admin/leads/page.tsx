@@ -176,7 +176,7 @@ export default async function LeadsPage({
   }));
 
   return (
-    <Container className="h-full max-w-[1400px] py-4">
+    <Container className="h-full max-w-[1100px] py-4">
       <LiveJobRefresher active={hasActiveJob} />
 
       <section className="flex h-full flex-col gap-3 overflow-hidden">
