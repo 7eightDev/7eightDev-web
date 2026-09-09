@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useOptimistic, useTransition } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BanIcon,
@@ -10,14 +10,17 @@ import {
   Mail01Icon,
   MoreHorizontalIcon,
   SentIcon,
+  StarIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import {
   deleteLeadAction,
   createQuoteFromLeadAction,
   updateLeadOutreachAction,
+  toggleLeadFavoriteAction,
 } from "@/application/lead/admin.actions";
 import type { LeadOutreachStatus, LeadStatus } from "@/domain/lead/lead.types";
+import { cn } from "@/presentation/lib/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -40,6 +43,7 @@ interface LeadRowActionsProps {
   id: string;
   companyName: string;
   status: LeadStatus;
+  favorite: boolean;
   /** Called when the user asks for the slide-over detail. */
   onOpenDetail: (id: string, companyName: string) => void;
 }
@@ -60,6 +64,7 @@ export function LeadRowActions({
   id,
   companyName,
   status,
+  favorite,
   onOpenDetail,
 }: LeadRowActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -67,6 +72,10 @@ export function LeadRowActions({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const cellRef = useRef<HTMLDivElement>(null);
+  const [optimisticFavorite, setOptimisticFavorite] = useOptimistic<
+    boolean,
+    boolean
+  >(favorite, (_state, next) => next);
 
   // The slide-in lives inside the row (no portal), so dismissal is ours to
   // manage: collapse on outside pointer-down or Escape.
@@ -107,6 +116,13 @@ export function LeadRowActions({
     });
   };
 
+  const toggleFavorite = () => {
+    startTransition(async () => {
+      setOptimisticFavorite(!optimisticFavorite);
+      await toggleLeadFavoriteAction({ leadId: id });
+    });
+  };
+
   const remove = () => {
     setError(null);
     startTransition(async () => {
@@ -121,7 +137,7 @@ export function LeadRowActions({
       <div ref={cellRef} className="relative inline-flex items-center justify-end self-stretch">
         <div
           inert={!menuOpen}
-          className={`absolute top-1/2 right-0 z-[5] flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-14 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+          className={`absolute top-1/2 right-0 z-[5] flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-20 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
             menuOpen
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"
@@ -274,6 +290,34 @@ export function LeadRowActions({
             </AlertDialogContent>
           </AlertDialog>
         </div>
+
+        <button
+          type="button"
+          onClick={toggleFavorite}
+          disabled={pending}
+          aria-label={
+            optimisticFavorite
+              ? `Rimuovi ${companyName} dai preferiti`
+              : `Aggiungi ${companyName} ai preferiti`
+          }
+          aria-pressed={optimisticFavorite}
+          title={
+            optimisticFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"
+          }
+          className={cn(
+            "relative z-[5] inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150 hover:bg-foreground/[0.06] disabled:opacity-50 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer",
+            optimisticFavorite
+              ? "text-accent-amber hover:text-accent-amber"
+              : "text-soft hover:text-foreground"
+          )}
+        >
+          <HugeiconsIcon
+            icon={StarIcon}
+            size={16}
+            aria-hidden
+            className={cn(optimisticFavorite && "fill-current")}
+          />
+        </button>
 
         <button
           type="button"

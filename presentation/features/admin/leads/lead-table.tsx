@@ -334,6 +334,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
                     id={lead.id}
                     companyName={lead.companyName}
                     status={lead.status}
+                    favorite={lead.favorite ?? false}
                     onOpenDetail={(id, name) =>
                       setDetail({ leadId: id, companyName: name })
                     }
