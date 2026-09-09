@@ -12,6 +12,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { StarIcon } from "@hugeicons/core-free-icons";
 import { ToggleGroup, ToggleGroupItem } from "@/presentation/components/ui/toggle-group";
 import { Button } from "@/presentation/components/ui/button";
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
@@ -21,6 +22,7 @@ import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import {
   ADS_FILTER_LABEL,
   DEFAULT_ADS_FILTER,
+  DEFAULT_FAVORITE_FILTER,
   DEFAULT_LEAD_STATUS_FILTER,
   DEFAULT_OUTREACH_STATUS_FILTER,
   DEFAULT_SCORE_FILTER,
@@ -31,6 +33,7 @@ import {
   SOURCE_FILTER_LABEL,
   serializeTechStackFilter,
   type AdsFilter,
+  type FavoriteFilter,
   type LeadStatusFilter,
   type OutreachStatusFilter,
   type ScoreFilter,
@@ -56,6 +59,7 @@ export interface ToolbarJob {
 interface LeadFilterBarProps {
   status: LeadStatusFilter;
   outreach: OutreachStatusFilter;
+  favorite: FavoriteFilter;
   score: ScoreFilter;
   source: SourceFilter;
   ads: AdsFilter;
@@ -103,6 +107,7 @@ const inputBase =
 export function LeadFilterBar({
   status,
   outreach,
+  favorite,
   score,
   source,
   ads,
@@ -184,6 +189,12 @@ export function LeadFilterBar({
         ? { outreach: "" }
         : { outreach: value }
     );
+  const setFavorite = () =>
+    push(
+      favorite === DEFAULT_FAVORITE_FILTER
+        ? { favorite: "favorite" }
+        : { favorite: "" }
+    );
   const setScore = (value: ScoreFilter) =>
     push(value === DEFAULT_SCORE_FILTER ? { score: "" } : { score: value });
   const setSource = (value: SourceFilter) =>
@@ -207,6 +218,7 @@ export function LeadFilterBar({
     push({
       status: "",
       outreach: "",
+      favorite: "",
       score: "",
       source: "",
       ads: "",
@@ -225,6 +237,7 @@ export function LeadFilterBar({
   const hasActive =
     status !== DEFAULT_LEAD_STATUS_FILTER ||
     outreach !== DEFAULT_OUTREACH_STATUS_FILTER ||
+    favorite !== DEFAULT_FAVORITE_FILTER ||
     score !== DEFAULT_SCORE_FILTER ||
     source !== DEFAULT_SOURCE_FILTER ||
     ads !== DEFAULT_ADS_FILTER ||
@@ -256,6 +269,7 @@ export function LeadFilterBar({
     const keep = [
       "status",
       "outreach",
+      "favorite",
       "source",
       "ads",
       "q",
@@ -421,6 +435,27 @@ export function LeadFilterBar({
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
+
+        <button
+          type="button"
+          onClick={setFavorite}
+          aria-pressed={favorite === "favorite"}
+          title="Solo lead preferiti (stella)"
+          className={cn(
+            "ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
+            favorite === "favorite"
+              ? "border-accent-amber bg-accent-amber/10 text-accent-amber hover:brightness-110"
+              : "border-border bg-surface text-soft hover:text-foreground hover:border-accent/40"
+          )}
+        >
+          <HugeiconsIcon
+            icon={StarIcon}
+            size={14}
+            aria-hidden
+            className={cn(favorite === "favorite" && "fill-current")}
+          />
+          Preferiti
+        </button>
       </div>
 
       {/* Advanced filters toggle: centered chevron on a divider line */}

@@ -7,6 +7,7 @@ import {
   parseScoreFilter,
   parseSourceFilter,
   parseAdsFilter,
+  parseFavoriteFilter,
   parseSortOption,
   parseYearFilter,
   uniqueCopyrightYears,
@@ -100,6 +101,15 @@ describe('lead-filters parsers', () => {
   it('parseAdsFilter accepts valid ads filters', () => {
     expect(parseAdsFilter('with')).toBe('with');
     expect(parseAdsFilter('without')).toBe('without');
+  });
+
+  it('parseFavoriteFilter returns "all" for unknown input', () => {
+    expect(parseFavoriteFilter(undefined)).toBe('all');
+    expect(parseFavoriteFilter('starred')).toBe('all');
+  });
+
+  it('parseFavoriteFilter accepts valid favorite filters', () => {
+    expect(parseFavoriteFilter('favorite')).toBe('favorite');
   });
 
   it('parseSortOption returns "date-desc" for unknown input', () => {

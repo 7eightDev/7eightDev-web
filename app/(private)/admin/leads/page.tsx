@@ -18,6 +18,7 @@ import {
   sortLeads,
   parseLeadStatusFilter,
   parseOutreachStatusFilter,
+  parseFavoriteFilter,
   parseScoreFilter,
   parseSourceFilter,
   parseAdsFilter,
@@ -47,6 +48,7 @@ export default async function LeadsPage({
   const filters = {
     status: parseLeadStatusFilter(param("status")),
     outreachStatus: parseOutreachStatusFilter(param("outreach")),
+    favorite: parseFavoriteFilter(param("favorite")),
     score: parseScoreFilter(param("score")),
     source: parseSourceFilter(param("source")),
     ads: parseAdsFilter(param("ads")),
@@ -94,6 +96,7 @@ export default async function LeadsPage({
     status: filters.status,
     outreachStatus: filters.outreachStatus,
     source: filters.source,
+    favorite: filters.favorite === "favorite" ? true : undefined,
     jobId,
     q: filters.q || undefined,
   });
@@ -146,6 +149,7 @@ export default async function LeadsPage({
     new URLSearchParams({
       ...(filters.status !== "all" && { status: filters.status }),
       ...(filters.outreachStatus !== "all" && { outreach: filters.outreachStatus }),
+      ...(filters.favorite !== "all" && { favorite: filters.favorite }),
       ...(filters.score !== "all" && { score: filters.score }),
       ...(filters.source !== "all" && { source: filters.source }),
       ...(filters.ads !== "all" && { ads: filters.ads }),
@@ -170,6 +174,7 @@ export default async function LeadsPage({
   const hasActiveFilters =
     filters.status !== "all" ||
     filters.outreachStatus !== "all" ||
+    filters.favorite !== "all" ||
     filters.score !== "all" ||
     filters.source !== "all" ||
     filters.ads !== "all" ||
@@ -200,6 +205,7 @@ export default async function LeadsPage({
         <LeadFilterBar
           status={filters.status}
           outreach={filters.outreachStatus}
+          favorite={filters.favorite}
           score={filters.score}
           source={filters.source}
           ads={filters.ads}

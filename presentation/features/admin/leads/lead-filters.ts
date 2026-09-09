@@ -167,6 +167,27 @@ export const ADS_FILTER_LABEL: Record<AdsFilter, string> = {
   without: 'Senza Ads',
 };
 
+/* ----------------------------- Favorite --------------------------- */
+
+export const FAVORITE_FILTER_VALUES = ['all', 'favorite'] as const;
+
+export type FavoriteFilter = (typeof FAVORITE_FILTER_VALUES)[number];
+
+export const DEFAULT_FAVORITE_FILTER: FavoriteFilter = 'all';
+
+export function parseFavoriteFilter(
+  raw: string | undefined
+): FavoriteFilter {
+  return FAVORITE_FILTER_VALUES.includes(raw as FavoriteFilter)
+    ? (raw as FavoriteFilter)
+    : DEFAULT_FAVORITE_FILTER;
+}
+
+export const FAVORITE_FILTER_LABEL: Record<FavoriteFilter, string> = {
+  all: 'tutti',
+  favorite: 'preferiti',
+};
+
 /* ----------------------------- Tech Stack (multiselect) ---------- */
 
 /** Comma-separated tech names in the URL, e.g. "WordPress,React". */
