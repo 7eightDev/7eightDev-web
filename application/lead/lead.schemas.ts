@@ -37,6 +37,27 @@ export type StartLeadGenerationInput = z.infer<
 
 export const leadIdSchema = z.string().uuid("Id lead non valido");
 
+export const leadOutreachStatusSchema = z.enum([
+  "not_contacted",
+  "audit_sent",
+  "in_talks",
+  "closed_won",
+  "rejected",
+]);
+
+export const leadOutreachNotesSchema = z
+  .string()
+  .trim()
+  .max(2000, "Le note non possono superare 2000 caratteri")
+  .optional()
+  .transform((value) => (value ? value : undefined));
+
+export const updateLeadOutreachSchema = z.object({
+  leadId: leadIdSchema,
+  outreachStatus: leadOutreachStatusSchema,
+  notes: leadOutreachNotesSchema,
+});
+
 export const jobIdSchema = z.string().uuid("Id job non valido");
 
 export const websiteUrlSchema = z

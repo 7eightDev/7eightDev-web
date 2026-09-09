@@ -10,6 +10,7 @@ import {
   startLeadGenerationSchema,
   leadIdSchema,
   jobIdSchema,
+  updateLeadOutreachSchema,
 } from "@/application/lead/lead.schemas";
 import {
   adsDetector,
@@ -144,6 +145,46 @@ export async function deleteLeadAction(
   }
 
   await leadRepository.delete(parsed.data);
+  revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
+/**
+ * Server action: update the outreach status (and optional notes) of a lead.
+ * `lastContactedAt` is refreshed whenever the status moves out of
+ * `not_contacted`, so the table and detail view can show the last touchpoint.
+ */
+export async function updateLeadOutreachAction(rawInput: unknown): Promise<LeadActionResult> {
+  const parsed = updateLeadOutreachSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  const lead = await leadRepository.findById(parsed.data.leadId);
+  if (!lead) {
+    return { ok: false, error: "Lead non trovato." };
+  }
+
+  const { outreachStatus, notes } = parsed.data;
+  const statusChanged = lead.outreachStatus !== outreachStatus;
+  const now = new Date().toISOString();
+
+  await leadRepository.save({
+    ...lead,
+    outreachStatus,
+    // Track the last touchpoint only when the status actually progresses a
+    // conversation; a pure notes save (same status) keeps the previous date.
+    lastContactedAt:
+      statusChanged && outreachStatus !== "not_contacted"
+        ? now
+        : lead.lastContactedAt,
+    outreachNotes:
+      notes !== undefined && notes !== (lead.outreachNotes ?? "")
+        ? notes
+        : lead.outreachNotes,
+    updatedAt: now,
+  });
+
   revalidatePath("/admin/leads");
   return { ok: true };
 }
