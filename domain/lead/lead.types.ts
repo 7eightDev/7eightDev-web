@@ -30,6 +30,12 @@ export interface Lead {
    *  a signal of when the site was built and thus how stale it is. */
   readonly copyright?: string;
 
+  /** True when the lead's website runs paid-advertising trackers. */
+  readonly hasAds?: boolean;
+
+  /** Detected ad-tracking platforms, e.g. ['Google Ads', 'Meta Pixel', 'GTM']. */
+  readonly adsTrackers?: readonly string[];
+
   readonly createdAt: string;
   readonly updatedAt: string;
 }

@@ -19,15 +19,18 @@ export const LEAD_CSV_HEADER = [
   'cls',
   'tbt',
   'qualification',
-  'source'
+  'source',
+  'has_ads',
+  'ads_trackers'
 ].join(',');
 
 /** Mirrors the filter dimensions of the leads page (job, status, source, q,
- *  tech, copyright year range), so the export matches exactly what is visible
- *  on screen. */
+ *  tech, copyright year range, ads), so the export matches exactly what is
+ *  visible on screen. */
 export interface LeadExportFilters {
   readonly status?: string;
   readonly source?: string;
+  readonly ads?: string;
   readonly q?: string;
   readonly jobId?: string;
   readonly techStack?: string[];
@@ -61,9 +64,11 @@ export async function exportLeadsCsv(
       ? leads.filter((lead) => leadMatchesCriteria(lead, job))
       : leads;
 
-  // Additional in-memory filters: tech-stack multiselect (any-of) and the
-  // copyright year range.
+  // Additional in-memory filters: tech-stack multiselect (any-of), the
+  // copyright year range, and the ads tracker toggle.
   const criteriaLeads = jobCriteriaLeads.filter((lead) => {
+    if (filters.ads === 'with' && lead.hasAds !== true) return false;
+    if (filters.ads === 'without' && lead.hasAds === true) return false;
     if (filters.techStack && filters.techStack.length > 0) {
       const leadTechs = (lead.techStack ?? []).map((t) => t.toLowerCase());
       const hit = filters.techStack.some((t) =>
@@ -109,7 +114,9 @@ function toRow(lead: Lead, analysis: LeadAnalysis | undefined): string {
     analysis?.cls,
     analysis?.tbt,
     lead.status,
-    lead.source
+    lead.source,
+    lead.hasAds ?? false,
+    (lead.adsTrackers ?? []).join(';')
   ]
     .map(csvCell)
     .join(',');

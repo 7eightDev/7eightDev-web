@@ -1,4 +1,5 @@
 import { runLeadGenerationPipeline } from '@/application/lead/run-lead-generation-pipeline';
+import type { AdsDetectionPort, AdsDetectionResult } from '@/domain/lead/lead.ads';
 import type { CopyrightPort } from '@/domain/lead/lead.copyright';
 import type { LeadDiscoveryPort } from '@/domain/lead/lead.discovery';
 import type { PageSpeedPort, PageSpeedResult } from '@/domain/lead/lead.pagespeed';
@@ -156,6 +157,20 @@ function makePageSpeed(result: PageSpeedResult): PageSpeedPort {
 function makeCopyright(value: string | undefined): CopyrightPort {
   return {
     detect: jest.fn().mockResolvedValue(value)
+  };
+}
+
+function makeAdsResult(
+  flags: Partial<AdsDetectionResult> = {}
+): AdsDetectionResult {
+  return { hasGoogleAds: false, hasMetaPixel: false, hasGtm: false, ...flags };
+}
+
+function makeAdsDetection(
+  result: AdsDetectionResult
+): AdsDetectionPort {
+  return {
+    detect: jest.fn().mockResolvedValue(result)
   };
 }
 
@@ -826,6 +841,74 @@ describe('runLeadGenerationPipeline', () => {
       expect(result.leads).toHaveLength(2);
       expect(result.leads.every((lead) => lead.jobId === 'job-7')).toBe(true);
     }
+  });
+
+  it('detects and persists ads trackers on analyzed leads when the port is wired', async () => {
+    const repository = makeRepository();
+    const adsDetection = makeAdsDetection(
+      makeAdsResult({ hasGoogleAds: true, hasMetaPixel: true })
+    );
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme', website: 'https://acme.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 45,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        adsDetection,
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(adsDetection.detect).toHaveBeenCalledWith('https://acme.example');
+    expect(result.leads[0].hasAds).toBe(true);
+    expect(result.leads[0].adsTrackers).toEqual(['Google Ads', 'Meta Pixel']);
+    const saved = await repository.findById('lead-1');
+    expect(saved?.hasAds).toBe(true);
+    expect(saved?.adsTrackers).toEqual(['Google Ads', 'Meta Pixel']);
+  });
+
+  it('persists a false ads result as hasAds=false on analyzed leads', async () => {
+    const repository = makeRepository();
+    const adsDetection = makeAdsDetection(makeAdsResult());
+
+    const result = await runLeadGenerationPipeline(
+      {
+        discovery: makeDiscovery([
+          { companyName: 'Acme', website: 'https://acme.example' }
+        ]),
+        pageSpeed: makePageSpeed({
+          performanceScore: 45,
+          lcp: null,
+          fcp: null,
+          cls: null,
+          tbt: null
+        }),
+        adsDetection,
+        repository,
+        now: NOW,
+        generateId: makeIds()
+      },
+      { query: 'dentisti', location: 'Padova', quantity: 1 }
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.leads[0].hasAds).toBe(false);
+    expect((await repository.findById('lead-1'))?.hasAds).toBe(false);
   });
 
   it('detects and persists copyright on analyzed leads when the port is wired', async () => {

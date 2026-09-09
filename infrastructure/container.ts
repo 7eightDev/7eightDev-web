@@ -1,4 +1,5 @@
 import type { CatalogRepository } from "@/domain/catalog/catalog.repository";
+import type { AdsDetectionPort } from "@/domain/lead/lead.ads";
 import type { CopyrightPort } from "@/domain/lead/lead.copyright";
 import type { LeadDiscoveryPort } from "@/domain/lead/lead.discovery";
 import type { LeadRepository } from "@/domain/lead/lead.repository";
@@ -7,6 +8,7 @@ import type { TechStackPort } from "@/domain/lead/lead.tech";
 import type { QuoteNotificationPort } from "@/domain/quote/quote-notification.port";
 import type { QuoteRepository } from "@/domain/quote/quote.repository";
 import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog.repository";
+import { HtmlAdsDetector } from "@/infrastructure/lead/ads/html-ads-detector";
 import { HtmlCopyrightDetector } from "@/infrastructure/lead/copyright/html-copyright-detector";
 import { GooglePlacesLeadDiscovery } from "@/infrastructure/lead/discovery/google-places-lead-discovery";
 import { PrismaLeadRepository } from "@/infrastructure/lead/prisma-lead.repository";
@@ -78,6 +80,9 @@ export const techStackDetector: TechStackPort = new HtmlTechDetector();
 
 /** Footer copyright detection on a lead's website (staleness signal). */
 export const copyrightDetector: CopyrightPort = new HtmlCopyrightDetector();
+
+/** Paid-advertising tracker detection (Google Ads / Meta Pixel / GTM). */
+export const adsDetector: AdsDetectionPort = new HtmlAdsDetector();
 
 /** Rate limiters: per-instance in-memory (sufficient for B2B admin). */
 export const leadGenerationRateLimiter = new RateLimiter({
