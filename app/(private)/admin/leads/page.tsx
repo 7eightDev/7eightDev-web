@@ -17,6 +17,7 @@ import {
   filterLeads,
   sortLeads,
   parseLeadStatusFilter,
+  parseOutreachStatusFilter,
   parseScoreFilter,
   parseSourceFilter,
   parseAdsFilter,
@@ -45,6 +46,7 @@ export default async function LeadsPage({
     Array.isArray(params[key]) ? params[key][0] : params[key];
   const filters = {
     status: parseLeadStatusFilter(param("status")),
+    outreachStatus: parseOutreachStatusFilter(param("outreach")),
     score: parseScoreFilter(param("score")),
     source: parseSourceFilter(param("source")),
     ads: parseAdsFilter(param("ads")),
@@ -90,6 +92,7 @@ export default async function LeadsPage({
 
   const matchingLeads = await leadRepository.findMatchingLeads({
     status: filters.status,
+    outreachStatus: filters.outreachStatus,
     source: filters.source,
     jobId,
     q: filters.q || undefined,
@@ -142,6 +145,7 @@ export default async function LeadsPage({
   const listQuery = (overrides: Record<string, string>) =>
     new URLSearchParams({
       ...(filters.status !== "all" && { status: filters.status }),
+      ...(filters.outreachStatus !== "all" && { outreach: filters.outreachStatus }),
       ...(filters.score !== "all" && { score: filters.score }),
       ...(filters.source !== "all" && { source: filters.source }),
       ...(filters.ads !== "all" && { ads: filters.ads }),
@@ -165,6 +169,7 @@ export default async function LeadsPage({
 
   const hasActiveFilters =
     filters.status !== "all" ||
+    filters.outreachStatus !== "all" ||
     filters.score !== "all" ||
     filters.source !== "all" ||
     filters.ads !== "all" ||
@@ -194,6 +199,7 @@ export default async function LeadsPage({
       <section className="flex h-full flex-col gap-3 overflow-hidden">
         <LeadFilterBar
           status={filters.status}
+          outreach={filters.outreachStatus}
           score={filters.score}
           source={filters.source}
           ads={filters.ads}

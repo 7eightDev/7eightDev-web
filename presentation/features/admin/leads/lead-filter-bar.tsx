@@ -22,14 +22,17 @@ import {
   ADS_FILTER_LABEL,
   DEFAULT_ADS_FILTER,
   DEFAULT_LEAD_STATUS_FILTER,
+  DEFAULT_OUTREACH_STATUS_FILTER,
   DEFAULT_SCORE_FILTER,
   DEFAULT_SOURCE_FILTER,
   LEAD_STATUS_FILTER_LABEL,
+  OUTREACH_STATUS_FILTER_LABEL,
   SCORE_FILTER_LABEL,
   SOURCE_FILTER_LABEL,
   serializeTechStackFilter,
   type AdsFilter,
   type LeadStatusFilter,
+  type OutreachStatusFilter,
   type ScoreFilter,
   type SourceFilter,
   type TechStackFilter,
@@ -52,6 +55,7 @@ export interface ToolbarJob {
 
 interface LeadFilterBarProps {
   status: LeadStatusFilter;
+  outreach: OutreachStatusFilter;
   score: ScoreFilter;
   source: SourceFilter;
   ads: AdsFilter;
@@ -73,6 +77,15 @@ const ALL_STATUSES: LeadStatusFilter[] = [
   "discarded",
 ];
 
+const ALL_OUTREACH_STATUSES: OutreachStatusFilter[] = [
+  "all",
+  "not_contacted",
+  "audit_sent",
+  "in_talks",
+  "closed_won",
+  "rejected",
+];
+
 const selectBase =
   "h-9 w-fit items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] text-soft cursor-pointer transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
@@ -89,6 +102,7 @@ const inputBase =
  */
 export function LeadFilterBar({
   status,
+  outreach,
   score,
   source,
   ads,
@@ -164,6 +178,12 @@ export function LeadFilterBar({
     push(
       value === DEFAULT_LEAD_STATUS_FILTER ? { status: "" } : { status: value }
     );
+  const setOutreach = (value: OutreachStatusFilter) =>
+    push(
+      value === DEFAULT_OUTREACH_STATUS_FILTER
+        ? { outreach: "" }
+        : { outreach: value }
+    );
   const setScore = (value: ScoreFilter) =>
     push(value === DEFAULT_SCORE_FILTER ? { score: "" } : { score: value });
   const setSource = (value: SourceFilter) =>
@@ -186,6 +206,7 @@ export function LeadFilterBar({
   const clearAll = () =>
     push({
       status: "",
+      outreach: "",
       score: "",
       source: "",
       ads: "",
@@ -203,6 +224,7 @@ export function LeadFilterBar({
 
   const hasActive =
     status !== DEFAULT_LEAD_STATUS_FILTER ||
+    outreach !== DEFAULT_OUTREACH_STATUS_FILTER ||
     score !== DEFAULT_SCORE_FILTER ||
     source !== DEFAULT_SOURCE_FILTER ||
     ads !== DEFAULT_ADS_FILTER ||
@@ -233,6 +255,7 @@ export function LeadFilterBar({
   const exportHref = useMemo(() => {
     const keep = [
       "status",
+      "outreach",
       "source",
       "ads",
       "q",
@@ -369,6 +392,35 @@ export function LeadFilterBar({
             Azzera filtri
           </button>
         )}
+      </div>
+
+      {/* Quick outreach band: sales funnel stage filter */}
+      <div className="mx-auto flex w-full max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+          Outreach
+        </span>
+        <ToggleGroup
+          type="single"
+          value={outreach}
+          onValueChange={(v) => v && setOutreach(v as OutreachStatusFilter)}
+          aria-label="Filtro per stato outreach"
+          className="h-9 rounded-lg border border-border bg-surface p-0.5"
+        >
+          {ALL_OUTREACH_STATUSES.map((value) => (
+            <ToggleGroupItem
+              key={value}
+              value={value}
+              title={OUTREACH_STATUS_FILTER_LABEL[value]}
+              className={cn(
+                "h-full font-mono text-[11px] px-2.5 rounded-md transition-colors",
+                "data-[state=on]:text-accent data-[state=on]:bg-accent/[0.08]",
+                "data-[state=off]:text-soft data-[state=off]:hover:text-foreground"
+              )}
+            >
+              {OUTREACH_STATUS_FILTER_LABEL[value]}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       </div>
 
       {/* Advanced filters toggle: centered chevron on a divider line */}
