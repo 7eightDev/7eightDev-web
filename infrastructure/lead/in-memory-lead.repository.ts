@@ -27,6 +27,7 @@ export class InMemoryLeadRepository implements LeadRepository {
     status,
     outreachStatus,
     source,
+    favorite,
     jobId,
     q
   }: LeadMatchParams): Promise<Lead[]> {
@@ -40,6 +41,9 @@ export class InMemoryLeadRepository implements LeadRepository {
     }
     if (source && source !== 'all') {
       filtered = filtered.filter((l) => l.source === source);
+    }
+    if (favorite !== undefined) {
+      filtered = filtered.filter((l) => (l.favorite ?? false) === favorite);
     }
     if (jobId) {
       filtered = filtered.filter((l) => l.jobId === jobId);
@@ -71,6 +75,7 @@ export class InMemoryLeadRepository implements LeadRepository {
     status,
     outreachStatus,
     source,
+    favorite,
     jobId,
     q
   }: LeadPageParams): Promise<LeadPage> {
@@ -84,6 +89,9 @@ export class InMemoryLeadRepository implements LeadRepository {
     }
     if (source && source !== 'all') {
       filtered = filtered.filter((l) => l.source === source);
+    }
+    if (favorite !== undefined) {
+      filtered = filtered.filter((l) => (l.favorite ?? false) === favorite);
     }
     if (jobId) {
       filtered = filtered.filter((l) => l.jobId === jobId);
@@ -213,6 +221,13 @@ export class InMemoryLeadRepository implements LeadRepository {
     const job = this.jobs.get(id);
     if (job) {
       this.jobs.set(id, { ...job, favorite });
+    }
+  }
+
+  async setLeadFavorite(id: string, favorite: boolean): Promise<void> {
+    const lead = this.leads.get(id);
+    if (lead) {
+      this.leads.set(id, { ...lead, favorite });
     }
   }
 

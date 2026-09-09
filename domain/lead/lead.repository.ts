@@ -59,6 +59,8 @@ export interface LeadRepository {
   saveJob(job: LeadGenerationJob): Promise<void>;
   /** Toggle the sidebar pin (star) on a job. */
   setJobFavorite(id: string, favorite: boolean): Promise<void>;
+  /** Toggle the star on a lead (the "intend to contact" mark). */
+  setLeadFavorite(id: string, favorite: boolean): Promise<void>;
   /** Permanently delete a job; its leads keep their `jobId` unset (SetNull). */
   deleteJob(id: string): Promise<void>;
   /** Analyzed + qualified lead counts for the given jobs, keyed by job id. */

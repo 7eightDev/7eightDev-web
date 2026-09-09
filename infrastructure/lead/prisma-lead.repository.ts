@@ -44,6 +44,7 @@ export class PrismaLeadRepository implements LeadRepository {
       copyright: row.copyright,
       hasAds: row.hasAds,
       adsTrackers: row.adsTrackers,
+      favorite: row.favorite,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     };
@@ -78,10 +79,11 @@ export class PrismaLeadRepository implements LeadRepository {
     status,
     outreachStatus,
     source,
+    favorite,
     jobId,
     q
   }: LeadPageParams): Promise<LeadPage> {
-    const where = buildLeadsWhere({ status, outreachStatus, source, jobId, q });
+    const where = buildLeadsWhere({ status, outreachStatus, source, favorite, jobId, q });
 
     const [total, rows] = await Promise.all([
       prisma.lead.count({ where }),
@@ -103,11 +105,12 @@ export class PrismaLeadRepository implements LeadRepository {
     status,
     outreachStatus,
     source,
+    favorite,
     jobId,
     q
   }: LeadMatchParams): Promise<Lead[]> {
     const rows = await prisma.lead.findMany({
-      where: buildLeadsWhere({ status, outreachStatus, source, jobId, q }),
+      where: buildLeadsWhere({ status, outreachStatus, source, favorite, jobId, q }),
       orderBy: { createdAt: 'desc' }
     });
 
@@ -257,6 +260,13 @@ export class PrismaLeadRepository implements LeadRepository {
     });
   }
 
+  async setLeadFavorite(id: string, favorite: boolean): Promise<void> {
+    await prisma.lead.update({
+      where: { id },
+      data: { favorite }
+    });
+  }
+
   async deleteJob(id: string): Promise<void> {
     await prisma.leadGenerationJob.delete({
       where: { id }
@@ -347,6 +357,7 @@ function buildLeadsWhere({
   status,
   outreachStatus,
   source,
+  favorite,
   jobId,
   q
 }: LeadMatchParams): Record<string, unknown> {
@@ -361,6 +372,9 @@ function buildLeadsWhere({
   }
   if (source && source !== 'all') {
     where.source = source;
+  }
+  if (favorite !== undefined) {
+    where.favorite = favorite;
   }
   if (jobId) {
     where.jobId = jobId;

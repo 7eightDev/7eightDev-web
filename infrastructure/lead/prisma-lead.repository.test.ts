@@ -17,6 +17,7 @@ jest.mock('@/infrastructure/db/prisma', () => ({
       findMany: jest.fn(),
       count: jest.fn(),
       groupBy: jest.fn(),
+      update: jest.fn(),
       delete: jest.fn()
     },
     leadAnalysis: {
@@ -79,6 +80,7 @@ describe('PrismaLeadRepository', () => {
         copyright: null,
         hasAds: false,
         adsTrackers: [],
+        favorite: false,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -102,6 +104,7 @@ describe('PrismaLeadRepository', () => {
         copyright: null,
         hasAds: false,
         adsTrackers: [],
+        favorite: false,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -144,6 +147,7 @@ describe('PrismaLeadRepository', () => {
       copyright: null,
       hasAds: false,
       adsTrackers: [],
+      favorite: false,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -719,6 +723,53 @@ const result = await repository.findPaginated({
         ]
       },
       orderBy: { createdAt: 'desc' }
+    });
+  });
+  it('filters by favorite in paginated queries', async () => {
+    const repository = new PrismaLeadRepository();
+
+    jest.mocked(prisma.lead.findMany).mockResolvedValue([]);
+    jest.mocked(prisma.lead.count).mockResolvedValue(0);
+
+    await repository.findPaginated({
+      page: 1,
+      pageSize: 20,
+      favorite: true
+    });
+
+    expect(prisma.lead.count).toHaveBeenCalledWith({
+      where: { favorite: true }
+    });
+    expect(prisma.lead.findMany).toHaveBeenCalledWith({
+      where: { favorite: true },
+      orderBy: { createdAt: 'desc' },
+      skip: 0,
+      take: 20
+    });
+  });
+  it('filters by favorite in findMatchingLeads', async () => {
+    const repository = new PrismaLeadRepository();
+
+    jest.mocked(prisma.lead.findMany).mockResolvedValue([]);
+
+    await repository.findMatchingLeads({
+      favorite: true,
+      status: 'new'
+    });
+
+    expect(prisma.lead.findMany).toHaveBeenCalledWith({
+      where: { favorite: true, status: 'new' },
+      orderBy: { createdAt: 'desc' }
+    });
+  });
+  it('sets a lead favorite', async () => {
+    const repository = new PrismaLeadRepository();
+
+    await repository.setLeadFavorite('lead-1', true);
+
+    expect(prisma.lead.update).toHaveBeenCalledWith({
+      where: { id: 'lead-1' },
+      data: { favorite: true }
     });
   });
   it('finds latest analyses by lead ids', async () => {

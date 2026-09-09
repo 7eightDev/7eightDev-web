@@ -95,6 +95,7 @@ function makeLeadRepo(lead: Lead | null, analyses: LeadAnalysis[] = []) {
     async findAllJobs() { return []; },
     async saveJob() {},
     async setJobFavorite() {},
+    async setLeadFavorite() {},
     async deleteJob() {},
     async findPaginated() { return { leads: lead ? [lead] : [], total: lead ? 1 : 0 }; },
     async findMatchingLeads() { return lead ? [lead] : []; },

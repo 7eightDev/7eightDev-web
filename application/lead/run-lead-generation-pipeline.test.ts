@@ -54,6 +54,7 @@ function makeRepository(existingLeads: Lead[] = []) {
       jobs.push(job);
     },
     async setJobFavorite() {},
+    async setLeadFavorite() {},
     async deleteJob() {},
     async findPaginated({ jobId }: { jobId?: string }) {
       const all = [...leads.values()];

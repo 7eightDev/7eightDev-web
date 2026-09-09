@@ -128,6 +128,36 @@ describe('InMemoryLeadRepository', () => {
     expect(page.total).toBe(1);
   });
 
+  it('filters leads by favorite', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.save({ ...lead, id: 'lead-1', favorite: true });
+    await repository.save({ ...lead, id: 'lead-2', favorite: false });
+    await repository.save({ ...lead, id: 'lead-3' });
+
+    const page = await repository.findPaginated({
+      page: 1,
+      pageSize: 10,
+      favorite: true
+    });
+    expect(page.leads.map((l) => l.id)).toEqual(['lead-1']);
+
+    const matching = await repository.findMatchingLeads({ favorite: true });
+    expect(matching.map((l) => l.id)).toEqual(['lead-1']);
+  });
+
+  it('sets a lead favorite', async () => {
+    const repository = new InMemoryLeadRepository();
+
+    await repository.save({ ...lead, favorite: false });
+    await repository.setLeadFavorite('lead-1', true);
+
+    await expect(repository.findById('lead-1')).resolves.toEqual({
+      ...lead,
+      favorite: true
+    });
+  });
+
   it('counts leads grouped by job ids', async () => {
     const repository = new InMemoryLeadRepository();
 
