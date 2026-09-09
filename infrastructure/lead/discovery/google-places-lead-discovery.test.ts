@@ -293,4 +293,78 @@ describe('GooglePlacesLeadDiscovery', () => {
       rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it('counts served calls toward the daily quota', async () => {
+    const { mkdtempSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+
+    try {
+      const quotaGuard = new DailyQuotaGuard({
+        limits: { 'places-text-search': 10 },
+        trackerFilePath: join(tmpDir, 'tracker.json')
+      });
+      const fetchFn = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(placeResponse)
+      });
+
+      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
+      await discovery.search(input);
+
+      expect(quotaGuard.usage('places-text-search').used).toBe(1);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not count failed requests toward the daily quota', async () => {
+    const { mkdtempSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+
+    try {
+      const quotaGuard = new DailyQuotaGuard({
+        limits: { 'places-text-search': 10 },
+        trackerFilePath: join(tmpDir, 'tracker.json')
+      });
+      const fetchFn = jest.fn().mockResolvedValue({ ok: false, status: 403 });
+
+      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
+
+      await expect(discovery.search(input)).rejects.toThrow(
+        'Google Places search failed with status 403'
+      );
+      expect(quotaGuard.usage('places-text-search').used).toBe(0);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not count zero-result responses (SKU gratuito) toward the quota', async () => {
+    const { mkdtempSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+
+    try {
+      const quotaGuard = new DailyQuotaGuard({
+        limits: { 'places-text-search': 10 },
+        trackerFilePath: join(tmpDir, 'tracker.json')
+      });
+      const fetchFn = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ places: [] })
+      });
+
+      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
+      await discovery.search(input);
+
+      expect(quotaGuard.usage('places-text-search').used).toBe(0);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });

@@ -93,7 +93,7 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
       pages += 1;
 
       if (this.quotaGuard) {
-        const quota = await this.quotaGuard.checkAndIncrement(
+        const quota = await this.quotaGuard.check(
           QUOTA_BUCKET_PLACES_TEXT_SEARCH
         );
         if (!quota.allowed) {
@@ -117,6 +117,14 @@ export class GooglePlacesLeadDiscovery implements LeadDiscoveryPort {
         { maxRetries: this.maxRetries, baseDelayMs: 500, maxDelayMs: 10_000 },
         (error) => !(error instanceof HttpError && error.status >= 400 && error.status < 500 && error.status !== 429)
       );
+
+      // Count ONLY the calls that are actually monetizable: a request that
+      // failed (transport error or HTTP error) or returned zero results is
+      // billed under Google's $0 "Zero results" SKU, so it must not consume
+      // the daily free allowance.
+      if (this.quotaGuard && page.places.length > 0) {
+        await this.quotaGuard.increment(QUOTA_BUCKET_PLACES_TEXT_SEARCH);
+      }
 
       results.push(...page.places);
 

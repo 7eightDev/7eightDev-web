@@ -95,11 +95,16 @@ export class DailyQuotaGuard {
   }
 
   /**
-   * Check whether a call for the given bucket is allowed, and if so increment
-   * the counter. Returns usage details (used/limit/remaining).
-   * Logs a warning when blocked or when nearing the limit (< 10 left).
+   * Check whether a call for the given bucket is still allowed, WITHOUT
+   * consuming a unit. Returns usage details (used/limit/remaining).
+   * Logs a warning when blocked.
+   *
+   * Use together with `increment()`: call `check()` before issuing the API
+   * request, and `increment()` after it actually succeeded, so failed calls
+   * (transport errors, HTTP errors, quota rejects) never count against the
+   * daily free allowance.
    */
-  async checkAndIncrement(bucket: string): Promise<QuotaCheckResult> {
+  async check(bucket: string): Promise<QuotaCheckResult> {
     this.state = this.loadState();
     const used = this.state.buckets[bucket] ?? 0;
     const limit = this.limits[bucket];
@@ -111,16 +116,27 @@ export class DailyQuotaGuard {
         limit,
         date: this.state.date,
       });
-
-      return {
-        allowed: false,
-        used,
-        limit,
-        remaining: 0,
-      };
     }
 
+    return {
+      allowed: used < limit,
+      used,
+      limit,
+      remaining: Math.max(limit - used, 0),
+    };
+  }
+
+  /**
+   * Record one served API call for the given bucket. Call ONLY after the
+   * request really reached the provider and returned a usable response:
+   * a failed call must never be counted.
+   */
+  async increment(bucket: string): Promise<QuotaCheckResult> {
+    this.state = this.loadState();
+    const used = this.state.buckets[bucket] ?? 0;
+    const limit = this.limits[bucket];
     const newUsed = used + 1;
+
     this.state = {
       ...this.state,
       buckets: { ...this.state.buckets, [bucket]: newUsed },
@@ -137,7 +153,7 @@ export class DailyQuotaGuard {
         remaining,
       });
     } else {
-      log.debug('Chiamata API autorizzata', {
+      log.debug('Chiamata API registrata', {
         bucket,
         used: newUsed,
         limit,
@@ -146,11 +162,23 @@ export class DailyQuotaGuard {
     }
 
     return {
-      allowed: true,
+      allowed: newUsed <= limit,
       used: newUsed,
       limit,
       remaining,
     };
+  }
+
+  /**
+   * Combined check + increment: returns whether a call is allowed and, if so,
+   * consumes one unit immediately. Legacy helper kept for tests/backwards
+   * compatibility — production callers should use `check()` + `increment()`
+   * so failed calls are not counted.
+   */
+  async checkAndIncrement(bucket: string): Promise<QuotaCheckResult> {
+    const checked = await this.check(bucket);
+    if (!checked.allowed) return checked;
+    return this.increment(bucket);
   }
 
   /** Returns the current daily limit for a bucket. */

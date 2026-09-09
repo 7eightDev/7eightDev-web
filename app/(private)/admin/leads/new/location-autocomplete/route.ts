@@ -37,8 +37,9 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   // Safety: block autocomplete calls when the daily free allowance for the
-  // Autocomplete SKU is exhausted to avoid unexpected costs.
-  const quota = await googleApiQuotaGuard.checkAndIncrement(
+  // Autocomplete SKU is exhausted to avoid unexpected costs. The unit is
+  // consumed only when the call actually succeeds below.
+  const quota = await googleApiQuotaGuard.check(
     QUOTA_BUCKET_PLACES_AUTOCOMPLETE,
   );
   if (!quota.allowed) {
@@ -50,6 +51,12 @@ export async function GET(request: Request): Promise<Response> {
 
   try {
     const suggestions = await fetchSuggestions(apiKey, q);
+    // Count only monetizable calls: failures and zero-result responses are
+    // billed under Google's $0 "Zero results" SKU, so they must not inflate
+    // the daily usage.
+    if (suggestions.length > 0) {
+      await googleApiQuotaGuard.increment(QUOTA_BUCKET_PLACES_AUTOCOMPLETE);
+    }
     return Response.json({ suggestions });
   } catch (error) {
     if (error instanceof HttpError && error.status === 429) {

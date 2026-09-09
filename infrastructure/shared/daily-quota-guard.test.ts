@@ -40,6 +40,38 @@ describe('DailyQuotaGuard', () => {
     expect(r2.remaining).toBe(1);
   });
 
+  it('check() does not consume quota', async () => {
+    const guard = new DailyQuotaGuard({
+      limits: { [bucket]: 3 },
+      trackerFilePath: trackerPath(),
+    });
+
+    const r = await guard.check(bucket);
+
+    expect(r.allowed).toBe(true);
+    expect(r.used).toBe(0);
+    expect(r.remaining).toBe(3);
+    expect(guard.usage(bucket).used).toBe(0);
+  });
+
+  it('increment() counts only explicitly recorded calls', async () => {
+    const guard = new DailyQuotaGuard({
+      limits: { [bucket]: 2 },
+      trackerFilePath: trackerPath(),
+    });
+
+    const first = await guard.increment(bucket);
+    expect(first.allowed).toBe(true);
+    expect(guard.usage(bucket).used).toBe(1);
+
+    const second = await guard.check(bucket);
+    expect(second.allowed).toBe(true);
+    expect(second.remaining).toBe(1);
+
+    await guard.increment(bucket);
+    expect(guard.check(bucket)).resolves.toMatchObject({ allowed: false });
+  });
+
   it('rejects calls when the daily limit is reached', async () => {
     const guard = new DailyQuotaGuard({
       limits: { [bucket]: 2 },
