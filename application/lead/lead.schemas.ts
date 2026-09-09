@@ -58,6 +58,10 @@ export const updateLeadOutreachSchema = z.object({
   notes: leadOutreachNotesSchema,
 });
 
+export const toggleLeadFavoriteSchema = z.object({
+  leadId: leadIdSchema,
+});
+
 export const jobIdSchema = z.string().uuid("Id job non valido");
 
 export const websiteUrlSchema = z

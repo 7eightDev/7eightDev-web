@@ -11,6 +11,7 @@ import {
   leadIdSchema,
   jobIdSchema,
   updateLeadOutreachSchema,
+  toggleLeadFavoriteSchema,
 } from "@/application/lead/lead.schemas";
 import {
   adsDetector,
@@ -185,6 +186,28 @@ export async function updateLeadOutreachAction(rawInput: unknown): Promise<LeadA
     updatedAt: now,
   });
 
+  revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
+/**
+ * Server action: toggle the star on a lead (the "intend to contact" mark).
+ * The optimistic star button in the table row and detail views call this.
+ */
+export async function toggleLeadFavoriteAction(
+  rawInput: unknown
+): Promise<LeadActionResult> {
+  const parsed = toggleLeadFavoriteSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  const lead = await leadRepository.findById(parsed.data.leadId);
+  if (!lead) {
+    return { ok: false, error: "Lead non trovato." };
+  }
+
+  await leadRepository.setLeadFavorite(parsed.data.leadId, !(lead.favorite ?? false));
   revalidatePath("/admin/leads");
   return { ok: true };
 }
