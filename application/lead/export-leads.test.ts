@@ -37,7 +37,7 @@ function makeAnalysis(overrides: Partial<LeadAnalysis> = {}): LeadAnalysis {
 }
 
 const CSV_HEADER =
-  'company,category,website,phone,email,address,city,performance,lcp,fcp,cls,tbt,qualification,source';
+  'company,category,website,phone,email,address,city,performance,lcp,fcp,cls,tbt,qualification,source,has_ads,ads_trackers';
 
 describe('exportLeadsCsv', () => {
   it('exports every lead with the CSV header when no filters are set', async () => {
@@ -82,7 +82,7 @@ describe('exportLeadsCsv', () => {
     const csv = await exportLeadsCsv(repo, { status: 'discarded' });
 
     expect(csv).toContain('Lead scartato');
-    expect(csv).toContain(',discarded,google_maps\r\n');
+    expect(csv).toContain(',discarded,google_maps,false,\r\n');
     expect(csv).not.toContain('Studio Dentistico Rossi');
   });
 
@@ -112,7 +112,7 @@ describe('exportLeadsCsv', () => {
     expect(csv).toContain(
       'Studio Dentistico Rossi,dentist,https://rossi.example,+39 02 1234567,info@rossi.example,'
     );
-    expect(csv).toContain('30,4100,2600,0.4,820,qualified,google_maps');
+    expect(csv).toContain('30,4100,2600,0.4,820,qualified,google_maps,false,');
   });
 
   it('uses the most recent analysis when a lead has several', async () => {
@@ -127,8 +127,8 @@ describe('exportLeadsCsv', () => {
 
     const csv = await exportLeadsCsv(repo);
 
-    expect(csv).toContain(',45,4100,2600,0.4,820,qualified,google_maps');
-    expect(csv).not.toContain(',20,4100,2600,0.4,820,qualified,google_maps');
+    expect(csv).toContain(',45,4100,2600,0.4,820,qualified,google_maps,false,');
+    expect(csv).not.toContain(',20,4100,2600,0.4,820,qualified,google_maps,');
   });
 
   it('escapes fields containing commas, quotes and newlines', async () => {
@@ -209,6 +209,6 @@ describe('exportLeadsCsv', () => {
 
     const csv = await exportLeadsCsv(repo);
 
-    expect(csv).toContain('Studio Dentistico Rossi,,,,,,,,,,,,qualified,google_maps\r\n');
+    expect(csv).toContain('Studio Dentistico Rossi,,,,,,,,,,,,qualified,google_maps,false,\r\n');
   });
 });

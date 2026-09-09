@@ -2,6 +2,7 @@ import { exportLeadsCsv } from "@/application/lead/export-leads";
 import {
   parseLeadStatusFilter,
   parseSourceFilter,
+  parseAdsFilter,
   parseTechStackFilter,
   parseYearFilter,
 } from "@/presentation/features/admin/leads/lead-filters";
@@ -26,6 +27,7 @@ export async function GET(request: Request): Promise<Response> {
   const csv = await exportLeadsCsv(leadRepository, {
     status: parseLeadStatusFilter(params.get("status") ?? undefined),
     source: parseSourceFilter(params.get("source") ?? undefined),
+    ads: parseAdsFilter(params.get("ads") ?? undefined),
     q: (params.get("q") ?? "").trim(),
     jobId: params.get("job") ?? undefined,
     techStack: parseTechStackFilter(params.get("tech") ?? undefined),

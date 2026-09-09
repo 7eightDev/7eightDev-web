@@ -24,6 +24,7 @@ const lead: Lead = {
   city: 'Padova',
   source: 'google_maps',
   status: 'new',
+  hasAds: false,
   createdAt: '2026-08-28T10:00:00.000Z',
   updatedAt: '2026-08-28T10:01:00.000Z'
 };

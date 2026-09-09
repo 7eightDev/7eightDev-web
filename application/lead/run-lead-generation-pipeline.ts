@@ -11,6 +11,8 @@ import type { CopyrightPort } from '@/domain/lead/lead.copyright';
 import { isCopyrightPayload } from '@/domain/lead/lead.copyright';
 import type { LeadRepository } from '@/domain/lead/lead.repository';
 import type { TechStackPort } from '@/domain/lead/lead.tech';
+import type { AdsDetectionPort } from '@/domain/lead/lead.ads';
+import { adsResultToTrackers } from '@/domain/lead/lead.ads';
 import { calculateLeadQualification } from '@/domain/lead/lead.score';
 import type {
   Lead,
@@ -29,6 +31,7 @@ export interface RunLeadGenerationPipelineDeps {
   readonly repository: LeadRepository;
   readonly techStack?: TechStackPort;
   readonly copyright?: CopyrightPort;
+  readonly adsDetection?: AdsDetectionPort;
   readonly now?: () => Date;
   readonly generateId?: () => string;
   readonly source?: LeadSource;
@@ -303,6 +306,10 @@ async function analyzeLead(input: {
       input.deps.copyright && input.lead.website
         ? await input.deps.copyright.detect(input.lead.website)
         : undefined;
+    const adsTrackers =
+      input.deps.adsDetection && input.lead.website
+        ? await detectAds(input.deps.adsDetection, input.lead.website)
+        : undefined;
     const analyzedLead = {
       ...input.lead,
       status,
@@ -315,6 +322,16 @@ async function analyzeLead(input: {
         (isCopyrightPayload(input.lead.copyright)
           ? undefined
           : input.lead.copyright),
+      // Ad tracking is an additive signal: a "clean" re-detect resets the
+      // flags, but when detection is skipped entirely the previous capture
+      // stays (same trade-off as techStack/copyright re-runs).
+      hasAds: adsTrackers
+        ? adsTrackers.length > 0
+        : input.lead.hasAds,
+      adsTrackers:
+        adsTrackers && adsTrackers.length > 0
+          ? adsTrackers
+          : input.lead.adsTrackers,
       // A successful re-analysis supersedes any earlier failure, so the
       // stale `analysisError` from a previous run must not persist.
       analysisError: undefined,
@@ -388,6 +405,19 @@ function leadStatusFromPageSpeed(result: PageSpeedResult): LeadStatus {
   );
 
   return qualification === 'qualified' ? 'qualified' : 'analyzed';
+}
+
+async function detectAds(
+  detector: AdsDetectionPort,
+  website: string
+): Promise<string[] | undefined> {
+  try {
+    const result = await detector.detect(website);
+    return adsResultToTrackers(result);
+  } catch {
+    // Best-effort by design: a detection failure must never fail the lead.
+    return undefined;
+  }
 }
 
 function websiteKey(website: string | undefined) {

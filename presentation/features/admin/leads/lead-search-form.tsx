@@ -37,12 +37,12 @@ export function LeadSearchForm() {
         techStack: techStack || undefined,
         copyright: copyright || undefined,
       });
-      // On success the action returns without redirecting (the job runs in the
-      // background); we go to the list where polling tracks the job progress.
+      // On success the action returns the job id; we land directly on the job's
+      // results, where polling tracks its progress live.
       if (result && !result.ok) {
         setError(result.error ?? "Errore.");
       } else {
-        router.push("/admin/leads");
+        router.push(result.jobId ? `/admin/leads?job=${result.jobId}` : "/admin/leads");
       }
     });
   };

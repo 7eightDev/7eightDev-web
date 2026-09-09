@@ -73,6 +73,8 @@ describe('PrismaLeadRepository', () => {
         analysisError: null,
         techStack: [],
         copyright: null,
+        hasAds: false,
+        adsTrackers: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -91,6 +93,8 @@ describe('PrismaLeadRepository', () => {
         analysisError: null,
         techStack: [],
         copyright: null,
+        hasAds: false,
+        adsTrackers: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -127,6 +131,8 @@ describe('PrismaLeadRepository', () => {
       analysisError: null,
       techStack: [],
       copyright: null,
+      hasAds: false,
+      adsTrackers: [],
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -155,6 +161,8 @@ describe('PrismaLeadRepository', () => {
       analysisError: null,
       techStack: [],
       copyright: null,
+      hasAds: false,
+      adsTrackers: [],
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -174,6 +182,7 @@ describe('PrismaLeadRepository', () => {
       city: 'Padova',
       source: 'google_maps',
       status: 'new',
+      hasAds: false,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z'
     });
@@ -198,6 +207,8 @@ describe('PrismaLeadRepository', () => {
         analysisError: null,
         techStack: [],
         copyright: null,
+        hasAds: false,
+        adsTrackers: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -217,6 +228,8 @@ describe('PrismaLeadRepository', () => {
         analysisError: null,
         techStack: [],
         copyright: null,
+        hasAds: false,
+        adsTrackers: [],
         createdAt: new Date('2026-01-02T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z')
       }
@@ -240,6 +253,7 @@ describe('PrismaLeadRepository', () => {
         city: 'Padova',
         source: 'google_maps',
         status: 'new',
+        hasAds: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z'
       },
@@ -254,6 +268,7 @@ describe('PrismaLeadRepository', () => {
         city: 'Vicenza',
         source: 'google_maps',
         status: 'new',
+        hasAds: false,
         createdAt: '2026-01-02T00:00:00.000Z',
         updatedAt: '2026-01-02T00:00:00.000Z'
       }
@@ -549,6 +564,8 @@ describe('PrismaLeadRepository', () => {
         analysisError: null,
         techStack: [],
         copyright: null,
+        hasAds: false,
+        adsTrackers: [],
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -612,6 +629,7 @@ const result = await repository.findPaginated({
           city: 'Padova',
           source: 'google_maps',
           status: 'new',
+          hasAds: false,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z'
         }
@@ -769,6 +787,8 @@ const result = await repository.findPaginated({
       analysisError: null,
       techStack: [],
       copyright: null,
+      hasAds: false,
+      adsTrackers: [],
       createdAt: new Date('2026-08-28T10:00:00.000Z'),
       updatedAt: new Date('2026-08-28T10:00:00.000Z')
     };
@@ -792,6 +812,7 @@ const result = await repository.findPaginated({
       source: 'outscraper',
       status: 'qualified',
       analysisError: undefined,
+      hasAds: false,
       createdAt: '2026-08-28T10:00:00.000Z',
       updatedAt: '2026-08-28T10:00:00.000Z'
     });

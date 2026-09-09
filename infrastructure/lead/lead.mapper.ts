@@ -20,6 +20,8 @@ export interface LeadRow {
   analysisError: string | null;
   techStack: string[];
   copyright: string | null;
+  hasAds: boolean;
+  adsTrackers: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +78,11 @@ export function rowToLead(row: LeadRow): Lead {
     // data, style blocks): never surface those as a "copyright".
     copyright:
       !isCopyrightPayload(row.copyright) ? row.copyright ?? undefined : undefined,
+    hasAds: row.hasAds,
+    adsTrackers:
+      row.adsTrackers !== undefined && row.adsTrackers.length > 0
+        ? row.adsTrackers
+        : undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString()
   };
@@ -97,6 +104,8 @@ export function leadToRow(lead: Lead): LeadRow {
     analysisError: lead.analysisError ?? null,
     techStack: lead.techStack ? [...lead.techStack] : [],
     copyright: lead.copyright ?? null,
+    hasAds: lead.hasAds ?? false,
+    adsTrackers: lead.adsTrackers ? [...lead.adsTrackers] : [],
     createdAt: new Date(lead.createdAt),
     updatedAt: new Date(lead.updatedAt)
   };

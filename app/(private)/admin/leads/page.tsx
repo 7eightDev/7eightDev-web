@@ -19,6 +19,7 @@ import {
   parseLeadStatusFilter,
   parseScoreFilter,
   parseSourceFilter,
+  parseAdsFilter,
   parseSortOption,
   parseTechStackFilter,
   parseYearFilter,
@@ -46,6 +47,7 @@ export default async function LeadsPage({
     status: parseLeadStatusFilter(param("status")),
     score: parseScoreFilter(param("score")),
     source: parseSourceFilter(param("source")),
+    ads: parseAdsFilter(param("ads")),
     q: (param("q") ?? "").trim(),
     sort: parseSortOption(param("sort")),
     techStack: parseTechStackFilter(param("tech")),
@@ -62,11 +64,21 @@ export default async function LeadsPage({
   const jobs = (await leadRepository.findAllJobs()).map((job) =>
     resolveJobStatus(job)
   );
+  // Newest in-progress jobs (repository returns them newest-first). Used to
+  // auto-focus a running search and to render the live progress panel.
+  const runningJobs = jobs.filter(
+    (job) => job.status === "pending" || job.status === "running"
+  );
   const requestedJobId = param("job");
+  // No auto-selection here: while a search runs, opening /admin/leads must
+  // keep showing ALL results (a running job is surfaced by the "Ricerche in
+  // corso" panel below, and by the progress banner when it's the active one).
   const activeJob = requestedJobId
     ? jobs.find((job) => job.id === requestedJobId)
     : undefined;
   const jobId = activeJob ? activeJob.id : undefined;
+  const activeJobRunning =
+    activeJob?.status === "pending" || activeJob?.status === "running";
 
   // `totalFound` on the job is the raw discovery count; the table, however,
   // counts the leads actually persisted for the job (deduplication skips leads
@@ -92,9 +104,7 @@ export default async function LeadsPage({
     ? matchingLeads.filter((lead) => leadMatchesCriteria(lead, activeCriteria))
     : matchingLeads;
   const hiddenByCriteria = matchingLeads.length - criteriaLeads.length;
-  const hasActiveJob = jobs.some(
-    (job) => job.status === "pending" || job.status === "running"
-  );
+  const hasActiveJob = runningJobs.length > 0;
 
   const latestAnalyses = await leadRepository.findLatestAnalysesByLeadIds(
     criteriaLeads.map((l) => l.id)
@@ -134,6 +144,7 @@ export default async function LeadsPage({
       ...(filters.status !== "all" && { status: filters.status }),
       ...(filters.score !== "all" && { score: filters.score }),
       ...(filters.source !== "all" && { source: filters.source }),
+      ...(filters.ads !== "all" && { ads: filters.ads }),
       ...(filters.techStack.length > 0 && {
         tech: filters.techStack.join(","),
       }),
@@ -156,6 +167,7 @@ export default async function LeadsPage({
     filters.status !== "all" ||
     filters.score !== "all" ||
     filters.source !== "all" ||
+    filters.ads !== "all" ||
     filters.techStack.length > 0 ||
     filters.copyrightFrom !== undefined ||
     filters.copyrightTo !== undefined ||
@@ -184,6 +196,7 @@ export default async function LeadsPage({
           status={filters.status}
           score={filters.score}
           source={filters.source}
+          ads={filters.ads}
           q={filters.q}
           jobs={toolbarJobs}
           activeJobId={jobId}
@@ -193,6 +206,73 @@ export default async function LeadsPage({
           availableTechStacks={availableTechStacks}
           availableYears={availableYears}
         />
+
+        {runningJobs.some((job) => job.id !== jobId) && (
+          <div className="flex flex-col gap-2 rounded-xl border border-accent/40 bg-accent/[0.04] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <svg
+                className="animate-spin text-accent"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  className="opacity-25"
+                />
+                <path
+                  d="M22 12a10 10 0 0 1-10 10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-accent">
+                Ricerche in corso
+              </span>
+              <span className="ml-auto font-mono text-[11px] text-muted tabular-nums">
+                {runningJobs.length === 1
+                  ? "1 ricerca attiva"
+                  : `${runningJobs.length} ricerche attive`}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {runningJobs.map((job) => (
+                <Link
+                  key={job.id}
+                  href={`/admin/leads?job=${job.id}`}
+                  aria-current={job.id === jobId ? "page" : undefined}
+                  className="flex items-center gap-3 rounded-lg border border-border/80 bg-surface px-3 py-2 transition-colors hover:border-accent/40"
+                >
+                  <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[10px] uppercase tracking-[0.08em] rounded-full border border-accent/40 px-2 py-[2px] text-accent">
+                    {job.status === "pending" ? "in coda" : "in corso"}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="font-space text-[13px] font-semibold text-foreground truncate">
+                      {job.query}
+                    </span>
+                    {job.location && (
+                      <span className="font-mono text-[11px] text-dim truncate">
+                        {job.location}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 font-mono text-[12px] text-muted tabular-nums">
+                    {job.totalFound} trovati · {job.analyzed} analizzati ·{" "}
+                    {job.qualified} qualificati
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {activeJob && (
           <div className="flex items-start justify-between gap-3 rounded-xl border border-accent/40 bg-accent/[0.04] px-4 py-3">
@@ -225,19 +305,51 @@ export default async function LeadsPage({
                       `footer "${activeCriteria.copyright}"`}
                   </span>
                 )}
-                <span className="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-muted">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="M21 21l-4.35-4.35" />
-                  </svg>
-                  {activeCriteria
-                    ? `${total} lead corrispondono ai criteri${
-                        hiddenByCriteria > 0
-                          ? ` · ${hiddenByCriteria} salvati ma non corrispondono`
-                          : ""
-                      }`
-                    : `${total} lead trovati da questa ricerca`}
-                </span>
+                {activeJobRunning ? (
+                  <span className="mt-1 inline-flex items-center gap-2 font-mono text-[12px] text-muted">
+                    <svg
+                      className="animate-spin text-accent"
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        className="opacity-25"
+                      />
+                      <path
+                        d="M22 12a10 10 0 0 1-10 10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="tabular-nums">
+                      {activeJob.totalFound} trovati · {activeJob.analyzed}{" "}
+                      analizzati · {activeJob.qualified} qualificati
+                    </span>
+                  </span>
+                ) : (
+                  <span className="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-muted">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                    {activeCriteria
+                      ? `${total} lead corrispondono ai criteri${
+                          hiddenByCriteria > 0
+                            ? ` · ${hiddenByCriteria} salvati ma non corrispondono`
+                            : ""
+                        }`
+                      : `${total} lead trovati da questa ricerca`}
+                  </span>
+                )}
               </div>
             </div>
             <Button

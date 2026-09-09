@@ -115,6 +115,26 @@ export const SOURCE_FILTER_LABEL: Record<SourceFilter, string> = {
   serpapi: 'SerpAPI',
 };
 
+/* ----------------------------- Ads ----------------------------- */
+
+export const ADS_FILTER_VALUES = ['all', 'with', 'without'] as const;
+
+export type AdsFilter = (typeof ADS_FILTER_VALUES)[number];
+
+export const DEFAULT_ADS_FILTER: AdsFilter = 'all';
+
+export function parseAdsFilter(raw: string | undefined): AdsFilter {
+  return ADS_FILTER_VALUES.includes(raw as AdsFilter)
+    ? (raw as AdsFilter)
+    : DEFAULT_ADS_FILTER;
+}
+
+export const ADS_FILTER_LABEL: Record<AdsFilter, string> = {
+  all: 'Tutti',
+  with: 'Con Ads Attive',
+  without: 'Senza Ads',
+};
+
 /* ----------------------------- Tech Stack (multiselect) ---------- */
 
 /** Comma-separated tech names in the URL, e.g. "WordPress,React". */
@@ -226,6 +246,7 @@ export interface LeadFilters {
   readonly status: LeadStatusFilter;
   readonly score: ScoreFilter;
   readonly source: SourceFilter;
+  readonly ads?: AdsFilter;
   readonly q: string;
   readonly sort: SortOption;
   readonly techStack?: TechStackFilter;
@@ -249,6 +270,12 @@ export function filterLeads(
       return false;
     }
     if (filters.source !== 'all' && lead.source !== filters.source) {
+      return false;
+    }
+    if (filters.ads === 'with' && lead.hasAds !== true) {
+      return false;
+    }
+    if (filters.ads === 'without' && lead.hasAds === true) {
       return false;
     }
     if (filters.q) {

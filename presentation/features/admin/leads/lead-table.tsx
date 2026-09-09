@@ -20,8 +20,10 @@ import {
   TooltipTrigger,
 } from "@/presentation/components/ui/tooltip";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
+import { LeadAdsBadge } from "@/presentation/features/admin/leads/lead-ads-badge";
 import { LeadRowActions } from "@/presentation/features/admin/leads/lead-row-actions";
 import { LeadDetailSheet } from "@/presentation/features/admin/leads/lead-detail-sheet";
+import { extractCopyrightYear } from "@/domain/lead/lead.copyright";
 import { cn } from "@/presentation/lib/utils";
 import {
   toggleColumnSort,
@@ -131,7 +133,7 @@ function StatusBadge({ status }: { status: LeadStatus }) {
   return (
     <span
       className={cn(
-        "font-mono text-[9.5px] tracking-[0.1em] uppercase rounded-full px-2 py-[1px] border",
+        "font-mono text-[10px] tracking-[0.08em] uppercase leading-none rounded-full px-2.5 py-[5px] border",
         STATUS_STYLE[status]
       )}
     >
@@ -182,17 +184,18 @@ function CopyrightCell({ copyright }: { copyright: string | undefined }) {
     return <span className="font-mono text-[11px] text-muted-foreground/40">—</span>;
   }
 
-  // The column shows only the year — the staleness signal — the full footer
-  // line stays available on hover.
-  const year = copyright.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
+  // The column shows only the year — the staleness signal. Footer blocks that
+  // carry no parsable year are omitted from the cell to keep the row compact;
+  // the full line stays available on hover.
+  const year = extractCopyrightYear(copyright);
 
   return (
     <div className="min-w-0 max-w-full">
       <span
-        className="block font-mono text-[10.5px] text-soft truncate"
+        className="block font-mono text-[10.5px] truncate text-soft"
         title={copyright}
       >
-        {year ?? copyright}
+        {year ?? <span className="text-muted-foreground/40">—</span>}
       </span>
     </div>
   );
@@ -217,7 +220,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
               <SortableHeader
                 column="company"
                 label="Azienda / Dominio"
-                className="w-[33%]"
+                className="w-[27%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
@@ -228,8 +231,11 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[17%]")}>Tech Stack</TableHead>
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[15%]")}>Copyright</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[24%]")}>Tech Stack</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%]")}>Ads</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[9%] overflow-hidden")}>
+                <span className="block truncate">Copyright</span>
+              </TableHead>
               <SortableHeader
                 column="score"
                 label="PageSpeed"
@@ -240,11 +246,11 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
               <SortableHeader
                 column="status"
                 label="Stato"
-                className="w-[10%]"
+                className="w-[9%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[8%] text-right")}>Azioni</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%] text-right")}>Azioni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -271,9 +277,12 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
                   <TechStackCell techStack={lead.techStack ?? []} />
                 </TableCell>
                 <TableCell className="overflow-hidden">
+                  <LeadAdsBadge adsTrackers={lead.adsTrackers ?? []} />
+                </TableCell>
+                <TableCell className="overflow-hidden">
                   <CopyrightCell copyright={lead.copyright} />
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                   <LeadScoreBadge score={score} />
                 </TableCell>
                 <TableCell>
@@ -293,7 +302,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
             ))}
             {rows.length === 0 && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={8} className="p-0">
                   {emptyRow}
                 </TableCell>
               </TableRow>
