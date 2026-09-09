@@ -7,6 +7,7 @@ import { getLeadDetailAction } from "@/application/lead/admin.actions";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
+import { LeadOutreachEditor } from "@/presentation/features/admin/leads/lead-outreach-editor";
 import { WebsiteLink } from "@/presentation/features/admin/leads/lead-website-link";
 import {
   Sheet,
@@ -353,6 +354,18 @@ export function LeadDetailSheet({
                   {field("Città", lead?.city)}
                   {field("Fonte", lead?.source)}
                   {field("Creato il", formatDateIt(lead?.createdAt))}
+                </section>
+
+                <section>
+                  <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
+                    Stato Outreach &amp; Vendita
+                  </h3>
+                  <LeadOutreachEditor
+                    leadId={lead.id}
+                    outreachStatus={lead.outreachStatus}
+                    lastContactedAt={lead.lastContactedAt}
+                    outreachNotes={lead.outreachNotes}
+                  />
                 </section>
 
                 <section>
