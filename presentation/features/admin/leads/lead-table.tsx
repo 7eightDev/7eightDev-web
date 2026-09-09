@@ -133,7 +133,7 @@ function StatusBadge({ status }: { status: LeadStatus }) {
   return (
     <span
       className={cn(
-        "font-mono text-[9.5px] tracking-[0.1em] uppercase rounded-full px-2 py-[1px] border",
+        "font-mono text-[10px] tracking-[0.08em] uppercase leading-none rounded-full px-2.5 py-[5px] border",
         STATUS_STYLE[status]
       )}
     >
@@ -220,7 +220,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
               <SortableHeader
                 column="company"
                 label="Azienda / Dominio"
-                className="w-[31%]"
+                className="w-[27%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
@@ -233,7 +233,9 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
               />
               <TableHead className={cn(STICKY_HEAD_CLASS, "w-[24%]")}>Tech Stack</TableHead>
               <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%]")}>Ads</TableHead>
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[5%]")}>Copyright</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[9%] overflow-hidden")}>
+                <span className="block truncate">Copyright</span>
+              </TableHead>
               <SortableHeader
                 column="score"
                 label="PageSpeed"

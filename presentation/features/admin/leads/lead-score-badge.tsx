@@ -14,7 +14,7 @@ interface LeadScoreBadgeProps {
 export function LeadScoreBadge({ score }: LeadScoreBadgeProps) {
   if (score === undefined || score === null) {
     return (
-      <span className="font-mono text-[11px] text-muted-foreground/40 border border-border rounded-full px-2 py-[2px]">
+      <span className="font-mono text-[10px] tracking-[0.08em] uppercase leading-none text-muted-foreground/40 border border-border rounded-full px-2.5 py-[5px]">
         —
       </span>
     );
@@ -25,7 +25,7 @@ export function LeadScoreBadge({ score }: LeadScoreBadgeProps) {
   return (
     <span
       className={cn(
-        "font-mono text-[11px] rounded-full px-2 py-[2px] border",
+        "font-mono text-[10px] tracking-[0.08em] uppercase leading-none rounded-full px-2.5 py-[5px] border",
         weak
           ? "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]"
           : "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]"

@@ -35,11 +35,11 @@ export function LeadAdsBadge({ adsTrackers }: LeadAdsBadgeProps) {
         <TooltipTrigger asChild>
           <span
             className={cn(
-              "font-mono text-[10px] tracking-[0.06em] uppercase rounded-full px-2 py-[2px] border cursor-default",
+              "font-mono text-[10px] tracking-[0.08em] uppercase leading-none rounded-full px-2.5 py-[5px] border cursor-default",
               "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] bg-accent/[0.06]"
             )}
           >
-            ● {label}
+            {label}
           </span>
         </TooltipTrigger>
         <TooltipContent>
