@@ -18,6 +18,7 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
     city: 'Milano',
     source: 'google_maps',
     status: 'qualified',
+    outreachStatus: 'not_contacted',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,

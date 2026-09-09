@@ -253,6 +253,7 @@ function buildLead(input: {
     city: input.discoveredLead.city,
     source: input.source,
     status: input.status,
+    outreachStatus: 'not_contacted',
     createdAt: timestamp,
     updatedAt: timestamp
   };

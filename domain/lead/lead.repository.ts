@@ -8,6 +8,7 @@ export interface LeadPageParams {
   readonly page: number;
   readonly pageSize: number;
   readonly status?: string;
+  readonly outreachStatus?: string;
   readonly source?: string;
   readonly jobId?: string;
   readonly q?: string;
@@ -21,6 +22,7 @@ export interface LeadPage {
 /** Lead-level filters shared by the list view, export and the full match query. */
 export interface LeadMatchParams {
   readonly status?: string;
+  readonly outreachStatus?: string;
   readonly source?: string;
   readonly jobId?: string;
   readonly q?: string;

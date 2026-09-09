@@ -24,6 +24,9 @@ const lead: Lead = {
   city: 'Padova',
   source: 'google_maps',
   status: 'new',
+  outreachStatus: 'not_contacted',
+  lastContactedAt: '2026-08-28T10:02:00.000Z',
+  outreachNotes: 'Loom inviato, attendo risposta',
   hasAds: false,
   createdAt: '2026-08-28T10:00:00.000Z',
   updatedAt: '2026-08-28T10:01:00.000Z'
@@ -76,6 +79,7 @@ describe('Lead mapper', () => {
       companyName: 'Minimal',
       source: 'outscraper',
       status: 'new',
+      outreachStatus: 'not_contacted',
       createdAt: '2026-08-28T10:00:00.000Z',
       updatedAt: '2026-08-28T10:00:00.000Z'
     };
@@ -108,6 +112,7 @@ describe('Lead mapper', () => {
       companyName: 'No Job',
       source: 'serpapi',
       status: 'new',
+      outreachStatus: 'not_contacted',
       createdAt: '2026-08-28T10:00:00.000Z',
       updatedAt: '2026-08-28T10:00:00.000Z'
     };
