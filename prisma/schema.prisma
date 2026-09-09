@@ -135,6 +135,13 @@ model Lead {
   // Footer copyright line detected on the lead's website (e.g. "© 2019"), a
   // signal of when the site was built/resold and thus how stale it is.
   copyright   String?
+  // True when the lead's website was detected running paid-advertising
+  // trackers (Google Ads, Meta Pixel, Google Tag Manager).
+  hasAds      Boolean    @default(false)
+  // Detected ad-tracking platforms, e.g. ['Google Ads', 'Meta Pixel', 'GTM'].
+  // Surfaces per-platform detail in the admin UI and mirrors the techStack
+  // array pattern.
+  adsTrackers String[]   @default([])
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
