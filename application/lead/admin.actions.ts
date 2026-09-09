@@ -29,6 +29,7 @@ export interface LeadActionResult {
   readonly ok: boolean;
   readonly error?: string;
   readonly jobId?: string;
+  readonly lastContactedAt?: string;
 }
 
 /** Server action: kick off a lead generation search (query + location + quantity). */
@@ -169,16 +170,15 @@ export async function updateLeadOutreachAction(rawInput: unknown): Promise<LeadA
   const { outreachStatus, notes } = parsed.data;
   const statusChanged = lead.outreachStatus !== outreachStatus;
   const now = new Date().toISOString();
+  const newLastContactedAt =
+    statusChanged && outreachStatus !== "not_contacted"
+      ? now
+      : lead.lastContactedAt;
 
   await leadRepository.save({
     ...lead,
     outreachStatus,
-    // Track the last touchpoint only when the status actually progresses a
-    // conversation; a pure notes save (same status) keeps the previous date.
-    lastContactedAt:
-      statusChanged && outreachStatus !== "not_contacted"
-        ? now
-        : lead.lastContactedAt,
+    lastContactedAt: newLastContactedAt,
     outreachNotes:
       notes !== undefined && notes !== (lead.outreachNotes ?? "")
         ? notes
@@ -187,7 +187,7 @@ export async function updateLeadOutreachAction(rawInput: unknown): Promise<LeadA
   });
 
   revalidatePath("/admin/leads");
-  return { ok: true };
+  return { ok: true, lastContactedAt: newLastContactedAt };
 }
 
 /**

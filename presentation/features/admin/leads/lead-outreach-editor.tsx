@@ -53,12 +53,17 @@ export function LeadOutreachEditor({
   const [draftStatus, setDraftStatus] =
     useState<LeadOutreachStatus>(outreachStatus);
   const [draftNotes, setDraftNotes] = useState(outreachNotes ?? "");
+  const [baselineStatus, setBaselineStatus] =
+    useState<LeadOutreachStatus>(outreachStatus);
+  const [baselineNotes, setBaselineNotes] = useState(outreachNotes ?? "");
+  const [currentLastContactedAt, setCurrentLastContactedAt] =
+    useState(lastContactedAt);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const dirty =
-    draftStatus !== outreachStatus || draftNotes !== (outreachNotes ?? "");
+    draftStatus !== baselineStatus || draftNotes !== baselineNotes;
 
   const save = () => {
     setError(null);
@@ -72,9 +77,11 @@ export function LeadOutreachEditor({
         setError(result.error ?? "Salvataggio non riuscito.");
       } else {
         setSavedAt(new Date().toISOString());
-        // Re-pull the persisted details so the editor reflects the server
-        // state (lastContactedAt refreshes on status change server-side).
-        setDraftStatus(draftStatus);
+        setBaselineStatus(draftStatus);
+        setBaselineNotes(draftNotes);
+        if (result.lastContactedAt !== undefined) {
+          setCurrentLastContactedAt(result.lastContactedAt);
+        }
       }
     });
   };
@@ -121,8 +128,8 @@ export function LeadOutreachEditor({
 
       <div className="flex items-center justify-between gap-3">
         <span className="font-mono text-[11px] text-muted">
-          {lastContactedAt ? (
-            <>Ultimo contatto: {formatDateIt(lastContactedAt)}</>
+          {currentLastContactedAt ? (
+            <>Ultimo contatto: {formatDateIt(currentLastContactedAt)}</>
           ) : (
             "Nessun contatto registrato"
           )}
