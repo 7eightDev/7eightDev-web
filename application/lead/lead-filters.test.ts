@@ -5,6 +5,7 @@ import {
   parseLeadStatusFilter,
   parseScoreFilter,
   parseSourceFilter,
+  parseAdsFilter,
   parseSortOption,
   parseYearFilter,
   uniqueCopyrightYears,
@@ -75,6 +76,16 @@ describe('lead-filters parsers', () => {
   it('parseSourceFilter accepts valid sources', () => {
     expect(parseSourceFilter('google_maps')).toBe('google_maps');
     expect(parseSourceFilter('outscraper')).toBe('outscraper');
+  });
+
+  it('parseAdsFilter returns "all" for unknown input', () => {
+    expect(parseAdsFilter(undefined)).toBe('all');
+    expect(parseAdsFilter('campagne')).toBe('all');
+  });
+
+  it('parseAdsFilter accepts valid ads filters', () => {
+    expect(parseAdsFilter('with')).toBe('with');
+    expect(parseAdsFilter('without')).toBe('without');
   });
 
   it('parseSortOption returns "date-desc" for unknown input', () => {
@@ -373,6 +384,61 @@ describe('filterLeads — tech stack', () => {
       sort: ALL_SORT,
       techStack: ['WordPress']});
     expect(result.some((r) => r.lead.id === '3')).toBe(false);
+  });
+});
+
+describe('filterLeads — ads tracker', () => {
+  const rows: LeadReadModel[] = [
+    row(makeLead({ id: '1', companyName: 'A', hasAds: true })),
+    row(makeLead({ id: '2', companyName: 'B', hasAds: false })),
+    row(makeLead({ id: '3', companyName: 'C' }))
+  ];
+
+  const base = {
+    status: ALL,
+    score: ALL_SCORE,
+    source: ALL_SOURCE,
+    q: NO_Q,
+    sort: ALL_SORT
+  };
+
+  it('no filter shows all', () => {
+    expect(filterLeads(rows, base)).toHaveLength(3);
+  });
+
+  it('"with" keeps only leads that spend on ads', () => {
+    const result = filterLeads(rows, { ...base, ads: 'with' });
+    expect(result.map((r) => r.lead.id)).toEqual(['1']);
+  });
+
+  it('"without" keeps only leads without ads', () => {
+    const result = filterLeads(rows, { ...base, ads: 'without' });
+    expect(result.map((r) => r.lead.id)).toEqual(['2', '3']);
+  });
+
+  it('combines with other filter dimensions', () => {
+    const result = filterLeads(
+      [
+        row(
+          makeLead({
+            id: '1',
+            companyName: 'Dentisti Milano',
+            city: 'Milano',
+            hasAds: true
+          })
+        ),
+        row(
+          makeLead({
+            id: '2',
+            companyName: 'Dentisti Verona',
+            city: 'Verona',
+            hasAds: true
+          })
+        )
+      ],
+      { ...base, ads: 'with', q: 'milano' }
+    );
+    expect(result.map((r) => r.lead.id)).toEqual(['1']);
   });
 });
 

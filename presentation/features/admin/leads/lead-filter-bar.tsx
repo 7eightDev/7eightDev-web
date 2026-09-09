@@ -19,6 +19,8 @@ import { LeadJobDrawer } from "@/presentation/features/admin/leads/lead-job-draw
 import { cn } from "@/presentation/lib/utils";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
 import {
+  ADS_FILTER_LABEL,
+  DEFAULT_ADS_FILTER,
   DEFAULT_LEAD_STATUS_FILTER,
   DEFAULT_SCORE_FILTER,
   DEFAULT_SOURCE_FILTER,
@@ -26,6 +28,7 @@ import {
   SCORE_FILTER_LABEL,
   SOURCE_FILTER_LABEL,
   serializeTechStackFilter,
+  type AdsFilter,
   type LeadStatusFilter,
   type ScoreFilter,
   type SourceFilter,
@@ -51,6 +54,7 @@ interface LeadFilterBarProps {
   status: LeadStatusFilter;
   score: ScoreFilter;
   source: SourceFilter;
+  ads: AdsFilter;
   q: string;
   jobs: ToolbarJob[];
   activeJobId: string | undefined;
@@ -87,6 +91,7 @@ export function LeadFilterBar({
   status,
   score,
   source,
+  ads,
   q,
   jobs,
   activeJobId,
@@ -165,6 +170,8 @@ export function LeadFilterBar({
     push(
       value === DEFAULT_SOURCE_FILTER ? { source: "" } : { source: value }
     );
+  const setAds = (value: AdsFilter) =>
+    push(value === DEFAULT_ADS_FILTER ? { ads: "" } : { ads: value });
   const setTechStack = (value: TechStackFilter) =>
     push(
       value.length === 0
@@ -181,6 +188,7 @@ export function LeadFilterBar({
       status: "",
       score: "",
       source: "",
+      ads: "",
       q: "",
       tech: "",
       "year-from": "",
@@ -197,6 +205,7 @@ export function LeadFilterBar({
     status !== DEFAULT_LEAD_STATUS_FILTER ||
     score !== DEFAULT_SCORE_FILTER ||
     source !== DEFAULT_SOURCE_FILTER ||
+    ads !== DEFAULT_ADS_FILTER ||
     techStack.length > 0 ||
     copyrightFrom !== undefined ||
     copyrightTo !== undefined ||
@@ -205,6 +214,7 @@ export function LeadFilterBar({
   const qActive = q !== "";
   const scoreActive = score !== DEFAULT_SCORE_FILTER;
   const sourceActive = source !== DEFAULT_SOURCE_FILTER;
+  const adsActive = ads !== DEFAULT_ADS_FILTER;
   const techStackActive = techStack.length > 0;
   const copyrightActive = copyrightFrom !== undefined || copyrightTo !== undefined;
   // Hidden filters live in the collapsible panel: the chevron turns accent
@@ -212,6 +222,7 @@ export function LeadFilterBar({
   const advancedActive =
     (scoreActive ? 1 : 0) +
     (sourceActive ? 1 : 0) +
+    (adsActive ? 1 : 0) +
     (techStackActive ? 1 : 0) +
     (copyrightActive ? 1 : 0);
 
@@ -223,6 +234,7 @@ export function LeadFilterBar({
     const keep = [
       "status",
       "source",
+      "ads",
       "q",
       "job",
       "tech",
@@ -446,6 +458,31 @@ export function LeadFilterBar({
                   (value) => (
                     <option key={value} value={value}>
                       {SOURCE_FILTER_LABEL[value]}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+                Inserzioni Ads
+              </span>
+              <select
+                value={ads}
+                onChange={(e) => setAds(e.target.value as AdsFilter)}
+                className={cn(
+                  selectBase,
+                  "w-full",
+                  adsActive && selectActive
+                )}
+                aria-label="Filtro per inserzioni ads"
+              >
+                {(Object.keys(ADS_FILTER_LABEL) as AdsFilter[]).map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {value === "with" ? "🟢 " : value === "without" ? "⚪ " : ""}
+                      {ADS_FILTER_LABEL[value]}
                     </option>
                   )
                 )}

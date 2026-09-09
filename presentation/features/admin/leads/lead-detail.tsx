@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
+import { WebsiteLink } from "@/presentation/features/admin/leads/lead-website-link";
 import { cn } from "@/presentation/lib/utils";
 
 interface LeadDetailProps {
@@ -41,7 +43,7 @@ function metric(
   );
 }
 
-function field(label: string, value: string | undefined) {
+function field(label: string, value: ReactNode) {
   return (
     <div className="flex justify-between gap-4 border-b border-border py-2 last:border-0">
       <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted shrink-0">
@@ -51,6 +53,60 @@ function field(label: string, value: string | undefined) {
         {value || <span className="text-dim">—</span>}
       </span>
     </div>
+  );
+}
+
+const TRACKER_BADGE: Record<string, string> = {
+  "Google Ads": "Google Ads",
+  "Meta Pixel": "Meta Pixel (FB/IG)",
+  GTM: "Google Tag Manager",
+};
+
+/** Badge for a single detected ad tracker. */
+function TrackerBadge({ tracker }: { tracker: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent border border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] rounded-full px-2.5 py-[3px] bg-accent/[0.06]">
+      <span className="inline-block size-1.5 rounded-full bg-accent" />
+      {TRACKER_BADGE[tracker] ?? tracker}
+    </span>
+  );
+}
+
+function TrackingAdsSection({
+  lead,
+  performanceScore,
+}: {
+  lead: Lead;
+  performanceScore: number | undefined;
+}) {
+  const trackers = lead.adsTrackers ?? [];
+
+  if (trackers.length === 0) {
+    return (
+      <p className="font-hanken text-soft m-0">
+        Nessun tracker pubblicitario rilevato sul sito.
+      </p>
+    );
+  }
+
+  const slowWithAds =
+    lead.hasAds === true &&
+    performanceScore !== undefined &&
+    performanceScore < 50;
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        {trackers.map((tracker) => (
+          <TrackerBadge key={tracker} tracker={tracker} />
+        ))}
+      </div>
+      {slowWithAds && (
+        <p className="mt-3 font-mono text-[12px] text-[var(--coral)] border border-[color-mix(in_oklab,var(--coral)_45%,var(--border))] bg-[var(--coral)]/10 rounded-lg px-3 py-2">
+          🔥 Priorità Alta: Budget Ads Sprecato su Sito Lento
+        </p>
+      )}
+    </>
   );
 }
 
@@ -89,9 +145,12 @@ export function LeadDetail({ lead, analyses }: LeadDetailProps) {
 
         <div className="flex flex-col">
           {field("Categoria", lead.category)}
-          {field("Sito", lead.website)}
+          {field("Sito", lead.website ? <WebsiteLink url={lead.website} /> : undefined)}
           {lead.techStack && lead.techStack.length > 0 && (
             field("Tech / Stack", lead.techStack.join(", "))
+          )}
+          {lead.adsTrackers && lead.adsTrackers.length > 0 && (
+            field("Tracciamento Ads", lead.adsTrackers.join(", "))
           )}
           {field("Copyright", lead.copyright)}
           {field("Telefono", lead.phone)}
@@ -152,6 +211,16 @@ export function LeadDetail({ lead, analyses }: LeadDetailProps) {
             </p>
           </>
         )}
+      </section>
+
+      <section className="p-4 sm:p-6 rounded-2xl bg-surface border border-border">
+        <h2 className="font-space text-lg font-semibold text-foreground mb-4">
+          Tracciamento &amp; Campaign Ads
+        </h2>
+        <TrackingAdsSection
+          lead={lead}
+          performanceScore={latest?.performanceScore}
+        />
       </section>
     </div>
   );
