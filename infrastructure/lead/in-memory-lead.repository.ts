@@ -25,6 +25,7 @@ export class InMemoryLeadRepository implements LeadRepository {
 
   async findMatchingLeads({
     status,
+    outreachStatus,
     source,
     jobId,
     q
@@ -33,6 +34,9 @@ export class InMemoryLeadRepository implements LeadRepository {
 
     if (status && status !== 'all') {
       filtered = filtered.filter((l) => l.status === status);
+    }
+    if (outreachStatus && outreachStatus !== 'all') {
+      filtered = filtered.filter((l) => l.outreachStatus === outreachStatus);
     }
     if (source && source !== 'all') {
       filtered = filtered.filter((l) => l.source === source);
@@ -65,6 +69,7 @@ export class InMemoryLeadRepository implements LeadRepository {
     page,
     pageSize,
     status,
+    outreachStatus,
     source,
     jobId,
     q
@@ -73,6 +78,9 @@ export class InMemoryLeadRepository implements LeadRepository {
 
     if (status && status !== 'all') {
       filtered = filtered.filter((l) => l.status === status);
+    }
+    if (outreachStatus && outreachStatus !== 'all') {
+      filtered = filtered.filter((l) => l.outreachStatus === outreachStatus);
     }
     if (source && source !== 'all') {
       filtered = filtered.filter((l) => l.source === source);

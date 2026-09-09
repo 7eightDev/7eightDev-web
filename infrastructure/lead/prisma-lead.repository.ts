@@ -36,6 +36,9 @@ export class PrismaLeadRepository implements LeadRepository {
       city: row.city,
       source: row.source,
       status: row.status,
+      outreachStatus: row.outreachStatus,
+      lastContactedAt: row.lastContactedAt,
+      outreachNotes: row.outreachNotes,
       analysisError: row.analysisError,
       techStack: row.techStack,
       copyright: row.copyright,
@@ -66,18 +69,19 @@ export class PrismaLeadRepository implements LeadRepository {
   async findAll(): Promise<Lead[]> {
     const rows = await prisma.lead.findMany();
 
-    return rows.map(rowToLead);
+    return rows.map((r) => rowToLead(r as unknown as LeadRow));
   }
 
   async findPaginated({
     page,
     pageSize,
     status,
+    outreachStatus,
     source,
     jobId,
     q
   }: LeadPageParams): Promise<LeadPage> {
-    const where = buildLeadsWhere({ status, source, jobId, q });
+    const where = buildLeadsWhere({ status, outreachStatus, source, jobId, q });
 
     const [total, rows] = await Promise.all([
       prisma.lead.count({ where }),
@@ -97,12 +101,13 @@ export class PrismaLeadRepository implements LeadRepository {
 
   async findMatchingLeads({
     status,
+    outreachStatus,
     source,
     jobId,
     q
   }: LeadMatchParams): Promise<Lead[]> {
     const rows = await prisma.lead.findMany({
-      where: buildLeadsWhere({ status, source, jobId, q }),
+      where: buildLeadsWhere({ status, outreachStatus, source, jobId, q }),
       orderBy: { createdAt: 'desc' }
     });
 
@@ -340,6 +345,7 @@ function websiteKey(website: string | undefined): string | null {
 
 function buildLeadsWhere({
   status,
+  outreachStatus,
   source,
   jobId,
   q
@@ -349,6 +355,9 @@ function buildLeadsWhere({
   if (status && status !== 'all') {
     // Strict partition: "analizzati"/"qualificati" are disjoint statuses.
     where.status = status;
+  }
+  if (outreachStatus && outreachStatus !== 'all') {
+    where.outreachStatus = outreachStatus;
   }
   if (source && source !== 'all') {
     where.source = source;
