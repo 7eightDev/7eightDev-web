@@ -3,15 +3,21 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  BanIcon,
   Delete02Icon,
   EyeIcon,
   FileAddIcon,
+  Mail01Icon,
+  MoreHorizontalIcon,
+  SentIcon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import {
   deleteLeadAction,
   createQuoteFromLeadAction,
+  updateLeadOutreachAction,
 } from "@/application/lead/admin.actions";
-import type { LeadStatus } from "@/domain/lead/lead.types";
+import type { LeadOutreachStatus, LeadStatus } from "@/domain/lead/lead.types";
 import {
   Tooltip,
   TooltipContent,
@@ -94,6 +100,13 @@ export function LeadRowActions({
     });
   };
 
+  const setOutreach = (outreachStatus: LeadOutreachStatus) => {
+    setMenuOpen(false);
+    startTransition(() => {
+      void updateLeadOutreachAction({ leadId: id, outreachStatus });
+    });
+  };
+
   const remove = () => {
     setError(null);
     startTransition(async () => {
@@ -144,6 +157,68 @@ export function LeadRowActions({
               <TooltipContent>Crea preventivo</TooltipContent>
             </Tooltip>
           )}
+
+          <span className="mx-0.5 h-5 w-px bg-border" aria-hidden />
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("audit_sent")}
+                disabled={pending}
+                aria-label={`Segna audit inviato per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={SentIcon} size={17} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Audit inviato</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("in_talks")}
+                disabled={pending}
+                aria-label={`Segna in trattativa per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={Mail01Icon} size={17} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>In trattativa</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("closed_won")}
+                disabled={pending}
+                aria-label={`Segna cliente acquisito per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={Tick02Icon} size={17} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Cliente acquisito</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("rejected")}
+                disabled={pending}
+                aria-label={`Segna rifiutato per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={BanIcon} size={17} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Rifiutato</TooltipContent>
+          </Tooltip>
 
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <Tooltip>
@@ -211,7 +286,7 @@ export function LeadRowActions({
               : "text-soft hover:text-foreground"
           }`}
         >
-          <HugeiconsIcon icon={EyeIcon} size={16} aria-hidden />
+          <HugeiconsIcon icon={MoreHorizontalIcon} size={17} aria-hidden />
         </button>
       </div>
     </TooltipProvider>
