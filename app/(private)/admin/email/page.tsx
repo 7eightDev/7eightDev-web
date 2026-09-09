@@ -84,12 +84,12 @@ export default async function EmailPreviewPage({
     : (scenarios[0]?.id ?? "");
 
   return (
-    <Container className="max-w-[900px] py-10">
-      <div className="mb-6">
+    <Container className="max-w-[1440px] py-4 lg:h-full lg:flex lg:flex-col lg:min-h-0">
+      <div className="mb-4">
         <h1 className="font-space text-2xl font-bold text-foreground m-0">
           Anteprima email
         </h1>
-        <p className="font-hanken text-sm text-muted mt-2 m-0">
+        <p className="font-hanken text-sm text-muted mt-1 m-0">
           Strumento di sviluppo: anteprima e invio di test da preventivi reali o
           scenari finti, senza creare né modificare alcun preventivo.
         </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { sendTestEmailAction } from "@/application/quote/email-test.actions";
 import { cn } from "@/presentation/lib/utils";
 
@@ -39,6 +39,26 @@ export function EmailPreviewPanel({
   const [recipient, setRecipient] = useState(defaultRecipient);
   const [send, setSend] = useState<SendState>({ status: "idle" });
   const [pending, startTransition] = useTransition();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (view !== "html" || !iframe) return;
+
+    const hideScrollbar = () => {
+      const doc = iframe.contentDocument;
+      if (!doc || doc.getElementById("email-preview-scrollbar")) return;
+      const style = doc.createElement("style");
+      style.id = "email-preview-scrollbar";
+      style.textContent =
+        "html::-webkit-scrollbar{display:none}html{scrollbar-width:none}";
+      (doc.head ?? doc.documentElement).appendChild(style);
+    };
+
+    iframe.addEventListener("load", hideScrollbar);
+    if (iframe.contentDocument?.readyState === "complete") hideScrollbar();
+    return () => iframe.removeEventListener("load", hideScrollbar);
+  }, [view, selectedId]);
 
   const selected =
     scenarios.find((s) => s.id === selectedId) ?? scenarios[0];
@@ -61,32 +81,36 @@ export function EmailPreviewPanel({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* scenario selector */}
-      <div className="flex flex-wrap gap-2">
-        {scenarios.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => {
-              setSelectedId(s.id);
-              setSend({ status: "idle" });
-            }}
-            className={cn(
-              "font-mono text-[12px] px-3 py-2 rounded-lg border cursor-pointer transition-all text-left",
-              s.id === selected.id
-                ? "border-accent text-accent"
-                : "border-border text-muted hover:text-soft"
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_minmax(0,1fr)_320px] lg:grid-rows-[minmax(0,1fr)] lg:flex-1 lg:min-h-0">
+      {/* left: scenario selector + subject + view toggle */}
+      <aside className="flex flex-col gap-4 min-w-0 self-center">
+        <div className="flex flex-col gap-3">
+          <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
+            Scenario
+          </span>
+          <div className="flex flex-col gap-2">
+            {scenarios.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => {
+                  setSelectedId(s.id);
+                  setSend({ status: "idle" });
+                }}
+                className={cn(
+                  "font-mono text-[12px] px-3 py-2 rounded-lg border cursor-pointer transition-all text-left",
+                  s.id === selected.id
+                    ? "border-accent text-accent"
+                    : "border-border text-muted hover:text-soft"
+                )}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* subject + view toggle */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="min-w-0">
+        <div className="min-w-0 rounded-xl bg-surface border border-border p-4">
           <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted block mb-1">
             Oggetto
           </span>
@@ -94,14 +118,15 @@ export function EmailPreviewPanel({
             {selected.subject}
           </span>
         </div>
-        <div className="flex gap-2 shrink-0">
+
+        <div className="flex gap-2">
           {(["html", "text"] as const).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setView(v)}
               className={cn(
-                "font-mono text-[11px] px-3 py-2 rounded-lg border cursor-pointer transition-all uppercase",
+                "font-mono text-[11px] px-3 py-2 rounded-lg border cursor-pointer transition-all uppercase flex-1",
                 view === v
                   ? "border-accent text-accent"
                   : "border-border text-muted hover:text-soft"
@@ -111,55 +136,54 @@ export function EmailPreviewPanel({
             </button>
           ))}
         </div>
-      </div>
+      </aside>
 
-      {/* preview */}
+      {/* center: preview */}
       {view === "html" ? (
         <iframe
+          ref={iframeRef}
           title="Anteprima email"
           srcDoc={selected.html}
-          className="w-full h-[640px] rounded-xl border border-border bg-white"
+          className="w-full h-full min-h-0 block"
         />
       ) : (
-        <pre className="w-full max-h-[640px] overflow-auto rounded-xl border border-border bg-raised p-4 font-mono text-[12.5px] text-soft whitespace-pre-wrap">
+        <pre className="w-full h-full min-h-0 overflow-auto no-scrollbar rounded-xl bg-raised p-4 font-mono text-[12.5px] text-soft whitespace-pre-wrap">
           {selected.text}
         </pre>
       )}
 
-      {/* test send */}
-      <div className="rounded-xl bg-surface border border-border p-4 flex flex-col gap-3">
+      {/* right: test send */}
+      <div className="rounded-xl bg-surface border border-border p-4 flex flex-col gap-3 self-center">
         <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
           Invio di test (Resend reale · nessun preventivo creato)
         </span>
-        <div className="flex gap-2 flex-wrap">
-          <input
-            type="email"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="destinatario@esempio.com"
-            className="flex-1 min-w-[220px] px-3 py-[10px] rounded-lg bg-raised border border-border text-foreground font-hanken text-sm outline-none transition-colors focus:border-accent placeholder:text-dim"
-          />
-          <button
-            type="button"
-            onClick={onSend}
-            disabled={pending}
-            className={cn(
-              "font-mono text-sm font-semibold px-5 py-[10px] rounded-lg transition-all",
-              pending
-                ? "bg-raised text-muted cursor-not-allowed"
-                : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105"
-            )}
-          >
-            {pending ? "Invio…" : "Invia test →"}
-          </button>
-        </div>
+        <input
+          type="email"
+          value={recipient}
+          onChange={(e) => setRecipient(e.target.value)}
+          placeholder="destinatario@esempio.com"
+          className="w-full px-3 py-[10px] rounded-lg bg-raised border border-border text-foreground font-hanken text-sm outline-none transition-colors focus:border-accent placeholder:text-dim"
+        />
+        <button
+          type="button"
+          onClick={onSend}
+          disabled={pending}
+          className={cn(
+            "font-mono text-sm font-semibold px-5 py-[10px] rounded-lg transition-all w-full",
+            pending
+              ? "bg-raised text-muted cursor-not-allowed"
+              : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105"
+          )}
+        >
+          {pending ? "Invio…" : "Invia test →"}
+        </button>
         {send.status === "ok" && (
-          <p className="font-mono text-[12px] text-accent m-0">
+          <p className="font-mono text-[12px] text-accent m-0 break-words">
             ✓ Inviata{send.messageId ? ` · id ${send.messageId}` : ""}.
           </p>
         )}
         {send.status === "error" && (
-          <p className="font-mono text-[12px] text-[var(--coral)] m-0">
+          <p className="font-mono text-[12px] text-[var(--coral)] m-0 break-words">
             ✗ {send.error}
           </p>
         )}
