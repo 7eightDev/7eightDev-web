@@ -12,6 +12,7 @@ import {
   jobIdSchema,
 } from "@/application/lead/lead.schemas";
 import {
+  adsDetector,
   catalogRepository,
   copyrightDetector,
   leadDiscovery,
@@ -25,6 +26,7 @@ import {
 export interface LeadActionResult {
   readonly ok: boolean;
   readonly error?: string;
+  readonly jobId?: string;
 }
 
 /** Server action: kick off a lead generation search (query + location + quantity). */
@@ -43,19 +45,20 @@ export async function startLeadGenerationAction(
     };
   }
 
-  await startRunLeadJob(
+  const { jobId } = await startRunLeadJob(
     {
       discovery: leadDiscovery,
       pageSpeed: pageSpeedAnalyzer,
       repository: leadRepository,
       techStack: techStackDetector,
       copyright: copyrightDetector,
+      adsDetection: adsDetector,
       source: "google_maps",
     },
     parsed.data
   );
   revalidatePath("/admin/leads");
-  return { ok: true };
+  return { ok: true, jobId };
 }
 
 /**
@@ -84,6 +87,7 @@ export async function rerunLeadGenerationAction(
       repository: leadRepository,
       techStack: techStackDetector,
       copyright: copyrightDetector,
+      adsDetection: adsDetector,
       source: "google_maps",
     },
     parsed.data
