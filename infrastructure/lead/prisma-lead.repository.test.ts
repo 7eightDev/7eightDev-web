@@ -177,6 +177,7 @@ describe('PrismaLeadRepository', () => {
       copyright: null,
       hasAds: false,
       adsTrackers: [],
+      favorite: false,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z')
     };
@@ -198,6 +199,7 @@ describe('PrismaLeadRepository', () => {
       status: 'new',
       outreachStatus: 'not_contacted',
       hasAds: false,
+      favorite: false,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z'
     });
@@ -227,6 +229,7 @@ describe('PrismaLeadRepository', () => {
         copyright: null,
         hasAds: false,
         adsTrackers: [],
+        favorite: false,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       },
@@ -251,6 +254,7 @@ describe('PrismaLeadRepository', () => {
         copyright: null,
         hasAds: false,
         adsTrackers: [],
+        favorite: false,
         createdAt: new Date('2026-01-02T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z')
       }
@@ -276,6 +280,7 @@ describe('PrismaLeadRepository', () => {
         status: 'new',
         outreachStatus: 'not_contacted',
         hasAds: false,
+        favorite: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z'
       },
@@ -292,6 +297,7 @@ describe('PrismaLeadRepository', () => {
         status: 'new',
         outreachStatus: 'not_contacted',
         hasAds: false,
+        favorite: false,
         createdAt: '2026-01-02T00:00:00.000Z',
         updatedAt: '2026-01-02T00:00:00.000Z'
       }
@@ -592,6 +598,7 @@ describe('PrismaLeadRepository', () => {
         copyright: null,
         hasAds: false,
         adsTrackers: [],
+        favorite: false,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z')
       }
@@ -657,6 +664,7 @@ const result = await repository.findPaginated({
           status: 'new',
           outreachStatus: 'not_contacted',
           hasAds: false,
+          favorite: false,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z'
         }
@@ -819,6 +827,7 @@ const result = await repository.findPaginated({
       copyright: null,
       hasAds: false,
       adsTrackers: [],
+      favorite: false,
       createdAt: new Date('2026-08-28T10:00:00.000Z'),
       updatedAt: new Date('2026-08-28T10:00:00.000Z')
     };
@@ -844,6 +853,7 @@ const result = await repository.findPaginated({
       outreachStatus: 'not_contacted',
       analysisError: undefined,
       hasAds: false,
+      favorite: false,
       createdAt: '2026-08-28T10:00:00.000Z',
       updatedAt: '2026-08-28T10:00:00.000Z'
     });

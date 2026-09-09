@@ -26,6 +26,7 @@ export interface LeadRow {
   copyright: string | null;
   hasAds: boolean;
   adsTrackers: string[];
+  favorite: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -90,6 +91,7 @@ export function rowToLead(row: LeadRow): Lead {
       row.adsTrackers !== undefined && row.adsTrackers.length > 0
         ? row.adsTrackers
         : undefined,
+    favorite: row.favorite,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString()
   };
@@ -116,6 +118,7 @@ export function leadToRow(lead: Lead): LeadRow {
     copyright: lead.copyright ?? null,
     hasAds: lead.hasAds ?? false,
     adsTrackers: lead.adsTrackers ? [...lead.adsTrackers] : [],
+    favorite: lead.favorite ?? false,
     createdAt: new Date(lead.createdAt),
     updatedAt: new Date(lead.updatedAt)
   };

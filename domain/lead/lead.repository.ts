@@ -10,6 +10,7 @@ export interface LeadPageParams {
   readonly status?: string;
   readonly outreachStatus?: string;
   readonly source?: string;
+  readonly favorite?: boolean;
   readonly jobId?: string;
   readonly q?: string;
 }
@@ -24,6 +25,7 @@ export interface LeadMatchParams {
   readonly status?: string;
   readonly outreachStatus?: string;
   readonly source?: string;
+  readonly favorite?: boolean;
   readonly jobId?: string;
   readonly q?: string;
 }

@@ -28,6 +28,7 @@ const lead: Lead = {
   lastContactedAt: '2026-08-28T10:02:00.000Z',
   outreachNotes: 'Loom inviato, attendo risposta',
   hasAds: false,
+  favorite: false,
   createdAt: '2026-08-28T10:00:00.000Z',
   updatedAt: '2026-08-28T10:01:00.000Z'
 };

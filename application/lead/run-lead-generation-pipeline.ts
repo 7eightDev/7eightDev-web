@@ -254,6 +254,7 @@ function buildLead(input: {
     source: input.source,
     status: input.status,
     outreachStatus: 'not_contacted',
+    favorite: false,
     createdAt: timestamp,
     updatedAt: timestamp
   };

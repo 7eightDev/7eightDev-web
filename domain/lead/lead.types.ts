@@ -41,6 +41,11 @@ export interface Lead {
   /** Detected ad-tracking platforms, e.g. ['Google Ads', 'Meta Pixel', 'GTM']. */
   readonly adsTrackers?: readonly string[];
 
+  /** Pinned via the star in the leads list: leads the user intends to contact.
+   *  Optional because the pipeline creates leads without the flag; the UI
+   *  treats a missing value as not-favorite. */
+  readonly favorite?: boolean;
+
   readonly createdAt: string;
   readonly updatedAt: string;
 }
