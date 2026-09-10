@@ -53,13 +53,16 @@ interface LeadRowActionsProps {
 // control per row is a single "…" toggle that slides the action cluster in
 // from the right (mirrors the quotes list pattern).
 const iconBtn =
-  "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "inline-flex items-center justify-center w-9 h-9 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+const sendBtn =
+  "inline-flex items-center justify-center w-9 h-9 rounded-lg bg-accent text-[#0a0b0d] cursor-pointer transition-all duration-150 hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const toggleBtn =
-  "relative z-[5] inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "relative z-20 inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const dangerIconBtn =
-  "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-[var(--coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "inline-flex items-center justify-center w-9 h-9 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-accent-coral/10 hover:text-accent-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-coral focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export function LeadRowActions({
   id,
@@ -141,7 +144,7 @@ export function LeadRowActions({
       <div ref={cellRef} className="relative inline-flex items-center justify-end self-stretch">
         <div
           inert={!menuOpen}
-          className={`absolute top-1/2 right-0 z-[5] flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-20 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+          className={`absolute -top-4 -bottom-4 -right-5 z-10 flex items-center gap-1 rounded-l-lg bg-[rgba(35,38,46,0.82)] pl-4 pr-24 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
             menuOpen
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"
@@ -155,7 +158,7 @@ export function LeadRowActions({
                 aria-label={`Apri il dettaglio di ${companyName}`}
                 className={iconBtn}
               >
-                <HugeiconsIcon icon={EyeIcon} size={17} aria-hidden />
+                <HugeiconsIcon icon={EyeIcon} size={18} aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent>Dettaglio</TooltipContent>
@@ -169,16 +172,14 @@ export function LeadRowActions({
                   onClick={createQuote}
                   disabled={pending}
                   aria-label={`Crea preventivo da ${companyName}`}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-accent/15 text-accent cursor-pointer transition-all duration-150 hover:bg-accent hover:text-[#0a0b0d] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className={sendBtn}
                 >
-                  <HugeiconsIcon icon={FileAddIcon} size={17} aria-hidden />
+                  <HugeiconsIcon icon={FileAddIcon} size={18} aria-hidden />
                 </button>
               </TooltipTrigger>
               <TooltipContent>Crea preventivo</TooltipContent>
             </Tooltip>
           )}
-
-          <span className="mx-0.5 h-5 w-px bg-border" aria-hidden />
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -189,7 +190,7 @@ export function LeadRowActions({
                 aria-label={`Segna audit inviato per ${companyName}`}
                 className={iconBtn}
               >
-                <HugeiconsIcon icon={SentIcon} size={17} aria-hidden />
+                <HugeiconsIcon icon={SentIcon} size={18} aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent>Audit inviato</TooltipContent>
@@ -204,7 +205,7 @@ export function LeadRowActions({
                 aria-label={`Segna in trattativa per ${companyName}`}
                 className={iconBtn}
               >
-                <HugeiconsIcon icon={Mail01Icon} size={17} aria-hidden />
+                <HugeiconsIcon icon={Mail01Icon} size={18} aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent>In trattativa</TooltipContent>
@@ -219,7 +220,7 @@ export function LeadRowActions({
                 aria-label={`Segna cliente acquisito per ${companyName}`}
                 className={iconBtn}
               >
-                <HugeiconsIcon icon={Tick02Icon} size={17} aria-hidden />
+                <HugeiconsIcon icon={Tick02Icon} size={18} aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent>Cliente acquisito</TooltipContent>
@@ -234,7 +235,7 @@ export function LeadRowActions({
                 aria-label={`Segna rifiutato per ${companyName}`}
                 className={iconBtn}
               >
-                <HugeiconsIcon icon={BanIcon} size={17} aria-hidden />
+                <HugeiconsIcon icon={BanIcon} size={18} aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent>Rifiutato</TooltipContent>
@@ -249,7 +250,7 @@ export function LeadRowActions({
                     aria-label={`Elimina ${companyName}`}
                     className={dangerIconBtn}
                   >
-                    <HugeiconsIcon icon={Delete02Icon} size={17} aria-hidden />
+                    <HugeiconsIcon icon={Delete02Icon} size={18} aria-hidden />
                   </button>
                 </AlertDialogTrigger>
               </TooltipTrigger>
@@ -309,7 +310,7 @@ export function LeadRowActions({
             optimisticFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"
           }
           className={cn(
-            "relative z-[5] inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150 hover:bg-foreground/[0.06] disabled:opacity-50 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer",
+            "relative z-20 inline-flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150 hover:bg-foreground/[0.06] disabled:opacity-50 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer",
             optimisticFavorite
               ? "text-accent-amber hover:text-accent-amber"
               : "text-soft hover:text-foreground"
@@ -334,7 +335,7 @@ export function LeadRowActions({
               : "text-soft hover:text-foreground"
           }`}
         >
-          <HugeiconsIcon icon={MoreHorizontalIcon} size={17} aria-hidden />
+          <HugeiconsIcon icon={MoreHorizontalIcon} size={18} aria-hidden />
         </button>
       </div>
     </TooltipProvider>
