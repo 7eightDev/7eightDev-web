@@ -9,6 +9,8 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
+import { SaveIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Select,
   SelectContent,
@@ -20,7 +22,6 @@ import { Button } from "@/presentation/components/ui/button";
 import { updateLeadOutreachAction } from "@/application/lead/admin.actions";
 import type { LeadOutreachStatus } from "@/domain/lead/lead.types";
 import { formatDateIt } from "@/presentation/lib/format-date";
-import { cn } from "@/presentation/lib/utils";
 
 export const OUTREACH_EDITOR_LABEL: Record<LeadOutreachStatus, string> = {
   not_contacted: "Da contattare",
@@ -41,7 +42,6 @@ const OUTREACH_ORDER: LeadOutreachStatus[] = [
 export interface LeadOutreachEditorState {
   dirty: boolean;
   pending: boolean;
-  savedAt: string | null;
 }
 
 export interface LeadOutreachEditorHandle {
@@ -88,7 +88,6 @@ export const LeadOutreachEditor = forwardRef<
   const [baselineNotes, setBaselineNotes] = useState(outreachNotes ?? "");
   const [currentLastContactedAt, setCurrentLastContactedAt] =
     useState(lastContactedAt);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -107,7 +106,6 @@ export const LeadOutreachEditor = forwardRef<
       if (!result.ok) {
         setError(result.error ?? "Salvataggio non riuscito.");
       } else {
-        setSavedAt(new Date().toISOString());
         setBaselineStatus(draftStatus);
         setBaselineNotes(draftNotes);
         if (result.lastContactedAt !== undefined) {
@@ -123,8 +121,8 @@ export const LeadOutreachEditor = forwardRef<
   useImperativeHandle(ref, () => ({ save }));
 
   useEffect(() => {
-    onStateChange?.({ dirty, pending, savedAt });
-  }, [dirty, pending, savedAt, onStateChange]);
+    onStateChange?.({ dirty, pending });
+  }, [dirty, pending, onStateChange]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -183,7 +181,8 @@ export const LeadOutreachEditor = forwardRef<
   );
 });
 
-/** Save control shared by the sheet footer and the full-page actions row. */
+/** Save control shared by the sheet footer and the full-page actions row.
+ *  Only rendered while there are unsaved changes. */
 export function SaveOutreachButton({
   state,
   onSave,
@@ -191,21 +190,24 @@ export function SaveOutreachButton({
   state: LeadOutreachEditorState;
   onSave: () => void;
 }) {
+  if (!state.dirty) return null;
+
   return (
     <Button
-      type="button"
+      variant="default"
       size="sm"
+      type="button"
       onClick={onSave}
-      disabled={state.pending || (!state.dirty && state.savedAt === null)}
-      className={cn(state.savedAt !== null && !state.dirty && "opacity-80")}
+      disabled={state.pending}
+      className="cursor-pointer bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px"
     >
-      {state.pending
-        ? "Salvataggio…"
-        : state.dirty
-          ? "Salva"
-          : state.savedAt
-            ? "Salvato"
-            : "Salva"}
+      <HugeiconsIcon
+        icon={SaveIcon}
+        size={16}
+        aria-hidden
+        className={state.pending ? "animate-spin" : undefined}
+      />
+      {state.pending ? "Salvataggio…" : "Salva"}
     </Button>
   );
 }
@@ -221,7 +223,6 @@ export function LeadOutreachEditorWithActions(
   const [state, setState] = useState<LeadOutreachEditorState>({
     dirty: false,
     pending: false,
-    savedAt: null,
   });
 
   return (

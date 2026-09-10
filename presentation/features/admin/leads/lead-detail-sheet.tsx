@@ -23,6 +23,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/presentation/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/presentation/components/ui/alert-dialog";
 import { cn } from "@/presentation/lib/utils";
 
 interface LeadDetailSheetProps {
@@ -275,8 +285,8 @@ export function LeadDetailSheet({
   const [outreachState, setOutreachState] = useState<LeadOutreachEditorState>({
     dirty: false,
     pending: false,
-    savedAt: null,
   });
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   // Fetch on open. State is only written after the awaited server action, so
   // the effect performs no synchronous setState (the parent keys this
@@ -317,16 +327,33 @@ export function LeadDetailSheet({
     setLead(null);
     setAnalyses([]);
     setError(null);
+    setOutreachState({ dirty: false, pending: false });
+  };
+
+  // Intercepts a close attempt: if the outreach draft is dirty, ask for
+  // confirmation before discarding it instead of closing right away.
+  const handleOpenChange = (next: boolean) => {
+    if (!next && outreachState.dirty) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    onOpenChange(next);
+    if (!next) reset();
+  };
+
+  const discardAndClose = () => {
+    setConfirmCloseOpen(false);
+    setOutreachState({ dirty: false, pending: false });
+    onOpenChange(false);
+    reset();
   };
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(next) => {
-        onOpenChange(next);
-        if (!next) reset();
-      }}
-    >
+    <>
+      <Sheet
+        open={open}
+        onOpenChange={handleOpenChange}
+      >
       <SheetContent className="w-full sm:max-w-lg gap-6 p-6">
         <SheetHeader>
           <div className="flex items-center justify-between gap-3 pr-8">
@@ -419,5 +446,24 @@ export function LeadDetailSheet({
         </SheetFooter>
       </SheetContent>
     </Sheet>
+
+    <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Hai modifiche non salvate allo stato di vendita. Se esci ora,
+            andranno perse.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Continua a modificare</AlertDialogCancel>
+          <AlertDialogAction onClick={discardAndClose}>
+            Esci senza salvare
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
