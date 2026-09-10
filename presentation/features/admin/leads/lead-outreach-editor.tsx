@@ -21,7 +21,6 @@ import {
 import { Button } from "@/presentation/components/ui/button";
 import { updateLeadOutreachAction } from "@/application/lead/admin.actions";
 import type { LeadOutreachStatus } from "@/domain/lead/lead.types";
-import { formatDateIt } from "@/presentation/lib/format-date";
 
 export const OUTREACH_EDITOR_LABEL: Record<LeadOutreachStatus, string> = {
   not_contacted: "Da contattare",
@@ -51,7 +50,6 @@ export interface LeadOutreachEditorHandle {
 interface LeadOutreachEditorProps {
   leadId: string;
   outreachStatus: LeadOutreachStatus;
-  lastContactedAt: string | undefined;
   outreachNotes: string | undefined;
   /** Pushed upstream so parents can host the Save button in their own layout. */
   onStateChange?: (state: LeadOutreachEditorState) => void;
@@ -74,7 +72,6 @@ export const LeadOutreachEditor = forwardRef<
   {
     leadId,
     outreachStatus,
-    lastContactedAt,
     outreachNotes,
     onStateChange,
   },
@@ -86,8 +83,6 @@ export const LeadOutreachEditor = forwardRef<
   const [baselineStatus, setBaselineStatus] =
     useState<LeadOutreachStatus>(outreachStatus);
   const [baselineNotes, setBaselineNotes] = useState(outreachNotes ?? "");
-  const [currentLastContactedAt, setCurrentLastContactedAt] =
-    useState(lastContactedAt);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -108,11 +103,6 @@ export const LeadOutreachEditor = forwardRef<
       } else {
         setBaselineStatus(draftStatus);
         setBaselineNotes(draftNotes);
-        if (result.lastContactedAt !== undefined) {
-          setCurrentLastContactedAt(result.lastContactedAt);
-        }
-        // Re-render the server page so the row badge behind the sheet (and the
-        // re-opened detail) reflects the persisted status immediately.
         router.refresh();
       }
     });
@@ -126,29 +116,24 @@ export const LeadOutreachEditor = forwardRef<
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2">
-        <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
-          Stato vendita
-        </span>
-        <Select
-          value={draftStatus}
-          onValueChange={(value) => setDraftStatus(value as LeadOutreachStatus)}
+      <Select
+        value={draftStatus}
+        onValueChange={(value) => setDraftStatus(value as LeadOutreachStatus)}
+      >
+        <SelectTrigger
+          aria-label="Stato outreach"
+          className="w-full"
         >
-          <SelectTrigger
-            aria-label="Stato outreach"
-            className="w-full"
-          >
-            <SelectValue placeholder="Stato outreach" />
-          </SelectTrigger>
-          <SelectContent>
-            {OUTREACH_ORDER.map((value) => (
-              <SelectItem key={value} value={value}>
-                {OUTREACH_EDITOR_LABEL[value]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <SelectValue placeholder="Stato outreach" />
+        </SelectTrigger>
+        <SelectContent>
+          {OUTREACH_ORDER.map((value) => (
+            <SelectItem key={value} value={value}>
+              {OUTREACH_EDITOR_LABEL[value]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <div className="flex flex-col gap-2">
         <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted">
@@ -159,18 +144,10 @@ export const LeadOutreachEditor = forwardRef<
           onChange={(e) => setDraftNotes(e.target.value)}
           placeholder="Contatti, offerta accettata, follow-up…"
           aria-label="Note di vendita"
-          rows={3}
+          rows={6}
           className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 font-hanken text-[13px] text-foreground placeholder:text-dim outline-none transition-colors focus:border-accent"
         />
       </div>
-
-      <span className="font-mono text-[11px] text-muted">
-        {currentLastContactedAt ? (
-          <>Ultimo contatto: {formatDateIt(currentLastContactedAt)}</>
-        ) : (
-          "Nessun contatto registrato"
-        )}
-      </span>
 
       {error && (
         <p role="alert" className="font-mono text-[12.5px] text-[var(--coral)]">
@@ -181,8 +158,10 @@ export const LeadOutreachEditor = forwardRef<
   );
 });
 
-/** Save control shared by the sheet footer and the full-page actions row.
- *  Only rendered while there are unsaved changes. */
+/**
+ * Save control shared by the sheet footer and the full-page actions row.
+ * Always rendered; enabled only while there are unsaved changes.
+ */
 export function SaveOutreachButton({
   state,
   onSave,
@@ -190,16 +169,14 @@ export function SaveOutreachButton({
   state: LeadOutreachEditorState;
   onSave: () => void;
 }) {
-  if (!state.dirty) return null;
-
   return (
     <Button
       variant="default"
       size="sm"
       type="button"
       onClick={onSave}
-      disabled={state.pending}
-      className="cursor-pointer bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px"
+      disabled={!state.dirty || state.pending}
+      className="cursor-pointer bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px disabled:cursor-not-allowed"
     >
       <HugeiconsIcon
         icon={SaveIcon}
@@ -228,7 +205,7 @@ export function LeadOutreachEditorWithActions(
   return (
     <div className="flex flex-col gap-3">
       <LeadOutreachEditor ref={ref} onStateChange={setState} {...props} />
-      <div className="flex justify-center">
+      <div className="flex justify-center mt-4 mb-2">
         <SaveOutreachButton state={state} onSave={() => ref.current?.save()} />
       </div>
     </div>
