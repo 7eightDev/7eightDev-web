@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -22,7 +21,6 @@ import {
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadAdsBadge } from "@/presentation/features/admin/leads/lead-ads-badge";
 import { LeadRowActions } from "@/presentation/features/admin/leads/lead-row-actions";
-import { LeadDetailDialog } from "@/presentation/features/admin/leads/lead-detail-dialog";
 import { extractCopyrightYear } from "@/domain/lead/lead.copyright";
 import { cn } from "@/presentation/lib/utils";
 import {
@@ -44,11 +42,6 @@ interface LeadTableProps {
   emptyRow?: React.ReactNode;
 }
 
-interface DetailTarget {
-  leadId: string;
-  companyName: string;
-}
-
 const STATUS_STYLE: Record<LeadStatus, string> = {
   new: "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
   analyzed:
@@ -66,9 +59,6 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   discarded: "scartato",
 };
 
-// Outreach badges follow the same pure-text + border-color pattern as the
-// qualification `STATUS_STYLE` above: no icon, no emoji, color alone carries
-// the semantic weight.
 const OUTREACH_STYLE: Record<LeadOutreachStatus, string> = {
   not_contacted:
     "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
@@ -92,9 +82,6 @@ const OUTREACH_LABEL: Record<LeadOutreachStatus, string> = {
 
 const MAX_VISIBLE_TECH = 3;
 
-// Sticky is applied per-cell (not on <thead>) because position: sticky on a
-// table-header-group element is unreliable across browsers when nested in
-// scroll containers. Each <th> carries its own sticky offset instead.
 const STICKY_HEAD_CLASS = "sticky top-0 z-10 border-b border-border bg-surface";
 
 function SortableHeader({
@@ -181,7 +168,7 @@ function LeadOutreachBadge({ status }: { status: LeadOutreachStatus }) {
 
 function TechStackCell({ techStack }: { techStack: readonly string[] }) {
   if (!techStack || techStack.length === 0) {
-    return <span className="font-mono text-[11px] text-muted-foreground/40">—</span>;
+    return <span className="font-mono text-[11px] text-muted-foreground/40">&mdash;</span>;
   }
 
   const visible = techStack.slice(0, MAX_VISIBLE_TECH);
@@ -207,7 +194,7 @@ function TechStackCell({ techStack }: { techStack: readonly string[] }) {
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              {hidden.join(" · ")}
+              {hidden.join(" &middot; ")}
             </TooltipContent>
           </Tooltip>
         )}
@@ -218,12 +205,9 @@ function TechStackCell({ techStack }: { techStack: readonly string[] }) {
 
 function CopyrightCell({ copyright }: { copyright: string | undefined }) {
   if (!copyright) {
-    return <span className="font-mono text-[11px] text-muted-foreground/40">—</span>;
+    return <span className="font-mono text-[11px] text-muted-foreground/40">&mdash;</span>;
   }
 
-  // The column shows only the year — the staleness signal. Footer blocks that
-  // carry no parsable year are omitted from the cell to keep the row compact;
-  // the full line stays available on hover.
   const year = extractCopyrightYear(copyright);
 
   return (
@@ -232,7 +216,7 @@ function CopyrightCell({ copyright }: { copyright: string | undefined }) {
         className="block font-mono text-[10.5px] truncate text-soft"
         title={copyright}
       >
-        {year ?? <span className="text-muted-foreground/40">—</span>}
+        {year ?? <span className="text-muted-foreground/40">&mdash;</span>}
       </span>
     </div>
   );
@@ -240,128 +224,111 @@ function CopyrightCell({ copyright }: { copyright: string | undefined }) {
 
 /**
  * Dense enterprise data table of leads. One lead per row; the row's action
- * cell slides an icon cluster in (quotas pattern) to open the detail Sheet or
- * delete the lead, keeping the list context visible under the sheet.
+ * cell navigates to the full-page detail or allows quick actions.
  */
 export function LeadTable({ rows, emptyRow }: LeadTableProps) {
-  const [detail, setDetail] = useState<DetailTarget | null>(null);
   const searchParams = useSearchParams();
   const currentSort = parseSortOption(searchParams.get("sort") ?? undefined);
 
   return (
-    <>
-      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-surface">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <SortableHeader
-                column="company"
-                label="Azienda / Dominio"
-                className="w-[25%]"
-                currentSort={currentSort}
-                params={searchParams}
-              />
-              <SortableHeader
-                column="city"
-                label="Città"
-                className="w-[8%]"
-                currentSort={currentSort}
-                params={searchParams}
-              />
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[20%]")}>Tech Stack</TableHead>
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%]")}>Ads</TableHead>
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[8%] overflow-hidden")}>
-                <span className="block truncate">Copyright</span>
-              </TableHead>
-              <SortableHeader
-                column="score"
-                label="PageSpeed"
-                className="w-[7%]"
-                currentSort={currentSort}
-                params={searchParams}
-              />
-              <SortableHeader
-                column="status"
-                label="Stato"
-                className="w-[9%]"
-                currentSort={currentSort}
-                params={searchParams}
-              />
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[9%]")}>Outreach</TableHead>
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%] text-right")}>Azioni</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map(({ lead, score }) => (
-              <TableRow key={lead.id} className="group last:border-0">
-                <TableCell className="overflow-hidden">
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="font-space text-[13.5px] font-semibold text-foreground truncate">
-                      {lead.companyName}
-                    </span>
-                    {lead.website && (
-                      <span className="font-mono text-[11px] text-dim truncate">
-                        {lead.website.replace(/^https?:\/\//, "")}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="overflow-hidden">
-                  <span className="block font-hanken text-[13px] text-soft truncate">
-                    {lead.city ?? <span className="text-muted-foreground/40">—</span>}
+    <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-surface">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <SortableHeader
+              column="company"
+              label="Azienda / Dominio"
+              className="w-[25%]"
+              currentSort={currentSort}
+              params={searchParams}
+            />
+            <SortableHeader
+              column="city"
+              label="Citt&agrave;"
+              className="w-[8%]"
+              currentSort={currentSort}
+              params={searchParams}
+            />
+            <TableHead className={cn(STICKY_HEAD_CLASS, "w-[20%]")}>Tech Stack</TableHead>
+            <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%]")}>Ads</TableHead>
+            <TableHead className={cn(STICKY_HEAD_CLASS, "w-[8%] overflow-hidden")}>
+              <span className="block truncate">Copyright</span>
+            </TableHead>
+            <SortableHeader
+              column="score"
+              label="PageSpeed"
+              className="w-[7%]"
+              currentSort={currentSort}
+              params={searchParams}
+            />
+            <SortableHeader
+              column="status"
+              label="Stato"
+              className="w-[9%]"
+              currentSort={currentSort}
+              params={searchParams}
+            />
+            <TableHead className={cn(STICKY_HEAD_CLASS, "w-[9%]")}>Outreach</TableHead>
+            <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%] text-right")}>Azioni</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map(({ lead, score }) => (
+            <TableRow key={lead.id} className="group last:border-0">
+              <TableCell className="overflow-hidden">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="font-space text-[13.5px] font-semibold text-foreground truncate">
+                    {lead.companyName}
                   </span>
-                </TableCell>
-                <TableCell className="overflow-hidden">
-                  <TechStackCell techStack={lead.techStack ?? []} />
-                </TableCell>
-                <TableCell className="overflow-hidden">
-                  <LeadAdsBadge adsTrackers={lead.adsTrackers ?? []} />
-                </TableCell>
-                <TableCell className="overflow-hidden">
-                  <CopyrightCell copyright={lead.copyright} />
-                </TableCell>
-                <TableCell className="text-center">
-                  <LeadScoreBadge score={score} />
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={lead.status} />
-                </TableCell>
-                <TableCell>
-                  <LeadOutreachBadge status={lead.outreachStatus} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <LeadRowActions
-                    id={lead.id}
-                    companyName={lead.companyName}
-                    status={lead.status}
-                    favorite={lead.favorite ?? false}
-                    onOpenDetail={(id, name) =>
-                      setDetail({ leadId: id, companyName: name })
-                    }
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-            {rows.length === 0 && (
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={9} className="p-0">
-                  {emptyRow}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <LeadDetailDialog
-        key={detail?.leadId ?? "closed"}
-        open={detail !== null}
-        onOpenChange={(open) => {
-          if (!open) setDetail(null);
-        }}
-        leadId={detail?.leadId ?? ""}
-        leadCompanyName={detail?.companyName ?? ""}
-      />
-    </>
+                  {lead.website && (
+                    <span className="font-mono text-[11px] text-dim truncate">
+                      {lead.website.replace(/^https?:\/\//, "")}
+                    </span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="overflow-hidden">
+                <span className="block font-hanken text-[13px] text-soft truncate">
+                  {lead.city ?? <span className="text-muted-foreground/40">&mdash;</span>}
+                </span>
+              </TableCell>
+              <TableCell className="overflow-hidden">
+                <TechStackCell techStack={lead.techStack ?? []} />
+              </TableCell>
+              <TableCell className="overflow-hidden">
+                <LeadAdsBadge adsTrackers={lead.adsTrackers ?? []} />
+              </TableCell>
+              <TableCell className="overflow-hidden">
+                <CopyrightCell copyright={lead.copyright} />
+              </TableCell>
+              <TableCell className="text-center">
+                <LeadScoreBadge score={score} />
+              </TableCell>
+              <TableCell>
+                <StatusBadge status={lead.status} />
+              </TableCell>
+              <TableCell>
+                <LeadOutreachBadge status={lead.outreachStatus} />
+              </TableCell>
+              <TableCell className="text-right">
+                <LeadRowActions
+                  id={lead.id}
+                  companyName={lead.companyName}
+                  status={lead.status}
+                  favorite={lead.favorite ?? false}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+          {rows.length === 0 && (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={9} className="p-0">
+                {emptyRow}
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

@@ -45,8 +45,6 @@ interface LeadRowActionsProps {
   companyName: string;
   status: LeadStatus;
   favorite: boolean;
-  /** Called when the user asks for the slide-over detail. */
-  onOpenDetail: (id: string, companyName: string) => void;
 }
 
 // Ghost by default: no bordered box, so the row reads quieter and the only
@@ -69,7 +67,6 @@ export function LeadRowActions({
   companyName,
   status,
   favorite,
-  onOpenDetail,
 }: LeadRowActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -104,7 +101,7 @@ export function LeadRowActions({
 
   const openDetail = () => {
     setMenuOpen(false);
-    onOpenDetail(id, companyName);
+    router.push(`/admin/leads/${id}`);
   };
 
   const createQuote = () => {
