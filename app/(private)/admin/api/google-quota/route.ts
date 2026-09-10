@@ -14,12 +14,10 @@ export const dynamic = "force-dynamic";
  * area. Read-only: never increments the counters.
  */
 export async function GET(): Promise<Response> {
-  const textSearch = googleApiQuotaGuard.usage(
-    QUOTA_BUCKET_PLACES_TEXT_SEARCH,
-  );
-  const autocomplete = googleApiQuotaGuard.usage(
-    QUOTA_BUCKET_PLACES_AUTOCOMPLETE,
-  );
+  const [textSearch, autocomplete] = await Promise.all([
+    googleApiQuotaGuard.usage(QUOTA_BUCKET_PLACES_TEXT_SEARCH),
+    googleApiQuotaGuard.usage(QUOTA_BUCKET_PLACES_AUTOCOMPLETE),
+  ]);
 
   return Response.json({
     date: textSearch.date,

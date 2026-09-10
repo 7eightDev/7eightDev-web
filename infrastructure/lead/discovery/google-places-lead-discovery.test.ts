@@ -3,6 +3,7 @@ import {
   parseSearchResponse
 } from '@/infrastructure/lead/discovery/google-places-lead-discovery';
 import { DailyQuotaGuard } from '@/infrastructure/shared/daily-quota-guard';
+import { InMemoryQuotaStore } from '@/infrastructure/shared/quota-store';
 
 const placeResponse = {
   places: [
@@ -263,108 +264,72 @@ describe('GooglePlacesLeadDiscovery', () => {
   });
 
   it('stops early without calling the network when quota is exhausted', async () => {
-    const { mkdtempSync, rmSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
-    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+    const fetchFn = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue(placeResponse)
+    });
 
-    try {
-      const fetchFn = jest.fn().mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(placeResponse)
-      });
+    const quotaGuard = new DailyQuotaGuard({
+      limits: { 'places-text-search': 1 },
+      store: new InMemoryQuotaStore()
+    });
 
-      const quotaGuard = new DailyQuotaGuard({
-        limits: { 'places-text-search': 1 },
-        trackerFilePath: join(tmpDir, 'tracker.json')
-      });
+    const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
 
-      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
+    // First search consumes the only quota unit.
+    await discovery.search(input);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
 
-      // First search consumes the only quota unit.
-      await discovery.search(input);
-      expect(fetchFn).toHaveBeenCalledTimes(1);
-
-      // Quota exhausted: second run must not hit the network and returns [].
-      const results = await discovery.search(input);
-      expect(results).toHaveLength(0);
-      expect(fetchFn).toHaveBeenCalledTimes(1);
-    } finally {
-      rmSync(tmpDir, { recursive: true, force: true });
-    }
+    // Quota exhausted: second run must not hit the network and returns [].
+    const results = await discovery.search(input);
+    expect(results).toHaveLength(0);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
   it('counts served calls toward the daily quota', async () => {
-    const { mkdtempSync, rmSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
-    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+    const quotaGuard = new DailyQuotaGuard({
+      limits: { 'places-text-search': 10 },
+      store: new InMemoryQuotaStore()
+    });
+    const fetchFn = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue(placeResponse)
+    });
 
-    try {
-      const quotaGuard = new DailyQuotaGuard({
-        limits: { 'places-text-search': 10 },
-        trackerFilePath: join(tmpDir, 'tracker.json')
-      });
-      const fetchFn = jest.fn().mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(placeResponse)
-      });
+    const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
+    await discovery.search(input);
 
-      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
-      await discovery.search(input);
-
-      expect(quotaGuard.usage('places-text-search').used).toBe(1);
-    } finally {
-      rmSync(tmpDir, { recursive: true, force: true });
-    }
+    expect((await quotaGuard.usage('places-text-search')).used).toBe(1);
   });
 
   it('does not count failed requests toward the daily quota', async () => {
-    const { mkdtempSync, rmSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
-    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+    const quotaGuard = new DailyQuotaGuard({
+      limits: { 'places-text-search': 10 },
+      store: new InMemoryQuotaStore()
+    });
+    const fetchFn = jest.fn().mockResolvedValue({ ok: false, status: 403 });
 
-    try {
-      const quotaGuard = new DailyQuotaGuard({
-        limits: { 'places-text-search': 10 },
-        trackerFilePath: join(tmpDir, 'tracker.json')
-      });
-      const fetchFn = jest.fn().mockResolvedValue({ ok: false, status: 403 });
+    const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
 
-      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
-
-      await expect(discovery.search(input)).rejects.toThrow(
-        'Google Places search failed with status 403'
-      );
-      expect(quotaGuard.usage('places-text-search').used).toBe(0);
-    } finally {
-      rmSync(tmpDir, { recursive: true, force: true });
-    }
+    await expect(discovery.search(input)).rejects.toThrow(
+      'Google Places search failed with status 403'
+    );
+    expect((await quotaGuard.usage('places-text-search')).used).toBe(0);
   });
 
   it('does not count zero-result responses (SKU gratuito) toward the quota', async () => {
-    const { mkdtempSync, rmSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
-    const tmpDir = mkdtempSync(join(tmpdir(), 'quota-guard-test-'));
+    const quotaGuard = new DailyQuotaGuard({
+      limits: { 'places-text-search': 10 },
+      store: new InMemoryQuotaStore()
+    });
+    const fetchFn = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ places: [] })
+    });
 
-    try {
-      const quotaGuard = new DailyQuotaGuard({
-        limits: { 'places-text-search': 10 },
-        trackerFilePath: join(tmpDir, 'tracker.json')
-      });
-      const fetchFn = jest.fn().mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ places: [] })
-      });
+    const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
+    await discovery.search(input);
 
-      const discovery = new GooglePlacesLeadDiscovery({ fetchFn, quotaGuard });
-      await discovery.search(input);
-
-      expect(quotaGuard.usage('places-text-search').used).toBe(0);
-    } finally {
-      rmSync(tmpDir, { recursive: true, force: true });
-    }
+    expect((await quotaGuard.usage('places-text-search')).used).toBe(0);
   });
 });

@@ -21,6 +21,7 @@ import {
   type ResendQuoteNotificationConfig,
 } from "@/infrastructure/quote/resend-quote-notification.adapter";
 import { DailyQuotaGuard } from "@/infrastructure/shared/daily-quota-guard";
+import { PrismaQuotaStore } from "@/infrastructure/shared/prisma-quota.store";
 import { RateLimiter } from "@/infrastructure/shared/rate-limiter";
 import { createLogger } from "@/infrastructure/logging/logger";
 
@@ -44,10 +45,13 @@ export const leadRepository: LeadRepository = new PrismaLeadRepository();
  * Blocks calls when a daily limit is reached so the account never exceeds
  * Google's monthly free allowance (Text Search ~1000/mo, Autocomplete
  * ~10000/mo). PageSpeed is free and is not gated.
- * Configure via GOOGLE_PLACES_DAILY_QUOTA_LIMIT, GOOGLE_AUTOCOMPLETE_DAILY_QUOTA_LIMIT
- * and GOOGLE_API_QUOTA_TRACKER_PATH.
+ * Counters are persisted in Postgres (table `api_quota_counters`) so they are
+ * shared across serverless instances; configure the limits via
+ * GOOGLE_PLACES_DAILY_QUOTA_LIMIT and GOOGLE_AUTOCOMPLETE_DAILY_QUOTA_LIMIT.
  */
-export const googleApiQuotaGuard = new DailyQuotaGuard();
+export const googleApiQuotaGuard = new DailyQuotaGuard({
+  store: new PrismaQuotaStore(),
+});
 
 /**
  * Lead discovery. Uses the Google Places Text Search API to find businesses

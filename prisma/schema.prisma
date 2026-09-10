@@ -211,3 +211,16 @@ model LeadGenerationJob {
 
   @@map("lead_generation_jobs")
 }
+
+model ApiQuotaCounter {
+  // Gated Google SKU: 'places-text-search' | 'places-autocomplete'.
+  bucket    String
+  // UTC day as YYYY-MM-DD. Part of the primary key, so the daily "reset" is
+  // simply a new row and past days stay around as an audit trail.
+  date      String
+  used      Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@id([bucket, date])
+  @@map("api_quota_counters")
+}

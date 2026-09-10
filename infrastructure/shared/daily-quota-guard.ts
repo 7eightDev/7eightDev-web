@@ -1,6 +1,5 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { createLogger } from '@/infrastructure/logging/logger';
+import type { QuotaStore } from '@/infrastructure/shared/quota-store';
 
 const log = createLogger('quota-guard');
 
@@ -42,12 +41,12 @@ function resolveDailyLimit(bucket: string): number {
 export interface DailyQuotaGuardConfig {
   /** Overrides for daily limits keyed by bucket (mainly for tests). */
   readonly limits?: Record<string, number>;
-  readonly trackerFilePath: string;
-}
-
-interface TrackerState {
-  readonly date: string;
-  readonly buckets: Record<string, number>;
+  /**
+   * Counter persistence. Required and injected by the composition root
+   * (PrismaQuotaStore in production, InMemoryQuotaStore in tests) so this
+   * module never depends on Prisma.
+   */
+  readonly store: QuotaStore;
 }
 
 export interface QuotaCheckResult {
@@ -57,27 +56,38 @@ export interface QuotaCheckResult {
   readonly remaining: number;
 }
 
+export interface QuotaUsage {
+  readonly used: number;
+  readonly limit: number;
+  readonly date: string;
+}
+
 /**
  * Daily quota guard for billed Google API calls.
  *
- * Persists a per-bucket call counter to a local JSON file and resets all
- * buckets automatically when the calendar day changes. Each bucket maps to a
- * Google SKU and is capped at a daily limit derived from Google's monthly free
- * threshold, so the account never exceeds the free allowance and never gets a
- * surprise bill.
+ * Counts calls per bucket (one bucket = one Google SKU) against a daily limit
+ * derived from Google's monthly free threshold, so the account never exceeds
+ * the free allowance and never gets a surprise bill. Counters are keyed by
+ * (bucket, UTC day) in the shared store, so a new day starts from zero without
+ * any explicit reset.
  *
- * Configure via env vars (limits) and GOOGLE_API_QUOTA_TRACKER_PATH (file path).
+ * State lives in Postgres via QuotaStore: the previous JSON-file tracker could
+ * not work on serverless, where the filesystem is per-instance and read-only
+ * outside /tmp — every write failed and the counter restarted from zero on each
+ * invocation, leaving the guard effectively disabled in production.
+ *
+ * FAIL-CLOSED: when the store is unreachable the guard denies the call. For a
+ * cost control, blocking a feature is preferable to an uncounted billed call.
+ *
+ * Configure the limits via GOOGLE_PLACES_DAILY_QUOTA_LIMIT and
+ * GOOGLE_AUTOCOMPLETE_DAILY_QUOTA_LIMIT.
  */
 export class DailyQuotaGuard {
-  private readonly trackerFilePath: string;
+  private readonly store: QuotaStore;
   private readonly limits: Record<string, number>;
-  private state: TrackerState;
 
-  constructor(config?: Partial<DailyQuotaGuardConfig>) {
-    this.trackerFilePath =
-      config?.trackerFilePath ??
-      process.env.GOOGLE_API_QUOTA_TRACKER_PATH ??
-      './api_usage_tracker.json';
+  constructor(config: DailyQuotaGuardConfig) {
+    this.store = config.store;
     const envLimits: Record<string, number> = {
       [QUOTA_BUCKET_PLACES_TEXT_SEARCH]: resolveDailyLimit(
         QUOTA_BUCKET_PLACES_TEXT_SEARCH
@@ -89,9 +99,8 @@ export class DailyQuotaGuard {
     this.limits = {
       ...DEFAULT_DAILY_LIMITS,
       ...envLimits,
-      ...(config?.limits ?? {}),
+      ...(config.limits ?? {}),
     };
-    this.state = this.loadState();
   }
 
   /**
@@ -105,16 +114,27 @@ export class DailyQuotaGuard {
    * daily free allowance.
    */
   async check(bucket: string): Promise<QuotaCheckResult> {
-    this.state = this.loadState();
-    const used = this.state.buckets[bucket] ?? 0;
     const limit = this.limits[bucket];
+    const date = this.today();
+
+    let used: number;
+    try {
+      used = await this.store.read(bucket, date);
+    } catch (error) {
+      // Unknown usage: assume exhausted rather than risk a billed call.
+      log.error('Lettura quota fallita – chiamate API bloccate', {
+        bucket,
+        error: String(error),
+      });
+      return { allowed: false, used: limit, limit, remaining: 0 };
+    }
 
     if (used >= limit) {
       log.warn('QUOTA RAGGIUNTA – chiamate API bloccate', {
         bucket,
         used,
         limit,
-        date: this.state.date,
+        date,
       });
     }
 
@@ -132,38 +152,42 @@ export class DailyQuotaGuard {
    * a failed call must never be counted.
    */
   async increment(bucket: string): Promise<QuotaCheckResult> {
-    this.state = this.loadState();
-    const used = this.state.buckets[bucket] ?? 0;
     const limit = this.limits[bucket];
-    const newUsed = used + 1;
 
-    this.state = {
-      ...this.state,
-      buckets: { ...this.state.buckets, [bucket]: newUsed },
-    };
-    this.saveState(this.state);
+    let used: number;
+    try {
+      used = await this.store.increment(bucket, this.today());
+    } catch (error) {
+      // The call already happened but could not be counted: report the bucket
+      // as exhausted so the next check() blocks instead of overshooting.
+      log.error('Impossibile registrare la chiamata API sul contatore quota', {
+        bucket,
+        error: String(error),
+      });
+      return { allowed: false, used: limit, limit, remaining: 0 };
+    }
 
-    const remaining = Math.max(limit - newUsed, 0);
+    const remaining = Math.max(limit - used, 0);
 
     if (remaining <= 10) {
       log.warn('Quasi al limite giornaliero API', {
         bucket,
-        used: newUsed,
+        used,
         limit,
         remaining,
       });
     } else {
       log.debug('Chiamata API registrata', {
         bucket,
-        used: newUsed,
+        used,
         limit,
         remaining,
       });
     }
 
     return {
-      allowed: newUsed <= limit,
-      used: newUsed,
+      allowed: used <= limit,
+      used,
       limit,
       remaining,
     };
@@ -186,62 +210,29 @@ export class DailyQuotaGuard {
     return this.limits[bucket];
   }
 
-  /** Read-only access to current usage for a bucket (for testing/debugging). */
-  usage(bucket: string): { used: number; limit: number; date: string } {
-    const state = this.loadState();
-    return {
-      used: state.buckets[bucket] ?? 0,
-      limit: this.limits[bucket],
-      date: state.date,
-    };
+  /**
+   * Read-only usage for a bucket, for the admin badge and debugging.
+   * Reports the bucket as exhausted when the store is unreachable, matching
+   * the fail-closed behaviour of `check()`.
+   */
+  async usage(bucket: string): Promise<QuotaUsage> {
+    const limit = this.limits[bucket];
+    const date = this.today();
+
+    try {
+      return { used: await this.store.read(bucket, date), limit, date };
+    } catch (error) {
+      log.error('Lettura quota fallita', { bucket, error: String(error) });
+      return { used: limit, limit, date };
+    }
   }
 
   /**
-   * Reset the counter for one bucket, or all buckets when none is given
-   * (for testing).
+   * Reset today's counter for one bucket, or for all buckets when none is
+   * given (for testing).
    */
-  reset(bucket?: string): void {
-    const state = this.loadState();
-    const buckets = bucket
-      ? { ...state.buckets, [bucket]: 0 }
-      : {};
-    this.saveState({ date: this.today(), buckets });
-  }
-
-  private loadState(): TrackerState {
-    try {
-      const raw = readFileSync(this.trackerFilePath, 'utf-8');
-      const parsed = JSON.parse(raw) as TrackerState;
-
-      if (parsed.date === this.today()) {
-        return { date: parsed.date, buckets: parsed.buckets ?? {} };
-      }
-
-      // New day — reset all buckets
-      log.info('Nuovo giorno: counter quota resettato', {
-        previousDate: parsed.date,
-      });
-      return { date: this.today(), buckets: {} };
-    } catch {
-      // File doesn't exist or is corrupt — start fresh
-      return { date: this.today(), buckets: {} };
-    }
-  }
-
-  private saveState(state: TrackerState): void {
-    try {
-      const dir = dirname(this.trackerFilePath);
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(
-        this.trackerFilePath,
-        JSON.stringify(state, null, 2),
-        'utf-8'
-      );
-    } catch (error) {
-      log.error('Impossibile salvare il tracker quota', {
-        error: String(error),
-      });
-    }
+  async reset(bucket?: string): Promise<void> {
+    await this.store.reset(this.today(), bucket);
   }
 
   private today(): string {
