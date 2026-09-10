@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
 import {
   createQuoteAction,
@@ -899,11 +900,11 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                   className="font-mono text-xs font-semibold px-4 py-3 rounded-lg border border-border text-muted hover:text-soft transition-all">
                   ← Roadmap
                 </button>
-                {/* In edit mode the persistent sidebar save covers this; avoid a duplicate. */}
+                {/* On lg+ the sidebar holds the sticky save action; here it only serves sm–lg. */}
                 {!isEdit && (
                   <button type="button" onClick={submit} disabled={pending || items.length === 0}
                     className={cn(
-                      "flex-1 font-mono text-[15px] font-semibold px-6 py-[14px] rounded-[9px] transition-all duration-150",
+                      "flex-1 font-mono text-[15px] font-semibold px-6 py-[14px] rounded-[9px] transition-all duration-150 lg:hidden",
                       pending || items.length === 0
                         ? "bg-raised text-muted cursor-not-allowed"
                         : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
@@ -918,29 +919,33 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
 
         {/* ── sidebar ── */}
         <aside className="hidden lg:flex flex-col gap-5 sticky top-24">
-          {/* In edit mode the save action is always reachable, on every step. */}
-          {isEdit && (
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={submit}
-                disabled={pending || items.length === 0}
-                className={cn(
-                  "font-mono text-sm font-semibold px-5 py-3 rounded-xl transition-all duration-150",
-                  pending || items.length === 0
-                    ? "bg-raised text-muted cursor-not-allowed border border-border"
-                    : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
-                )}
-              >
-                {pending ? "Salvataggio…" : "Salva modifiche"}
-              </button>
-              {error && (
-                <p className="font-hanken text-[13px] text-[var(--coral)] m-0" role="alert">
-                  {error}
-                </p>
+          {/* The primary action is always reachable on every step, in both create and edit mode. */}
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={pending || items.length === 0}
+              className={cn(
+                "font-mono text-sm font-semibold px-5 py-3 rounded-xl transition-all duration-150",
+                pending || items.length === 0
+                  ? "bg-raised text-muted cursor-not-allowed border border-border"
+                  : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
               )}
-            </div>
-          )}
+            >
+              {pending ? "Salvataggio…" : isEdit ? "Salva modifiche" : "Crea bozza preventivo →"}
+            </button>
+            <Link
+              href="/admin/quotes"
+              className="font-mono text-xs text-muted text-center py-1 hover:text-soft transition-colors"
+            >
+              ← {isEdit ? "Torna ai preventivi" : "Annulla"}
+            </Link>
+            {error && (
+              <p className="font-hanken text-[13px] text-[var(--coral)] m-0" role="alert">
+                {error}
+              </p>
+            )}
+          </div>
           {step === "items" ? (
             <CatalogSidebar
               tier={tier}
@@ -1010,27 +1015,35 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
       </div>
 
       {/* ── mobile sticky footer ── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-surface/80 backdrop-blur-xl border-t border-border flex items-center justify-between gap-4">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-muted">Netto</span>
-          <span className="text-[16px] font-mono font-bold text-accent">{formatMoney(totals.net)}</span>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-surface/80 backdrop-blur-xl border-t border-border flex items-center justify-between gap-3">
+        <Link
+          href="/admin/quotes"
+          aria-label={isEdit ? "Torna ai preventivi" : "Annulla creazione"}
+          className="font-mono text-[11px] text-muted hover:text-soft transition-colors shrink-0"
+        >
+          ← Annulla
+        </Link>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex flex-col items-end shrink-0">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted">Netto</span>
+            <span className="text-[16px] font-mono font-bold text-accent">{formatMoney(totals.net)}</span>
+          </div>
+          {/* In edit mode, save is always available; create keeps its guided flow. */}
+          {isEdit || step === "terms" ? (
+            <button type="button" onClick={submit} disabled={pending || items.length === 0}
+              className={cn(
+                "px-6 py-3 rounded-xl font-mono text-sm font-bold transition-all shrink-0",
+                pending || items.length === 0 ? "bg-raised text-muted" : "bg-accent text-[#0a0b0d]"
+              )}>
+              {pending ? "..." : isEdit ? "Salva" : "Crea bozza"}
+            </button>
+          ) : (
+            <button type="button" onClick={nextStep}
+              className="px-6 py-3 rounded-xl bg-raised border border-border text-foreground font-mono text-sm font-bold hover:border-accent shrink-0">
+              Avanti →
+            </button>
+          )}
         </div>
-        
-        {/* In edit mode, save is always available; create keeps its guided flow. */}
-        {isEdit || step === "terms" ? (
-          <button type="button" onClick={submit} disabled={pending || items.length === 0}
-            className={cn(
-              "px-6 py-3 rounded-xl font-mono text-sm font-bold transition-all",
-              pending || items.length === 0 ? "bg-raised text-muted" : "bg-accent text-[#0a0b0d]"
-            )}>
-            {pending ? "..." : isEdit ? "Salva" : "Crea bozza"}
-          </button>
-        ) : (
-          <button type="button" onClick={nextStep}
-            className="px-6 py-3 rounded-xl bg-raised border border-border text-foreground font-mono text-sm font-bold hover:border-accent">
-            Avanti →
-          </button>
-        )}
       </div>
     </div>
   );
