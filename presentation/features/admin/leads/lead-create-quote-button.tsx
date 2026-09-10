@@ -33,7 +33,7 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
     setError(null);
     startTransition(async () => {
       const result = await createQuoteFromLeadAction(leadId);
-      if (!result.ok) {
+      if (!result.ok || !result.input) {
         setError(result.error ?? "Creazione preventivo non riuscita.");
       } else {
         storeLeadQuoteInput(result.input);
@@ -58,7 +58,7 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
           aria-hidden
           className={pending ? "animate-spin" : undefined}
         />
-        {pending ? "Creazione…" : "Crea preventivo"}
+        {pending ? "Preparazione…" : "Crea preventivo"}
       </Button>
       {error && (
         <span role="alert" className="font-mono text-[11px] text-[var(--coral)]">
@@ -69,10 +69,10 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent onCloseAutoFocus={() => setError(null)}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Creare il preventivo?</AlertDialogTitle>
+            <AlertDialogTitle>Preparare il preventivo?</AlertDialogTitle>
             <AlertDialogDescription>
-              Verrà creato un preventivo in bozza basato sui dati del lead.
-              Potrai modificarlo prima dell&apos;invio.
+              I dati del lead verranno usati per precompilare un nuovo
+              preventivo. Potrai verificarlo e modificarlo prima del salvataggio.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -97,7 +97,7 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
                 create();
               }}
             >
-              {pending ? "Creazione…" : "Crea preventivo"}
+              {pending ? "Preparazione…" : "Vai al preventivo"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
