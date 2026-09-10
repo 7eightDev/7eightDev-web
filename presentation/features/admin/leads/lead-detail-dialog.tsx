@@ -208,26 +208,71 @@ function TrackingAdsSection({
 }
 
 function LoadingSkeleton() {
+  const bar = (w: number, className?: string) => (
+    <div
+      className={cn("h-[22px] rounded-md bg-foreground/[0.05] animate-pulse", className)}
+      style={{ width: `${w}rem` }}
+    />
+  );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="space-y-4">
-        {[11, 7, 7, 7, 7, 7].map((w, i) => (
-          <div
-            key={i}
-            className="h-[22px] rounded-md bg-foreground/[0.05] animate-pulse"
-            style={{ width: `${w}rem` }}
-          />
-        ))}
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left column: Anagrafica */}
+        <section className="flex flex-col">
+          <div className="h-[13px] w-28 rounded bg-foreground/[0.05] animate-pulse mb-4" />
+          <div className="flex flex-col">
+            {[10, 9, 8, 10, 11, 7, 7, 9].map((w, i) => (
+              <div
+                key={i}
+                className="flex justify-between gap-4 border-b border-border py-2 last:border-0"
+              >
+                {bar(w)}
+                {bar(w - 2)}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Right column: Vendita + Tracking */}
+        <div className="flex flex-col gap-6">
+          <section>
+            <div className="h-[13px] w-40 rounded bg-foreground/[0.05] animate-pulse mb-4" />
+            <div className="flex flex-col">
+              {[1, 1].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between gap-4 border-b border-border py-2 last:border-0"
+                >
+                  {bar(6)}
+                  {bar(5)}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="h-[13px] w-44 rounded bg-foreground/[0.05] animate-pulse mb-4" />
+            <div className="flex flex-wrap gap-2">
+              {[1, 1, 1].map((_, i) => (
+                <div key={i} className="h-7 w-20 rounded-full bg-foreground/[0.05] animate-pulse" />
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
-      <div className="space-y-4">
-        {[9, 7, 7, 11, 7].map((w, i) => (
-          <div
-            key={i}
-            className="h-[22px] rounded-md bg-foreground/[0.05] animate-pulse"
-            style={{ width: `${w}rem` }}
-          />
-        ))}
-      </div>
+    </>
+  );
+}
+
+function KpiSkeleton({ valueWidth }: { valueWidth: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="h-[10px] w-9 rounded bg-foreground/[0.05] animate-pulse" />
+      <span
+        className="h-[13px] rounded bg-foreground/[0.05] animate-pulse"
+        style={{ width: `${valueWidth}rem` }}
+      />
     </div>
   );
 }
@@ -323,6 +368,9 @@ export function LeadDetailDialog({
               {displayName}
             </DialogTitle>
             <div className="flex items-center gap-2 shrink-0">
+              {loading && (
+                <span className="h-5 w-20 rounded-full bg-foreground/[0.05] animate-pulse" />
+              )}
               {lead && <StatusBadge status={lead.status} />}
               <button
                 type="button"
@@ -336,31 +384,60 @@ export function LeadDetailDialog({
           </DialogHeader>
 
           {/* KPI Sub-header */}
-          {lead && (
+          {(loading || lead) && (
             <div className="px-6 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border">
-              <KpiItem label="Score">
-                <LeadScoreBadge score={latestAnalysis?.performanceScore} />
-              </KpiItem>
-              <KpiItem label="Outreach">
-                <span className="font-hanken text-[13px] text-foreground">
-                  {getOutreachLabel(lead.outreachStatus)}
-                </span>
-              </KpiItem>
-              <KpiItem label="Fonte">
-                <span className="font-hanken text-[13px] text-foreground">
-                  {lead.source}
-                </span>
-              </KpiItem>
-              <KpiItem label="Creato il">
-                <span className="font-hanken text-[13px] text-foreground">
-                  {formatDateIt(lead.createdAt)}
-                </span>
-              </KpiItem>
+              {loading ? (
+                <>
+                  {[5, 6, 4, 7].map((w, i) => (
+                    <KpiSkeleton key={i} valueWidth={w} />
+                  ))}
+                </>
+              ) : (
+                <>
+                  <KpiItem label="Score">
+                    <LeadScoreBadge score={latestAnalysis?.performanceScore} />
+                  </KpiItem>
+                  <KpiItem label="Outreach">
+                    <span className="font-hanken text-[13px] text-foreground">
+                      {getOutreachLabel(lead!.outreachStatus)}
+                    </span>
+                  </KpiItem>
+                  <KpiItem label="Fonte">
+                    <span className="font-hanken text-[13px] text-foreground">
+                      {lead!.source}
+                    </span>
+                  </KpiItem>
+                  <KpiItem label="Creato il">
+                    <span className="font-hanken text-[13px] text-foreground">
+                      {formatDateIt(lead!.createdAt)}
+                    </span>
+                  </KpiItem>
+                </>
+              )}
             </div>
           )}
 
           {/* PageSpeed band */}
-          {lead && <PageSpeedBand lead={lead} analyses={analyses} />}
+          {(loading || lead) && (
+            <div className="px-6 py-3 flex flex-wrap items-center gap-2 border-b border-border overflow-x-auto">
+              {loading ? (
+                <>
+                  {[1, 1, 1, 1].map((_, i) => (
+                    <div
+                      key={i}
+                      className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-border bg-raised px-3 py-1.5"
+                    >
+                      <span className="block h-[10px] w-8 rounded bg-foreground/[0.05] animate-pulse" />
+                      <span className="block h-[15px] w-10 rounded bg-foreground/[0.05] animate-pulse" />
+                    </div>
+                  ))}
+                  <span className="ml-auto block h-[10px] w-24 rounded bg-foreground/[0.05] animate-pulse" />
+                </>
+              ) : (
+                <PageSpeedBand lead={lead!} analyses={analyses} />
+              )}
+            </div>
+          )}
 
           {/* Body */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-6 py-6">
@@ -419,14 +496,23 @@ export function LeadDetailDialog({
           </div>
 
           {/* Footer */}
-          {lead && (
+          {(loading || lead) && (
             <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-2">
-              <SaveOutreachButton
-                state={outreachState}
-                onSave={() => editorRef.current?.save()}
-              />
-              {lead.status === "qualified" && (
-                <LeadCreateQuoteButton leadId={lead.id} />
+              {loading ? (
+                <>
+                  <span className="h-9 w-24 rounded-md bg-foreground/[0.05] animate-pulse" />
+                  <span className="h-9 w-32 rounded-md bg-foreground/[0.05] animate-pulse" />
+                </>
+              ) : (
+                <>
+                  <SaveOutreachButton
+                    state={outreachState}
+                    onSave={() => editorRef.current?.save()}
+                  />
+                  {lead!.status === "qualified" && (
+                    <LeadCreateQuoteButton leadId={lead!.id} />
+                  )}
+                </>
               )}
             </div>
           )}
