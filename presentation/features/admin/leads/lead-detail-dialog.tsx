@@ -331,7 +331,7 @@ export function LeadDetailDialog({
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent
-          className="sm:max-w-5xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+          className="sm:max-w-5xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-surface"
           showCloseButton={false}
         >
           {/* Header */}
