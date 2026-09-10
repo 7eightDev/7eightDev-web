@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { FileAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createQuoteFromLeadAction } from "@/application/lead/admin.actions";
+import { storeLeadQuoteInput } from "@/presentation/features/admin/leads/lead-quote-draft";
 import { Button } from "@/presentation/components/ui/button";
 import {
   AlertDialog,
@@ -17,10 +19,12 @@ import {
 } from "@/presentation/components/ui/alert-dialog";
 
 /**
- * Creates a draft quote pre-populated from a qualified lead. Redirects to the
- * quote composer for review once the draft is persisted.
+ * Prepares a pre-populated quote input from a qualified lead and redirects to
+ * the quote composer for review. The quote is only created when the user
+ * explicitly saves from the composer.
  */
 export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -29,8 +33,13 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
     setError(null);
     startTransition(async () => {
       const result = await createQuoteFromLeadAction(leadId);
-      if (!result.ok) setError(result.error ?? "Creazione preventivo non riuscita.");
-      else setConfirmOpen(false);
+      if (!result.ok) {
+        setError(result.error ?? "Creazione preventivo non riuscita.");
+      } else {
+        storeLeadQuoteInput(result.input);
+        setConfirmOpen(false);
+        router.push("/admin/quotes/new");
+      }
     });
   };
 
