@@ -415,7 +415,6 @@ export function LeadDetailSheet({
                     ref={editorRef}
                     leadId={lead.id}
                     outreachStatus={lead.outreachStatus}
-                    lastContactedAt={lead.lastContactedAt}
                     outreachNotes={lead.outreachNotes}
                     onStateChange={setOutreachState}
                   />

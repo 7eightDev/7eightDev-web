@@ -4,23 +4,18 @@ import { useEffect, useRef, useState, useOptimistic, useTransition } from "react
 import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  BanIcon,
   Delete02Icon,
   EyeIcon,
   FileAddIcon,
-  Mail01Icon,
   MoreHorizontalIcon,
-  SentIcon,
   StarIcon,
-  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import {
   deleteLeadAction,
   createQuoteFromLeadAction,
-  updateLeadOutreachAction,
   toggleLeadFavoriteAction,
 } from "@/application/lead/admin.actions";
-import type { LeadOutreachStatus, LeadStatus } from "@/domain/lead/lead.types";
+import type { LeadStatus } from "@/domain/lead/lead.types";
 import { cn } from "@/presentation/lib/utils";
 import {
   Tooltip,
@@ -111,15 +106,6 @@ export function LeadRowActions({
     });
   };
 
-  const setOutreach = (outreachStatus: LeadOutreachStatus) => {
-    setMenuOpen(false);
-    startTransition(async () => {
-      await updateLeadOutreachAction({ leadId: id, outreachStatus });
-      // Refresh the server page so the row badge reflects the persisted status.
-      router.refresh();
-    });
-  };
-
   const toggleFavorite = () => {
     startTransition(async () => {
       setOptimisticFavorite(!optimisticFavorite);
@@ -138,7 +124,11 @@ export function LeadRowActions({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div ref={cellRef} className="relative inline-flex items-center justify-end self-stretch">
+      <div
+        ref={cellRef}
+        onClick={(e) => e.stopPropagation()}
+        className="relative inline-flex items-center justify-end self-stretch"
+      >
         <div
           inert={!menuOpen}
           className={`absolute -top-4 -bottom-4 -right-5 z-10 flex items-center gap-1 rounded-l-lg bg-[rgba(35,38,46,0.82)] pl-4 pr-24 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
@@ -177,66 +167,6 @@ export function LeadRowActions({
               <TooltipContent>Crea preventivo</TooltipContent>
             </Tooltip>
           )}
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => setOutreach("audit_sent")}
-                disabled={pending}
-                aria-label={`Segna audit inviato per ${companyName}`}
-                className={iconBtn}
-              >
-                <HugeiconsIcon icon={SentIcon} size={18} aria-hidden />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Audit inviato</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => setOutreach("in_talks")}
-                disabled={pending}
-                aria-label={`Segna in trattativa per ${companyName}`}
-                className={iconBtn}
-              >
-                <HugeiconsIcon icon={Mail01Icon} size={18} aria-hidden />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>In trattativa</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => setOutreach("closed_won")}
-                disabled={pending}
-                aria-label={`Segna cliente acquisito per ${companyName}`}
-                className={iconBtn}
-              >
-                <HugeiconsIcon icon={Tick02Icon} size={18} aria-hidden />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Cliente acquisito</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => setOutreach("rejected")}
-                disabled={pending}
-                aria-label={`Segna rifiutato per ${companyName}`}
-                className={iconBtn}
-              >
-                <HugeiconsIcon icon={BanIcon} size={18} aria-hidden />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Rifiutato</TooltipContent>
-          </Tooltip>
 
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <Tooltip>

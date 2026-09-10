@@ -53,45 +53,6 @@ interface LeadDetailDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-interface WebVitalProps {
-  label: string;
-  value: number | undefined;
-  unit?: string;
-  ideal: string;
-  good: number;
-  poor: number;
-}
-
-function WebVital({ label, value, unit, ideal, good, poor }: WebVitalProps) {
-  const tone = getWebVitalTone(value, good, poor);
-
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
-        {label}
-      </span>
-      <span
-        className={cn(
-          "font-mono tabular-nums text-[15px] truncate min-w-0",
-          value === undefined || value === null ? "text-dim" : WEBVITAL_TONE[tone]
-        )}
-      >
-        {value === undefined || value === null ? (
-          <span className="text-dim">&mdash;</span>
-        ) : (
-          <>
-            {formatWebVital(value)}
-            {unit && <span className="text-dim text-[12px]"> {unit}</span>}
-          </>
-        )}
-      </span>
-      <span className="font-mono text-[10.5px] text-muted truncate min-w-0">
-        ideale {ideal}
-      </span>
-    </div>
-  );
-}
-
 function field(label: string, value: ReactNode) {
   return (
     <div className="flex justify-between gap-4 border-b border-border py-2 last:border-0">
@@ -118,7 +79,7 @@ function StatusBadge({ status }: { status: Lead["status"] }) {
   );
 }
 
-function PageSpeedSection({
+function PageSpeedBand({
   lead,
   analyses,
 }: {
@@ -130,7 +91,7 @@ function PageSpeedSection({
   if (!latest) {
     if (lead.status === "discarded") {
       return (
-        <p className="font-hanken text-soft m-0">
+        <p className="px-6 py-3 border-b border-border m-0 font-hanken text-[13px] text-soft">
           Analisi PageSpeed fallita: il lead &egrave; stato scartato.
           {lead.analysisError && (
             <>
@@ -145,38 +106,60 @@ function PageSpeedSection({
     }
     if (lead.status === "new" && !lead.website) {
       return (
-        <p className="font-hanken text-soft m-0">
+        <p className="px-6 py-3 border-b border-border m-0 font-hanken text-[13px] text-soft">
           Lead salvato senza indirizzo web: nessuna analisi PageSpeed eseguita.
           Puoi contattarlo via telefono o email.
         </p>
       );
     }
     return (
-      <p className="font-hanken text-soft m-0">
+      <p className="px-6 py-3 border-b border-border m-0 font-hanken text-[13px] text-soft">
         Nessuna analisi disponibile per questo lead.
       </p>
     );
   }
 
+  const vitals = [
+    { label: "LCP", value: latest.lcp, unit: "s", ideal: "\u2264 2.5 s", good: 2.5, poor: 4 },
+    { label: "FCP", value: latest.fcp, unit: "s", ideal: "\u2264 1.8 s", good: 1.8, poor: 3 },
+    { label: "CLS", value: latest.cls, ideal: "\u2264 0.1", good: 0.1, poor: 0.25 },
+    { label: "TBT", value: latest.tbt, unit: "ms", ideal: "\u2264 200 ms", good: 200, poor: 600 },
+  ];
+
   return (
-    <>
-      <div className="flex flex-col gap-1 mb-5">
-        <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
-          Performance
-        </span>
-        <LeadScoreBadge score={latest.performanceScore} />
-      </div>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-5">
-        <WebVital label="LCP" value={latest.lcp} unit="s" ideal="&le; 2.5 s" good={2.5} poor={4} />
-        <WebVital label="FCP" value={latest.fcp} unit="s" ideal="&le; 1.8 s" good={1.8} poor={3} />
-        <WebVital label="CLS" value={latest.cls} ideal="&le; 0.1" good={0.1} poor={0.25} />
-        <WebVital label="TBT" value={latest.tbt} unit="ms" ideal="&le; 200 ms" good={200} poor={600} />
-      </div>
-      <p className="font-mono text-[11px] text-muted m-0">
-        Strumento: <span className="text-soft">{latest.strategy}</span>
-        {" &middot; "}Analizzato il {formatDateIt(latest.analyzedAt)}
-      </p>
-    </>
+    <div className="px-6 py-3 flex flex-wrap items-center gap-2 border-b border-border overflow-x-auto">
+      {vitals.map((v) => (
+        <div
+          key={v.label}
+          className="inline-flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-border bg-raised px-3 py-1.5"
+          title={`ideale ${v.ideal}`}
+        >
+          <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted">
+            {v.label}
+          </span>
+          <span
+            className={cn(
+              "font-mono tabular-nums text-[15px] leading-none",
+              v.value === undefined || v.value === null
+                ? "text-dim"
+                : WEBVITAL_TONE[getWebVitalTone(v.value, v.good, v.poor)]
+            )}
+          >
+            {v.value === undefined || v.value === null ? (
+              "\u2014"
+            ) : (
+              <>
+                {formatWebVital(v.value)}
+                {v.unit && <span className="text-dim text-[12px]"> {v.unit}</span>}
+              </>
+            )}
+          </span>
+        </div>
+      ))}
+      <span className="ml-auto shrink-0 font-mono text-[10.5px] text-dim whitespace-nowrap">
+        {latest.strategy} &middot; {formatDateIt(latest.analyzedAt)}
+      </span>
+    </div>
   );
 }
 
@@ -376,6 +359,9 @@ export function LeadDetailDialog({
             </div>
           )}
 
+          {/* PageSpeed band */}
+          {lead && <PageSpeedBand lead={lead} analyses={analyses} />}
+
           {/* Body */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-6 py-6">
             {error ? (
@@ -388,7 +374,7 @@ export function LeadDetailDialog({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left column: Anagrafica */}
                 <section className="flex flex-col">
-                  <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
+                  <h3 className="font-space text-[13px] tracking-[0.1em] uppercase text-foreground mb-4">
                     Anagrafica
                   </h3>
                   <div className="flex flex-col">
@@ -403,31 +389,23 @@ export function LeadDetailDialog({
                   </div>
                 </section>
 
-                {/* Right column: Vendita + Analisi + Tracking */}
+                {/* Right column: Vendita + Tracking */}
                 <div className="flex flex-col gap-6">
                   <section>
-                    <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
+                    <h3 className="font-space text-[13px] tracking-[0.1em] uppercase text-foreground mb-4">
                       Stato Outreach &amp; Vendita
                     </h3>
                     <LeadOutreachEditor
                       ref={editorRef}
                       leadId={lead.id}
                       outreachStatus={lead.outreachStatus}
-                      lastContactedAt={lead.lastContactedAt}
                       outreachNotes={lead.outreachNotes}
                       onStateChange={setOutreachState}
                     />
                   </section>
 
                   <section>
-                    <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
-                      Analisi PageSpeed
-                    </h3>
-                    <PageSpeedSection lead={lead} analyses={analyses} />
-                  </section>
-
-                  <section>
-                    <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
+                    <h3 className="font-space text-[13px] tracking-[0.1em] uppercase text-foreground mb-4">
                       Tracciamento &amp; Campaign Ads
                     </h3>
                     <TrackingAdsSection

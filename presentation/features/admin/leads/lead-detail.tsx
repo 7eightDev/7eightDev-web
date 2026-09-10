@@ -1,18 +1,23 @@
 import type { ReactNode } from "react";
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
 import { formatDateIt } from "@/presentation/lib/format-date";
-import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
-import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
 import { LeadOutreachEditorWithActions } from "@/presentation/features/admin/leads/lead-outreach-editor";
 import { WebsiteLink } from "@/presentation/features/admin/leads/lead-website-link";
 import { cn } from "@/presentation/lib/utils";
 import {
-  QUALIFICATION_LABEL,
   TRACKER_BADGE,
   getOutreachLabel,
-  getStatusBadgeClass,
   isSlowWithAds,
+  formatWebVital,
+  getWebVitalTone,
+  WEBVITAL_TONE,
 } from "@/presentation/features/admin/leads/lead-dialog-utils";
+
+const TRACKER_ACRONYM: Record<string, string> = {
+  "Google Ads": "GA",
+  "Meta Pixel": "META",
+  GTM: "GTM",
+};
 
 interface LeadDetailProps {
   lead: Lead;
@@ -32,234 +37,238 @@ function field(label: string, value: ReactNode) {
   );
 }
 
-function TrackerBadge({ tracker }: { tracker: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent border border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] rounded-full px-2.5 py-[3px] bg-accent/[0.06]">
-      <span className="inline-block size-1.5 rounded-full bg-accent" />
-      {TRACKER_BADGE[tracker] ?? tracker}
-    </span>
-  );
-}
-
-function TrackingAdsSection({
-  lead,
-  performanceScore,
-}: {
-  lead: Lead;
-  performanceScore: number | undefined;
-}) {
-  const trackers = lead.adsTrackers ?? [];
-
-  if (trackers.length === 0) {
-    return (
-      <p className="font-hanken text-soft m-0">
-        Nessun tracker pubblicitario rilevato sul sito.
-      </p>
-    );
-  }
-
-  return (
-    <>
-      <div className="flex flex-wrap items-center gap-2">
-        {trackers.map((tracker) => (
-          <TrackerBadge key={tracker} tracker={tracker} />
-        ))}
-      </div>
-      {isSlowWithAds(lead.hasAds, performanceScore) && (
-        <p className="mt-3 font-mono text-[12px] text-[var(--coral)] border border-[color-mix(in_oklab,var(--coral)_45%,var(--border))] bg-[var(--coral)]/10 rounded-lg px-3 py-2">
-          Priorit&agrave; Alta: Budget Ads Sprecato su Sito Lento
-        </p>
-      )}
-    </>
-  );
-}
-
-function KpiItem({
+function KpiCard({
   label,
-  children,
+  value,
+  unit,
+  ideal,
+  className,
 }: {
   label: string;
-  children: ReactNode;
+  value: ReactNode;
+  unit?: string;
+  ideal?: string;
+  className?: string;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className={cn("flex flex-col gap-2 bg-raised border border-border rounded-xl px-4 py-4 min-w-0", className)}>
       <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted">
         {label}
       </span>
-      {children}
+      <span className="font-mono tabular-nums text-[22px] leading-tight text-foreground truncate">
+        {value ?? <span className="text-dim">&mdash;</span>}
+        {unit && typeof value === "number" && (
+          <span className="text-dim text-[14px]"> {unit}</span>
+        )}
+      </span>
+      {ideal && (
+        <span className="font-mono text-[10px] text-muted truncate">
+          {ideal}
+        </span>
+      )}
     </div>
   );
 }
 
-/**
- * Full-page detail view for a single lead. Layout:
- * - Header: company name + status badge
- * - KPI sub-header: score, outreach, source, date
- * - Body: two columns (anagrafica | vendita + pagespeed + tracking)
- */
 export function LeadDetail({ lead, analyses }: LeadDetailProps) {
   const latest = analyses[0];
 
+  const trackers = lead.adsTrackers ?? [];
+  const adsValue =
+    trackers.length > 0
+      ? trackers.map((t) => TRACKER_BADGE[t] ?? t).join(", ")
+      : "Sì";
+  const showAdsAlert = isSlowWithAds(lead.hasAds, latest?.performanceScore);
+
   return (
-    <div className="flex flex-col gap-0 rounded-2xl border border-border bg-surface overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-5 flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h2 className="font-space text-xl font-semibold text-foreground m-0">
-            {lead.companyName}
-          </h2>
-          <span
-            className={cn(
-              "font-mono text-[10px] tracking-[0.08em] uppercase rounded-full px-2 py-[2px] border",
-              getStatusBadgeClass(lead.status)
-            )}
-          >
-            {QUALIFICATION_LABEL[lead.status]}
-          </span>
+    <div>
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <KpiCard
+          label="Score"
+          className="bg-accent/[0.08] border-accent/40"
+          value={
+            latest?.performanceScore != null ? (
+              <span
+                className={cn(
+                  "font-mono tabular-nums text-[36px] leading-none",
+                  latest.performanceScore < 50
+                    ? "text-accent"
+                    : "text-muted"
+                )}
+              >
+                {latest.performanceScore}
+              </span>
+            ) : undefined
+          }
+          ideal=""
+        />
+        <KpiCard
+          label="LCP"
+          value={
+            latest?.lcp != null ? (
+              <span
+                className={cn(
+                  "font-mono tabular-nums text-[22px] leading-tight",
+                  WEBVITAL_TONE[getWebVitalTone(latest.lcp, 2.5, 4)]
+                )}
+              >
+                {formatWebVital(latest.lcp)}
+              </span>
+            ) : undefined
+          }
+          unit="s"
+          ideal="≤ 2.5 s"
+        />
+        <KpiCard
+          label="FCP"
+          value={
+            latest?.fcp != null ? (
+              <span
+                className={cn(
+                  "font-mono tabular-nums text-[22px] leading-tight",
+                  WEBVITAL_TONE[getWebVitalTone(latest.fcp, 1.8, 3)]
+                )}
+              >
+                {formatWebVital(latest.fcp)}
+              </span>
+            ) : undefined
+          }
+          unit="s"
+          ideal="≤ 1.8 s"
+        />
+        <KpiCard
+          label="CLS"
+          value={
+            latest?.cls != null ? (
+              <span
+                className={cn(
+                  "font-mono tabular-nums text-[22px] leading-tight",
+                  WEBVITAL_TONE[getWebVitalTone(latest.cls, 0.1, 0.25)]
+                )}
+              >
+                {formatWebVital(latest.cls)}
+              </span>
+            ) : undefined
+          }
+          ideal="≤ 0.1"
+        />
+        <KpiCard
+          label="TBT"
+          value={
+            latest?.tbt != null ? (
+              <span
+                className={cn(
+                  "font-mono tabular-nums text-[22px] leading-tight",
+                  WEBVITAL_TONE[getWebVitalTone(latest.tbt, 200, 600)]
+                )}
+              >
+                {formatWebVital(latest.tbt)}
+              </span>
+            ) : undefined
+          }
+          unit="ms"
+          ideal="≤ 200 ms"
+        />
+        <KpiCard
+          label="Tracking"
+          value={
+            trackers.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {trackers.map((tracker) => {
+                  const fullLabel = TRACKER_BADGE[tracker] ?? tracker;
+                  const acronym =
+                    TRACKER_ACRONYM[tracker] ??
+                    tracker.slice(0, 4).toUpperCase();
+                  return (
+                    <span
+                      key={tracker}
+                      className="font-mono text-[10px] text-accent border border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] rounded-full px-2 py-[2px] bg-accent/[0.06]"
+                      title={fullLabel}
+                    >
+                      {acronym}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : undefined
+          }
+          ideal={trackers.length > 0 ? undefined : "Google Ads"}
+        />
+      </div>
+
+      {/* Budget Ads alert */}
+      {showAdsAlert && (
+        <div className="mb-6 font-mono text-[12px] text-[var(--coral)] border border-[color-mix(in_oklab,var(--coral)_45%,var(--border))] bg-[var(--coral)]/10 rounded-lg px-3 py-2">
+          Priorit&agrave; Alta: Budget Ads Sprecato su Sito Lento
         </div>
-        {lead.status === "qualified" && (
-          <LeadCreateQuoteButton leadId={lead.id} />
-        )}
-      </div>
+      )}
 
-      {/* KPI Sub-header */}
-      <div className="px-6 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-border">
-        <KpiItem label="Score">
-          <LeadScoreBadge score={latest?.performanceScore} />
-        </KpiItem>
-        <KpiItem label="Outreach">
-          <span className="font-hanken text-[13px] text-foreground">
-            {getOutreachLabel(lead.outreachStatus)}
-          </span>
-        </KpiItem>
-        <KpiItem label="Fonte">
-          <span className="font-hanken text-[13px] text-foreground">
-            {lead.source}
-          </span>
-        </KpiItem>
-        <KpiItem label="Creato il">
-          <span className="font-hanken text-[13px] text-foreground">
-            {formatDateIt(lead.createdAt)}
-          </span>
-        </KpiItem>
-      </div>
-
-      {/* Body: two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        {/* Left column: Anagrafica */}
-        <section className="p-6 border-b lg:border-b-0 lg:border-r border-border">
-          <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
-            Anagrafica
-          </h3>
+      {/* Three side-by-side cards */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Dettagli Cliente */}
+        <section className="bg-surface border border-border rounded-2xl p-5">
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <h2 className="font-space text-[13px] tracking-[0.1em] uppercase text-foreground m-0">
+              Dettagli Cliente
+            </h2>
+          </div>
           <div className="flex flex-col">
+            {field("Azienda", lead.companyName)}
             {field("Categoria", lead.category)}
-            {field("Sito", lead.website ? <WebsiteLink url={lead.website} /> : undefined)}
-            {lead.techStack && lead.techStack.length > 0 &&
-              field("Tech / Stack", lead.techStack.join(", "))}
+            {field(
+              "Sito",
+              lead.website ? <WebsiteLink url={lead.website} /> : undefined
+            )}
             {field("Telefono", lead.phone)}
             {field("Email", lead.email)}
             {field("Indirizzo", lead.address)}
-            {field("Citt&agrave;", lead.city)}
-            {field("Fonte", lead.source)}
-            {field("Creato il", formatDateIt(lead.createdAt))}
+            {field("Città", lead.city)}
           </div>
         </section>
 
-        {/* Right column: Vendita + PageSpeed + Tracking */}
-        <div className="flex flex-col">
-          <section className="p-6 border-b border-border">
-            <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
-              Stato Outreach &amp; Vendita
-            </h3>
-            <LeadOutreachEditorWithActions
-              leadId={lead.id}
-              outreachStatus={lead.outreachStatus}
-              lastContactedAt={lead.lastContactedAt}
-              outreachNotes={lead.outreachNotes}
-            />
-          </section>
+        {/* Contesto */}
+        <section className="bg-surface border border-border rounded-2xl p-5">
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <h2 className="font-space text-[13px] tracking-[0.1em] uppercase text-foreground m-0">
+              Contesto
+            </h2>
+          </div>
+          <div className="flex flex-col">
+            {field("Outreach", getOutreachLabel(lead.outreachStatus))}
+            {field("Fonte", lead.source)}
+            {field("Creato il", formatDateIt(lead.createdAt))}
+            {lead.techStack &&
+              lead.techStack.length > 0 &&
+              field("Tech Stack", lead.techStack.join(", "))}
+            {(lead.hasAds || trackers.length > 0) &&
+              field("Ads", adsValue)}
+          </div>
+        </section>
 
-          <section className="p-6 border-b border-border">
-            <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
-              Analisi PageSpeed
-            </h3>
-
-            {!latest ? (
-              lead.status === "discarded" ? (
-                <p className="font-hanken text-soft m-0">
-                  Analisi PageSpeed fallita: il lead &egrave; stato scartato.
-                  {lead.analysisError && (
-                    <>
-                      {" "}
-                      <span className="text-[var(--coral)] font-medium">
-                        {lead.analysisError}
-                      </span>
-                    </>
-                  )}
-                </p>
-              ) : lead.status === "new" && !lead.website ? (
-                <p className="font-hanken text-soft m-0">
-                  Lead salvato senza indirizzo web: nessuna analisi PageSpeed
-                  eseguita. Puoi contattarlo via telefono o email.
-                </p>
-              ) : (
-                <p className="font-hanken text-soft m-0">
-                  Nessuna analisi disponibile per questo lead.
-                </p>
-              )
-            ) : (
-              <>
-                <div className="flex flex-col gap-1 mb-5">
-                  <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
-                    Performance
-                  </span>
-                  <LeadScoreBadge score={latest.performanceScore} />
-                </div>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-5">
-                  {[
-                    { label: "LCP", value: latest.lcp, unit: "s", ideal: "\u2264 2.5 s", good: 2.5, poor: 4 },
-                    { label: "FCP", value: latest.fcp, unit: "s", ideal: "\u2264 1.8 s", good: 1.8, poor: 3 },
-                    { label: "CLS", value: latest.cls, unit: undefined, ideal: "\u2264 0.1", good: 0.1, poor: 0.25 },
-                    { label: "TBT", value: latest.tbt, unit: "ms", ideal: "\u2264 200 ms", good: 200, poor: 600 },
-                  ].map((v) => (
-                    <div key={v.label} className="flex min-w-0 flex-col gap-1">
-                      <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted">
-                        {v.label}
-                      </span>
-                      <span className="font-mono tabular-nums text-[15px] text-foreground truncate min-w-0">
-                        {v.value === undefined || v.value === null ? (
-                          <span className="text-dim">&mdash;</span>
-                        ) : (
-                          <>
-                            {String(Math.round(v.value * 100) / 100)}
-                            {v.unit && <span className="text-dim text-[12px]"> {v.unit}</span>}
-                          </>
-                        )}
-                      </span>
-                      <span className="font-mono text-[10.5px] text-muted truncate min-w-0">
-                        ideale {v.ideal}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="font-mono text-[11px] text-muted m-0">
-                  Strumento: <span className="text-soft">{latest.strategy}</span>
-                  {" &middot; "}Analizzato il {formatDateIt(latest.analyzedAt)}
-                </p>
-              </>
+{/* Stato Vendita */}
+        <section className="bg-surface border border-border rounded-2xl p-5">
+          <div className="flex items-start justify-between gap-3 mb-6">
+            <h2 className="font-space text-[13px] tracking-[0.1em] uppercase text-foreground m-0">
+              Stato Vendita
+            </h2>
+            {lead.lastContactedAt && (
+              <div className="flex flex-col items-end shrink-0">
+                <span className="font-mono text-[11px] text-muted">
+                  ultimo aggiornamento
+                </span>
+                <span className="font-hanken text-[13px] text-foreground">
+                  {formatDateIt(lead.lastContactedAt)}
+                </span>
+              </div>
             )}
-          </section>
-
-          <section className="p-6">
-            <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
-              Tracciamento &amp; Campaign Ads
-            </h3>
-            <TrackingAdsSection
-              lead={lead}
-              performanceScore={latest?.performanceScore}
-            />
-          </section>
-        </div>
+          </div>
+          <LeadOutreachEditorWithActions
+            leadId={lead.id}
+            outreachStatus={lead.outreachStatus}
+            outreachNotes={lead.outreachNotes}
+          />
+        </section>
       </div>
     </div>
   );

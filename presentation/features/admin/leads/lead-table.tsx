@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -21,6 +22,7 @@ import {
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadAdsBadge } from "@/presentation/features/admin/leads/lead-ads-badge";
 import { LeadRowActions } from "@/presentation/features/admin/leads/lead-row-actions";
+import { LeadDetailDialog } from "@/presentation/features/admin/leads/lead-detail-dialog";
 import { extractCopyrightYear } from "@/domain/lead/lead.copyright";
 import { cn } from "@/presentation/lib/utils";
 import {
@@ -229,6 +231,7 @@ function CopyrightCell({ copyright }: { copyright: string | undefined }) {
 export function LeadTable({ rows, emptyRow }: LeadTableProps) {
   const searchParams = useSearchParams();
   const currentSort = parseSortOption(searchParams.get("sort") ?? undefined);
+  const [selected, setSelected] = useState<LeadTableRow | null>(null);
 
   return (
     <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-surface">
@@ -274,7 +277,11 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
         </TableHeader>
         <TableBody>
           {rows.map(({ lead, score }) => (
-            <TableRow key={lead.id} className="group last:border-0">
+            <TableRow
+              key={lead.id}
+              onClick={() => setSelected({ lead, score })}
+              className="group last:border-0 cursor-pointer transition-colors hover:bg-foreground/[0.04]"
+            >
               <TableCell className="overflow-hidden">
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="font-space text-[13.5px] font-semibold text-foreground truncate">
@@ -329,6 +336,17 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
           )}
         </TableBody>
       </Table>
+
+      {selected && (
+        <LeadDetailDialog
+          leadId={selected.lead.id}
+          leadCompanyName={selected.lead.companyName}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+        />
+      )}
     </div>
   );
 }
