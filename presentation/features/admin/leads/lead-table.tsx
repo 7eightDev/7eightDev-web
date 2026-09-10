@@ -22,7 +22,7 @@ import {
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadAdsBadge } from "@/presentation/features/admin/leads/lead-ads-badge";
 import { LeadRowActions } from "@/presentation/features/admin/leads/lead-row-actions";
-import { LeadDetailSheet } from "@/presentation/features/admin/leads/lead-detail-sheet";
+import { LeadDetailDialog } from "@/presentation/features/admin/leads/lead-detail-dialog";
 import { extractCopyrightYear } from "@/domain/lead/lead.copyright";
 import { cn } from "@/presentation/lib/utils";
 import {
@@ -353,7 +353,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
         </Table>
       </div>
 
-      <LeadDetailSheet
+      <LeadDetailDialog
         key={detail?.leadId ?? "closed"}
         open={detail !== null}
         onOpenChange={(open) => {
