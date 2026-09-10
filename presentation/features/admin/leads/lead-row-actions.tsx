@@ -15,6 +15,7 @@ import {
   createQuoteFromLeadAction,
   toggleLeadFavoriteAction,
 } from "@/application/lead/admin.actions";
+import { storeLeadQuoteInput } from "@/presentation/features/admin/leads/lead-quote-draft";
 import type { LeadStatus } from "@/domain/lead/lead.types";
 import { cn } from "@/presentation/lib/utils";
 import {
@@ -109,8 +110,13 @@ export function LeadRowActions({
     setError(null);
     startTransition(async () => {
       const result = await createQuoteFromLeadAction(id);
-      if (!result.ok) setError(result.error ?? "Creazione preventivo non riuscita.");
-      else setQuoteOpen(false);
+      if (!result.ok) {
+        setError(result.error ?? "Creazione preventivo non riuscita.");
+      } else {
+        storeLeadQuoteInput(result.input);
+        setQuoteOpen(false);
+        router.push("/admin/quotes/new");
+      }
     });
   };
 
