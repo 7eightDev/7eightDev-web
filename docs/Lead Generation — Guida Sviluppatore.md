@@ -225,7 +225,6 @@ test in `application/lead/lead-filters.test.ts` (se i test filtri vivono lì).
 | `OUTSCRAPER_API_KEY` | Adapter Outscraper (non collegato) |
 | `GOOGLE_PLACES_DAILY_QUOTA_LIMIT` | Max Text Search/day (default 32) |
 | `GOOGLE_AUTOCOMPLETE_DAILY_QUOTA_LIMIT` | Max Autocomplete/day (default 322) |
-| `GOOGLE_API_QUOTA_TRACKER_PATH` | Path del file contatore (default `./api_usage_tracker.json`) |
 
 Le chiavi sono in `.env.local` (gitignored); `.env.example` documenta le
 variabili. L'area admin è protetta da **Clerk** (proxy middleware).
@@ -249,10 +248,17 @@ Badge live in admin: `app/(private)/admin/api/google-quota/route.ts` (read-only)
 + componente `GoogleQuotaBadge` (polla ogni 15 s, ambra vicino al limite, rosso
 a esaurimento).
 
-> **Limitazione**: su Vercel serverless il file JSON del contatore **non è
-> condiviso/persistente** tra cold start. È una guardia affidabile solo in local
-> o self-hosted. Per persistenza serverless migrare il tracker su una tabella
-> Prisma.
+I contatori sono su Postgres (tabella `api_quota_counters`), dietro il seam
+`QuotaStore` (`infrastructure/shared/quota-store.ts`): in produzione lo store è
+`PrismaQuotaStore`, nei test `InMemoryQuotaStore`. La chiave è
+(bucket, giorno UTC), quindi il reset giornaliero è solo una chiave nuova e
+l'`increment` è un `INSERT ... ON CONFLICT DO UPDATE` atomico — su serverless più
+istanze incrementano lo stesso bucket in concorrenza e un read-modify-write
+perderebbe chiamate.
+
+> **Fail-closed**: se il DB non è raggiungibile la guardia **nega** la chiamata e
+> il badge mostra il bucket come esaurito. Per un controllo di costo una feature
+> bloccata è preferibile a una chiamata fatturata non conteggiata.
 
 Dettagli completi e strategia di calcolo dei limiti: sezione "Google API Quota
 Guard" in `AGENTS.md`.
@@ -321,10 +327,14 @@ Timeout 60 s voluto (siti lenti = lead interessanti) — non ridurlo se non
 necessario.
 
 **Il job fallisce con "quota esaurita".**
-`DailyQuotaGuard` ha raggiunto il limite giornaliero (vedi badge in alto o il
-file `api_usage_tracker.json`). Attendi il day-change (reset automatico) o, se
-stai testando, aggiorna i limiti/elimina il file tracker per risincronizzare.
-Vedi `AGENTS.md` per i valori. Il rilevamento del cambiod giorno è automatico.
+`DailyQuotaGuard` ha raggiunto il limite giornaliero (vedi badge in alto o la
+tabella `api_quota_counters`). Attendi il day-change (reset automatico) o, se
+stai testando, alza i limiti / elimina la riga del bucket per risincronizzare.
+Vedi `AGENTS.md` per i valori. Il rilevamento del cambio giorno è automatico.
+
+Se invece la quota risulta esaurita **subito**, sospetta il DB: la guardia è
+fail-closed e riporta il bucket a zero residuo quando non riesce a leggere il
+contatore. Controlla che la migration `api_quota_counters` sia applicata.
 
 **L'autocomplete non risponde (HTTP 429).**
 Quota `places-autocomplete` esaurita (un consumo per keystroke, debounce 250
@@ -336,8 +346,9 @@ job è rimasto `running` senza recovery, la pagina admin lo marca `failed` al
 reload (vedi §10).
 
 **Cambiato un limite quota ma i contatori non cambiano.**
-I contatori riflettono i **vecchi limiti** finché non cambia il giorno.
-Elimina `api_usage_tracker.json` per risincronizzare subito.
+I limiti sono letti dall'env alla costruzione e non sono persistiti, quindi la
+modifica ha effetto subito: sul DB c'è solo il conteggio `used`. Per azzerarlo,
+elimina la riga del bucket da `api_quota_counters`.
 
 ---
 
@@ -348,8 +359,8 @@ Elimina `api_usage_tracker.json` per risincronizzare subito.
 - [ ] Se cambi lo schema Prisma: `npx prisma generate` + nota nel PR di dover
       riavviare con `rm -rf .next` (vedi AGENTS.md).
 - [ ] Se aggiungi filtri: tipo + parser + `filterLeads` + controllo UI + test puri.
-- [ ] Se tocchi la quota Google: capisci l'impatto sulla guardia e sul file
-      tracker; non esporre mai le chiavi.
+- [ ] Se tocchi la quota Google: capisci l'impatto sulla guardia e sui contatori
+      in `api_quota_counters`; non esporre mai le chiavi.
 - [ ] `npm test -- --runInBand`, `npm run lint`, `npx tsc --noEmit`,
       `npm run build` tutti verdi.
 - [ ] Nessun import di `@/infrastructure` o `@/application` nel `domain`.
