@@ -65,6 +65,7 @@ export function LeadRowActions({
 }: LeadRowActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const cellRef = useRef<HTMLDivElement>(null);
@@ -101,8 +102,15 @@ export function LeadRowActions({
 
   const createQuote = () => {
     setMenuOpen(false);
-    startTransition(() => {
-      void createQuoteFromLeadAction(id);
+    setQuoteOpen(true);
+  };
+
+  const confirmCreateQuote = () => {
+    setError(null);
+    startTransition(async () => {
+      const result = await createQuoteFromLeadAction(id);
+      if (!result.ok) setError(result.error ?? "Creazione preventivo non riuscita.");
+      else setQuoteOpen(false);
     });
   };
 
@@ -217,6 +225,45 @@ export function LeadRowActions({
                   }}
                 >
                   {pending ? "Eliminazione…" : "Elimina"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={quoteOpen} onOpenChange={setQuoteOpen}>
+            <AlertDialogContent onCloseAutoFocus={() => setError(null)}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Creare preventivo per «{companyName}»?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Verrà creato un preventivo in bozza basato sui dati del lead.
+                  Potrai modificarlo prima dell&apos;invio.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              {error && (
+                <p
+                  role="alert"
+                  className="mt-[14px] font-mono text-[12.5px] text-[var(--coral)]"
+                >
+                  {error}
+                </p>
+              )}
+
+              <AlertDialogFooter className="grid grid-cols-2 gap-[10px]">
+                <AlertDialogCancel className="w-full" disabled={pending}>
+                  Annulla
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="w-full"
+                  disabled={pending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    confirmCreateQuote();
+                  }}
+                >
+                  {pending ? "Creazione…" : "Crea preventivo"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

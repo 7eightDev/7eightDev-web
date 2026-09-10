@@ -5,6 +5,16 @@ import { FileAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createQuoteFromLeadAction } from "@/application/lead/admin.actions";
 import { Button } from "@/presentation/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/presentation/components/ui/alert-dialog";
 
 /**
  * Creates a draft quote pre-populated from a qualified lead. Redirects to the
@@ -13,12 +23,14 @@ import { Button } from "@/presentation/components/ui/button";
 export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const create = () => {
     setError(null);
     startTransition(async () => {
       const result = await createQuoteFromLeadAction(leadId);
       if (!result.ok) setError(result.error ?? "Creazione preventivo non riuscita.");
+      else setConfirmOpen(false);
     });
   };
 
@@ -27,7 +39,7 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
       <Button
         variant="default"
         size="sm"
-        onClick={create}
+        onClick={() => setConfirmOpen(true)}
         disabled={pending}
         className="cursor-pointer bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px"
       >
@@ -44,6 +56,43 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
           {error}
         </span>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent onCloseAutoFocus={() => setError(null)}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Creare il preventivo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Verrà creato un preventivo in bozza basato sui dati del lead.
+              Potrai modificarlo prima dell&apos;invio.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {error && (
+            <p
+              role="alert"
+              className="mt-[14px] font-mono text-[12.5px] text-[var(--coral)]"
+            >
+              {error}
+            </p>
+          )}
+
+          <AlertDialogFooter className="grid grid-cols-2 gap-[10px]">
+            <AlertDialogCancel className="w-full" disabled={pending}>
+              Annulla
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="w-full"
+              disabled={pending}
+              onClick={(e) => {
+                e.preventDefault();
+                create();
+              }}
+            >
+              {pending ? "Creazione…" : "Crea preventivo"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
