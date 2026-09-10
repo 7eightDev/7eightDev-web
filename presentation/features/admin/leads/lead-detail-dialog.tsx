@@ -9,6 +9,7 @@ import { getLeadDetailAction } from "@/application/lead/admin.actions";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
+import { LeadSendAuditButton } from "@/presentation/features/admin/leads/lead-send-audit-button";
 import {
   LeadOutreachEditor,
   SaveOutreachButton,
@@ -509,6 +510,13 @@ export function LeadDetailDialog({
                     state={outreachState}
                     onSave={() => editorRef.current?.save()}
                   />
+                  {lead!.email && (
+                    <LeadSendAuditButton
+                      leadId={lead!.id}
+                      companyName={lead!.companyName}
+                      recipientEmail={lead!.email}
+                    />
+                  )}
                   {lead!.status === "qualified" && (
                     <LeadCreateQuoteButton leadId={lead!.id} />
                   )}
