@@ -456,7 +456,7 @@ export function LeadDetailSheet({
             andranno perse.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="flex-wrap">
           <AlertDialogCancel>Continua a modificare</AlertDialogCancel>
           <AlertDialogAction onClick={discardAndClose}>
             Esci senza salvare
