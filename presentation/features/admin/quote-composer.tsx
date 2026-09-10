@@ -6,8 +6,10 @@ import {
   createQuoteAction,
   updateQuoteAction,
 } from "@/application/quote/admin.actions";
+import type { CreateQuoteInput } from "@/application/quote/quote.schemas";
 import type { ServiceCatalogItem } from "@/domain/catalog/catalog.types";
 import type { Quote } from "@/domain/quote/quote.types";
+import { consumeLeadQuoteInput } from "@/presentation/features/admin/leads/lead-quote-draft";
 import {
   type FiscalRegime,
   netAfterWithholding,
@@ -133,6 +135,47 @@ function quoteToState(quote: Quote): InitialState {
   };
 }
 
+/** Maps a pre-populated CreateQuoteInput (from a lead) into composer state. */
+function inputToState(input: CreateQuoteInput): InitialState {
+  const discount = input.discount;
+  return {
+    clientName: input.clientName,
+    clientCompany: input.clientCompany ?? "",
+    clientEmail: input.clientEmail ?? "",
+    project: input.project,
+    intro: input.intro ?? "",
+    validUntil: input.validUntil.slice(0, 10),
+    fiscalRegime: input.fiscalRegime ?? "vat",
+    vatPercent: Math.round((input.vatRate ?? 0) * 100),
+    items: input.lineItems.map((li) => ({
+      key: nextKey(),
+      catalogRef: li.catalogRef,
+      title: li.title,
+      description: li.description ?? "",
+      priceUnits: li.priceUnits ?? 0,
+      quantity: li.quantity ?? 1,
+      optional: li.optional ?? false,
+      type: li.type === "recurring" ? "recurring" : li.type === "on_demand" ? "on_demand" : "one_time",
+      interval: li.type === "recurring" ? li.interval : undefined,
+    })),
+    phases: pairsFrom(input.phases, (p) => makePair(p.a, p.b), DEFAULT_PHASES),
+    terms: pairsFrom(input.terms, (t) => makePair(t.a, t.b), DEFAULT_TERMS),
+    techStack: pairsFrom(input.techStack, (t) => makePair(t.a, t.b), DEFAULT_STACK),
+    // Lead data never carries these sections: use the blank-state defaults.
+    showPhases: true,
+    showTerms: true,
+    showTechStack: (input.techStack?.length ?? 0) > 0,
+    timelineNote: input.timelineNote ?? "",
+    discountKind: discount ? discount.kind : "none",
+    discountValue: discount
+      ? discount.kind === "percent"
+        ? discount.value
+        : discount.amountUnits ?? 0
+      : 0,
+    pricingDisplay: input.pricingDisplay ?? "itemized",
+  };
+}
+
 function blankState(): InitialState {
   return {
     clientName: "",
@@ -246,9 +289,11 @@ function SectionToggle({
 
 export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
   const isEdit = !!quote;
-  const [initial] = useState<InitialState>(() =>
-    quote ? quoteToState(quote) : blankState()
-  );
+  const [initial] = useState<InitialState>(() => {
+    if (quote) return quoteToState(quote);
+    const leadInput = consumeLeadQuoteInput();
+    return leadInput ? inputToState(leadInput) : blankState();
+  });
   const [step, setStep] = useState<StepId>("info");
   const [clientName, setClientName] = useState(initial.clientName);
   const [clientCompany, setClientCompany] = useState(initial.clientCompany);
