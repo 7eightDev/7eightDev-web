@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -61,6 +62,7 @@ export function LeadOutreachEditor({
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const dirty =
     draftStatus !== baselineStatus || draftNotes !== baselineNotes;
@@ -82,6 +84,9 @@ export function LeadOutreachEditor({
         if (result.lastContactedAt !== undefined) {
           setCurrentLastContactedAt(result.lastContactedAt);
         }
+        // Re-render the server page so the row badge behind the sheet (and the
+        // re-opened detail) reflects the persisted status immediately.
+        router.refresh();
       }
     });
   };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useOptimistic, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BanIcon,
@@ -72,6 +73,7 @@ export function LeadRowActions({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const cellRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const [optimisticFavorite, setOptimisticFavorite] = useOptimistic<
     boolean,
     boolean
@@ -111,8 +113,10 @@ export function LeadRowActions({
 
   const setOutreach = (outreachStatus: LeadOutreachStatus) => {
     setMenuOpen(false);
-    startTransition(() => {
-      void updateLeadOutreachAction({ leadId: id, outreachStatus });
+    startTransition(async () => {
+      await updateLeadOutreachAction({ leadId: id, outreachStatus });
+      // Refresh the server page so the row badge reflects the persisted status.
+      router.refresh();
     });
   };
 
