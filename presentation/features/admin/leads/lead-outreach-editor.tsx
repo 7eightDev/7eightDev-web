@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -31,26 +38,48 @@ const OUTREACH_ORDER: LeadOutreachStatus[] = [
   "rejected",
 ];
 
+export interface LeadOutreachEditorState {
+  dirty: boolean;
+  pending: boolean;
+  savedAt: string | null;
+}
+
+export interface LeadOutreachEditorHandle {
+  save: () => void;
+}
+
 interface LeadOutreachEditorProps {
   leadId: string;
   outreachStatus: LeadOutreachStatus;
   lastContactedAt: string | undefined;
   outreachNotes: string | undefined;
+  /** Pushed upstream so parents can host the Save button in their own layout. */
+  onStateChange?: (state: LeadOutreachEditorState) => void;
 }
 
 /**
- * "Stato Outreach & Vendita" editor: status select + free-text notes + save.
+ * "Stato Outreach & Vendita" editor: status select + free-text notes. The save
+ * action is exposed through the ref handle, and the current editor state flows
+ * up via `onStateChange`, so parents can place the Save button wherever their
+ * layout needs it (sheet footer vs full-page actions row).
  * Pure client component so it can be dropped into both the slide-over Sheet
  * and the server-rendered full page. Local drafts start from the given lead;
  * parents remount it per lead (the table keys the Sheet by leadId, the full
  * page re-renders per request), so no prop-sync effect is needed.
  */
-export function LeadOutreachEditor({
-  leadId,
-  outreachStatus,
-  lastContactedAt,
-  outreachNotes,
-}: LeadOutreachEditorProps) {
+export const LeadOutreachEditor = forwardRef<
+  LeadOutreachEditorHandle,
+  LeadOutreachEditorProps
+>(function LeadOutreachEditor(
+  {
+    leadId,
+    outreachStatus,
+    lastContactedAt,
+    outreachNotes,
+    onStateChange,
+  },
+  ref
+) {
   const [draftStatus, setDraftStatus] =
     useState<LeadOutreachStatus>(outreachStatus);
   const [draftNotes, setDraftNotes] = useState(outreachNotes ?? "");
@@ -90,6 +119,12 @@ export function LeadOutreachEditor({
       }
     });
   };
+
+  useImperativeHandle(ref, () => ({ save }));
+
+  useEffect(() => {
+    onStateChange?.({ dirty, pending, savedAt });
+  }, [dirty, pending, savedAt, onStateChange]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -131,36 +166,70 @@ export function LeadOutreachEditor({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-mono text-[11px] text-muted">
-          {currentLastContactedAt ? (
-            <>Ultimo contatto: {formatDateIt(currentLastContactedAt)}</>
-          ) : (
-            "Nessun contatto registrato"
-          )}
-        </span>
-        <Button
-          type="button"
-          size="sm"
-          onClick={save}
-          disabled={pending || (!dirty && savedAt === null)}
-          className={cn(savedAt !== null && !dirty && "opacity-80")}
-        >
-          {pending
-            ? "Salvataggio…"
-            : dirty
-              ? "Salva"
-              : savedAt
-                ? "Salvato"
-                : "Salva"}
-        </Button>
-      </div>
+      <span className="font-mono text-[11px] text-muted">
+        {currentLastContactedAt ? (
+          <>Ultimo contatto: {formatDateIt(currentLastContactedAt)}</>
+        ) : (
+          "Nessun contatto registrato"
+        )}
+      </span>
 
       {error && (
         <p role="alert" className="font-mono text-[12.5px] text-[var(--coral)]">
           {error}
         </p>
       )}
+    </div>
+  );
+});
+
+/** Save control shared by the sheet footer and the full-page actions row. */
+export function SaveOutreachButton({
+  state,
+  onSave,
+}: {
+  state: LeadOutreachEditorState;
+  onSave: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      onClick={onSave}
+      disabled={state.pending || (!state.dirty && state.savedAt === null)}
+      className={cn(state.savedAt !== null && !state.dirty && "opacity-80")}
+    >
+      {state.pending
+        ? "Salvataggio…"
+        : state.dirty
+          ? "Salva"
+          : state.savedAt
+            ? "Salvato"
+            : "Salva"}
+    </Button>
+  );
+}
+
+/**
+ * Self-contained editor + centered Save button. Used by the server-rendered
+ * full lead page; the sheet composes the editor and its footer actions itself.
+ */
+export function LeadOutreachEditorWithActions(
+  props: Omit<LeadOutreachEditorProps, "onStateChange">
+) {
+  const ref = useRef<LeadOutreachEditorHandle>(null);
+  const [state, setState] = useState<LeadOutreachEditorState>({
+    dirty: false,
+    pending: false,
+    savedAt: null,
+  });
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LeadOutreachEditor ref={ref} onStateChange={setState} {...props} />
+      <div className="flex justify-center">
+        <SaveOutreachButton state={state} onSave={() => ref.current?.save()} />
+      </div>
     </div>
   );
 }

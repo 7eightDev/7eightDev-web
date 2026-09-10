@@ -1,13 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
 import { getLeadDetailAction } from "@/application/lead/admin.actions";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
-import { LeadOutreachEditor } from "@/presentation/features/admin/leads/lead-outreach-editor";
+import {
+  LeadOutreachEditor,
+  SaveOutreachButton,
+} from "@/presentation/features/admin/leads/lead-outreach-editor";
+import type {
+  LeadOutreachEditorHandle,
+  LeadOutreachEditorState,
+} from "@/presentation/features/admin/leads/lead-outreach-editor";
 import { WebsiteLink } from "@/presentation/features/admin/leads/lead-website-link";
 import {
   Sheet,
@@ -264,6 +271,12 @@ export function LeadDetailSheet({
   const [lead, setLead] = useState<Lead | null>(null);
   const [analyses, setAnalyses] = useState<LeadAnalysis[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const editorRef = useRef<LeadOutreachEditorHandle>(null);
+  const [outreachState, setOutreachState] = useState<LeadOutreachEditorState>({
+    dirty: false,
+    pending: false,
+    savedAt: null,
+  });
 
   // Fetch on open. State is only written after the awaited server action, so
   // the effect performs no synchronous setState (the parent keys this
@@ -361,10 +374,12 @@ export function LeadDetailSheet({
                     Stato Outreach &amp; Vendita
                   </h3>
                   <LeadOutreachEditor
+                    ref={editorRef}
                     leadId={lead.id}
                     outreachStatus={lead.outreachStatus}
                     lastContactedAt={lead.lastContactedAt}
                     outreachNotes={lead.outreachNotes}
+                    onStateChange={setOutreachState}
                   />
                 </section>
 
@@ -390,8 +405,16 @@ export function LeadDetailSheet({
         )}
 
         <SheetFooter>
-          {lead && lead.status === "qualified" && (
-            <LeadCreateQuoteButton leadId={lead.id} />
+          {lead && (
+            <div className="flex items-center justify-center gap-2">
+              <SaveOutreachButton
+                state={outreachState}
+                onSave={() => editorRef.current?.save()}
+              />
+              {lead.status === "qualified" && (
+                <LeadCreateQuoteButton leadId={lead.id} />
+              )}
+            </div>
           )}
         </SheetFooter>
       </SheetContent>

@@ -3,7 +3,7 @@ import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
-import { LeadOutreachEditor } from "@/presentation/features/admin/leads/lead-outreach-editor";
+import { LeadOutreachEditorWithActions } from "@/presentation/features/admin/leads/lead-outreach-editor";
 import { WebsiteLink } from "@/presentation/features/admin/leads/lead-website-link";
 import { cn } from "@/presentation/lib/utils";
 
@@ -167,7 +167,7 @@ export function LeadDetail({ lead, analyses }: LeadDetailProps) {
         <h2 className="font-space text-lg font-semibold text-foreground mb-4">
           Stato Outreach &amp; Vendita
         </h2>
-        <LeadOutreachEditor
+        <LeadOutreachEditorWithActions
           leadId={lead.id}
           outreachStatus={lead.outreachStatus}
           lastContactedAt={lead.lastContactedAt}
