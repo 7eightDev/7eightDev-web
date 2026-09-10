@@ -18,12 +18,12 @@ export default async function LeadDetailPage({
   const analyses = await leadRepository.findAnalysesByLeadId(id);
 
   return (
-    <Container className="max-w-[760px] py-12">
+    <Container className="max-w-[1100px] py-12">
       <Link
         href="/admin/leads"
         className="font-mono text-[13px] text-soft hover:text-accent transition-colors duration-150 no-underline"
       >
-        ← Torna alla lista
+        &larr; Torna alla lista
       </Link>
       <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] mt-4 mb-8 text-foreground">
         Dettaglio lead
