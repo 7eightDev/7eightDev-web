@@ -169,7 +169,7 @@ container, testa.
 | `deleteJobAction` | Elimina un job (i lead restano, associazione azzerata) |
 | `deleteLeadAction` | Elimina un lead |
 | `getLeadDetailAction` | Lead + analisi per il pannello dettaglio |
-| `createQuoteFromLeadAction` | Bozza preventivo da lead qualificato (redirect al composer) |
+| `createQuoteFromLeadAction` | Prepara `CreateQuoteInput` da lead qualificato (NON salva: il client lo mette in `sessionStorage` e naviga a `/admin/quotes/new`) |
 
 Le action validano gli input con gli **schemi Zod** in
 `application/lead/lead.schemas.ts` e applicano **rate limiting** (container:

@@ -1251,7 +1251,7 @@ Flusso:
 ```text
 Lead qualificato (score < 50)
  ↓
-Admin clicca "Crea preventivo" (detail page)
+Admin clicca "Crea preventivo" (detail page / riga tabella)
  ↓
 createQuoteFromLeadAction(leadId)
  ├─ createQuoteFromLead → CreateQuoteInput pre-compilato
@@ -1262,9 +1262,13 @@ createQuoteFromLeadAction(leadId)
  │         - sempre: seo-performance (Core Web Vitals)
  │         - se score < 30: + audit (performance e sicurezza)
  ↓
-createQuote() → draft PREV-YYYY-NNN
+return { ok: true, input }   ← NESSUNA persistenza a questo punto
  ↓
-redirect → /admin/quotes/<id>/edit (composer per revisione)
+Client: storeLeadQuoteInput(input) in sessionStorage → router.push(/admin/quotes/new)
+ ↓
+QuoteComposer (titolo "Nuovo preventivo") legge sessionStorage (consumeLeadQuoteInput)
+ ↓
+Admin verifica/corregge i campi → "Crea bozza preventivo →" → createQuoteAction → draft PREV-YYYY-NNN
 ```
 
 Vincoli (V1): pagina dettaglio mostra il pulsante solo se
