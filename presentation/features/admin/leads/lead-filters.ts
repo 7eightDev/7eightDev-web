@@ -61,6 +61,38 @@ export const LEAD_STATUS_FILTER_LABEL: Record<LeadStatusFilter, string> = {
   discarded: 'scartati',
 };
 
+/* ------------------------ Outreach Status --------------------- */
+
+export const OUTREACH_STATUS_FILTER_VALUES = [
+  'all',
+  'not_contacted',
+  'audit_sent',
+  'in_talks',
+  'closed_won',
+  'rejected',
+] as const;
+
+export type OutreachStatusFilter = (typeof OUTREACH_STATUS_FILTER_VALUES)[number];
+
+export const DEFAULT_OUTREACH_STATUS_FILTER: OutreachStatusFilter = 'all';
+
+export function parseOutreachStatusFilter(
+  raw: string | undefined
+): OutreachStatusFilter {
+  return OUTREACH_STATUS_FILTER_VALUES.includes(raw as OutreachStatusFilter)
+    ? (raw as OutreachStatusFilter)
+    : DEFAULT_OUTREACH_STATUS_FILTER;
+}
+
+export const OUTREACH_STATUS_FILTER_LABEL: Record<OutreachStatusFilter, string> = {
+  all: 'tutti',
+  not_contacted: 'da contattare',
+  audit_sent: 'audit inviato',
+  in_talks: 'in trattativa',
+  closed_won: 'cliente',
+  rejected: 'rifiutati',
+};
+
 /* ----------------------------- Score ----------------------------- */
 
 export const SCORE_FILTER_VALUES = [
@@ -133,6 +165,27 @@ export const ADS_FILTER_LABEL: Record<AdsFilter, string> = {
   all: 'Tutti',
   with: 'Con Ads Attive',
   without: 'Senza Ads',
+};
+
+/* ----------------------------- Favorite --------------------------- */
+
+export const FAVORITE_FILTER_VALUES = ['all', 'favorite'] as const;
+
+export type FavoriteFilter = (typeof FAVORITE_FILTER_VALUES)[number];
+
+export const DEFAULT_FAVORITE_FILTER: FavoriteFilter = 'all';
+
+export function parseFavoriteFilter(
+  raw: string | undefined
+): FavoriteFilter {
+  return FAVORITE_FILTER_VALUES.includes(raw as FavoriteFilter)
+    ? (raw as FavoriteFilter)
+    : DEFAULT_FAVORITE_FILTER;
+}
+
+export const FAVORITE_FILTER_LABEL: Record<FavoriteFilter, string> = {
+  all: 'tutti',
+  favorite: 'preferiti',
 };
 
 /* ----------------------------- Tech Stack (multiselect) ---------- */
@@ -244,6 +297,7 @@ export interface LeadReadModel {
 
 export interface LeadFilters {
   readonly status: LeadStatusFilter;
+  readonly outreachStatus: OutreachStatusFilter;
   readonly score: ScoreFilter;
   readonly source: SourceFilter;
   readonly ads?: AdsFilter;
@@ -267,6 +321,12 @@ export function filterLeads(
     // status badge, and the "analizzati"/"qualificati" counters on the job
     // card follow the same partition (Trovati >= Analizzati + Qualificati).
     if (filters.status !== 'all' && lead.status !== filters.status) {
+      return false;
+    }
+    if (
+      filters.outreachStatus !== 'all' &&
+      lead.outreachStatus !== filters.outreachStatus
+    ) {
       return false;
     }
     if (filters.source !== 'all' && lead.source !== filters.source) {

@@ -10,6 +10,8 @@ import {
   startLeadGenerationSchema,
   leadIdSchema,
   jobIdSchema,
+  updateLeadOutreachSchema,
+  toggleLeadFavoriteSchema,
 } from "@/application/lead/lead.schemas";
 import {
   adsDetector,
@@ -27,6 +29,7 @@ export interface LeadActionResult {
   readonly ok: boolean;
   readonly error?: string;
   readonly jobId?: string;
+  readonly lastContactedAt?: string;
 }
 
 /** Server action: kick off a lead generation search (query + location + quantity). */
@@ -144,6 +147,67 @@ export async function deleteLeadAction(
   }
 
   await leadRepository.delete(parsed.data);
+  revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
+/**
+ * Server action: update the outreach status (and optional notes) of a lead.
+ * `lastContactedAt` is refreshed whenever the status moves out of
+ * `not_contacted`, so the table and detail view can show the last touchpoint.
+ */
+export async function updateLeadOutreachAction(rawInput: unknown): Promise<LeadActionResult> {
+  const parsed = updateLeadOutreachSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  const lead = await leadRepository.findById(parsed.data.leadId);
+  if (!lead) {
+    return { ok: false, error: "Lead non trovato." };
+  }
+
+  const { outreachStatus, notes } = parsed.data;
+  const statusChanged = lead.outreachStatus !== outreachStatus;
+  const now = new Date().toISOString();
+  const newLastContactedAt =
+    statusChanged && outreachStatus !== "not_contacted"
+      ? now
+      : lead.lastContactedAt;
+
+  await leadRepository.save({
+    ...lead,
+    outreachStatus,
+    lastContactedAt: newLastContactedAt,
+    outreachNotes:
+      notes !== undefined && notes !== (lead.outreachNotes ?? "")
+        ? notes
+        : lead.outreachNotes,
+    updatedAt: now,
+  });
+
+  revalidatePath("/admin/leads");
+  return { ok: true, lastContactedAt: newLastContactedAt };
+}
+
+/**
+ * Server action: toggle the star on a lead (the "intend to contact" mark).
+ * The optimistic star button in the table row and detail views call this.
+ */
+export async function toggleLeadFavoriteAction(
+  rawInput: unknown
+): Promise<LeadActionResult> {
+  const parsed = toggleLeadFavoriteSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  const lead = await leadRepository.findById(parsed.data.leadId);
+  if (!lead) {
+    return { ok: false, error: "Lead non trovato." };
+  }
+
+  await leadRepository.setLeadFavorite(parsed.data.leadId, !(lead.favorite ?? false));
   revalidatePath("/admin/leads");
   return { ok: true };
 }

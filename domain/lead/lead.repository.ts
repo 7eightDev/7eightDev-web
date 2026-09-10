@@ -8,7 +8,9 @@ export interface LeadPageParams {
   readonly page: number;
   readonly pageSize: number;
   readonly status?: string;
+  readonly outreachStatus?: string;
   readonly source?: string;
+  readonly favorite?: boolean;
   readonly jobId?: string;
   readonly q?: string;
 }
@@ -21,7 +23,9 @@ export interface LeadPage {
 /** Lead-level filters shared by the list view, export and the full match query. */
 export interface LeadMatchParams {
   readonly status?: string;
+  readonly outreachStatus?: string;
   readonly source?: string;
+  readonly favorite?: boolean;
   readonly jobId?: string;
   readonly q?: string;
 }
@@ -55,6 +59,8 @@ export interface LeadRepository {
   saveJob(job: LeadGenerationJob): Promise<void>;
   /** Toggle the sidebar pin (star) on a job. */
   setJobFavorite(id: string, favorite: boolean): Promise<void>;
+  /** Toggle the star on a lead (the "intend to contact" mark). */
+  setLeadFavorite(id: string, favorite: boolean): Promise<void>;
   /** Permanently delete a job; its leads keep their `jobId` unset (SetNull). */
   deleteJob(id: string): Promise<void>;
   /** Analyzed + qualified lead counts for the given jobs, keyed by job id. */

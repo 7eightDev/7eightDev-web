@@ -1,7 +1,8 @@
 import type {
   Lead,
   LeadAnalysis,
-  LeadGenerationJob
+  LeadGenerationJob,
+  LeadOutreachStatus
 } from '@/domain/lead/lead.types';
 import { isCopyrightPayload } from '@/domain/lead/lead.copyright';
 
@@ -17,11 +18,15 @@ export interface LeadRow {
   city: string | null;
   source: Lead['source'];
   status: Lead['status'];
+  outreachStatus: LeadOutreachStatus;
+  lastContactedAt: Date | null;
+  outreachNotes: string | null;
   analysisError: string | null;
   techStack: string[];
   copyright: string | null;
   hasAds: boolean;
   adsTrackers: string[];
+  favorite: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -69,6 +74,9 @@ export function rowToLead(row: LeadRow): Lead {
     city: row.city ?? undefined,
     source: row.source,
     status: row.status,
+    outreachStatus: row.outreachStatus,
+    lastContactedAt: row.lastContactedAt?.toISOString(),
+    outreachNotes: row.outreachNotes ?? undefined,
     analysisError: row.analysisError ?? undefined,
     techStack:
       row.techStack !== undefined && row.techStack.length > 0
@@ -83,6 +91,7 @@ export function rowToLead(row: LeadRow): Lead {
       row.adsTrackers !== undefined && row.adsTrackers.length > 0
         ? row.adsTrackers
         : undefined,
+    favorite: row.favorite,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString()
   };
@@ -101,11 +110,15 @@ export function leadToRow(lead: Lead): LeadRow {
     city: lead.city ?? null,
     source: lead.source,
     status: lead.status,
+    outreachStatus: lead.outreachStatus,
+    lastContactedAt: lead.lastContactedAt ? new Date(lead.lastContactedAt) : null,
+    outreachNotes: lead.outreachNotes ?? null,
     analysisError: lead.analysisError ?? null,
     techStack: lead.techStack ? [...lead.techStack] : [],
     copyright: lead.copyright ?? null,
     hasAds: lead.hasAds ?? false,
     adsTrackers: lead.adsTrackers ? [...lead.adsTrackers] : [],
+    favorite: lead.favorite ?? false,
     createdAt: new Date(lead.createdAt),
     updatedAt: new Date(lead.updatedAt)
   };

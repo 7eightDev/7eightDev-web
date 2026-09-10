@@ -36,11 +36,15 @@ export class PrismaLeadRepository implements LeadRepository {
       city: row.city,
       source: row.source,
       status: row.status,
+      outreachStatus: row.outreachStatus,
+      lastContactedAt: row.lastContactedAt,
+      outreachNotes: row.outreachNotes,
       analysisError: row.analysisError,
       techStack: row.techStack,
       copyright: row.copyright,
       hasAds: row.hasAds,
       adsTrackers: row.adsTrackers,
+      favorite: row.favorite,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     };
@@ -66,18 +70,20 @@ export class PrismaLeadRepository implements LeadRepository {
   async findAll(): Promise<Lead[]> {
     const rows = await prisma.lead.findMany();
 
-    return rows.map(rowToLead);
+    return rows.map((r) => rowToLead(r as unknown as LeadRow));
   }
 
   async findPaginated({
     page,
     pageSize,
     status,
+    outreachStatus,
     source,
+    favorite,
     jobId,
     q
   }: LeadPageParams): Promise<LeadPage> {
-    const where = buildLeadsWhere({ status, source, jobId, q });
+    const where = buildLeadsWhere({ status, outreachStatus, source, favorite, jobId, q });
 
     const [total, rows] = await Promise.all([
       prisma.lead.count({ where }),
@@ -97,12 +103,14 @@ export class PrismaLeadRepository implements LeadRepository {
 
   async findMatchingLeads({
     status,
+    outreachStatus,
     source,
+    favorite,
     jobId,
     q
   }: LeadMatchParams): Promise<Lead[]> {
     const rows = await prisma.lead.findMany({
-      where: buildLeadsWhere({ status, source, jobId, q }),
+      where: buildLeadsWhere({ status, outreachStatus, source, favorite, jobId, q }),
       orderBy: { createdAt: 'desc' }
     });
 
@@ -252,6 +260,13 @@ export class PrismaLeadRepository implements LeadRepository {
     });
   }
 
+  async setLeadFavorite(id: string, favorite: boolean): Promise<void> {
+    await prisma.lead.update({
+      where: { id },
+      data: { favorite }
+    });
+  }
+
   async deleteJob(id: string): Promise<void> {
     await prisma.leadGenerationJob.delete({
       where: { id }
@@ -340,7 +355,9 @@ function websiteKey(website: string | undefined): string | null {
 
 function buildLeadsWhere({
   status,
+  outreachStatus,
   source,
+  favorite,
   jobId,
   q
 }: LeadMatchParams): Record<string, unknown> {
@@ -350,8 +367,14 @@ function buildLeadsWhere({
     // Strict partition: "analizzati"/"qualificati" are disjoint statuses.
     where.status = status;
   }
+  if (outreachStatus && outreachStatus !== 'all') {
+    where.outreachStatus = outreachStatus;
+  }
   if (source && source !== 'all') {
     where.source = source;
+  }
+  if (favorite !== undefined) {
+    where.favorite = favorite;
   }
   if (jobId) {
     where.jobId = jobId;

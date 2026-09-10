@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import type { Lead, LeadStatus } from "@/domain/lead/lead.types";
+import type { Lead, LeadOutreachStatus, LeadStatus } from "@/domain/lead/lead.types";
 import {
   Table,
   TableBody,
@@ -64,6 +64,30 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   analyzed: "analizzato",
   qualified: "qualificato",
   discarded: "scartato",
+};
+
+// Outreach badges follow the same pure-text + border-color pattern as the
+// qualification `STATUS_STYLE` above: no icon, no emoji, color alone carries
+// the semantic weight.
+const OUTREACH_STYLE: Record<LeadOutreachStatus, string> = {
+  not_contacted:
+    "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
+  audit_sent:
+    "text-accent-iris border-[color-mix(in_oklab,var(--color-accent-iris)_45%,var(--border))]",
+  in_talks:
+    "text-accent-amber border-[color-mix(in_oklab,var(--color-accent-amber)_45%,var(--border))]",
+  closed_won:
+    "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
+  rejected:
+    "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+};
+
+const OUTREACH_LABEL: Record<LeadOutreachStatus, string> = {
+  not_contacted: "Da contattare",
+  audit_sent: "Audit inviato",
+  in_talks: "In trattativa",
+  closed_won: "Cliente",
+  rejected: "Rifiutato",
 };
 
 const MAX_VISIBLE_TECH = 3;
@@ -138,6 +162,19 @@ function StatusBadge({ status }: { status: LeadStatus }) {
       )}
     >
       {STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+function LeadOutreachBadge({ status }: { status: LeadOutreachStatus }) {
+  return (
+    <span
+      className={cn(
+        "font-mono text-[10px] tracking-[0.08em] uppercase leading-none rounded-full px-2.5 py-[5px] border",
+        OUTREACH_STYLE[status]
+      )}
+    >
+      {OUTREACH_LABEL[status]}
     </span>
   );
 }
@@ -220,26 +257,26 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
               <SortableHeader
                 column="company"
                 label="Azienda / Dominio"
-                className="w-[27%]"
+                className="w-[25%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
               <SortableHeader
                 column="city"
                 label="Città"
-                className="w-[9%]"
+                className="w-[8%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[24%]")}>Tech Stack</TableHead>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[20%]")}>Tech Stack</TableHead>
               <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%]")}>Ads</TableHead>
-              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[9%] overflow-hidden")}>
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[8%] overflow-hidden")}>
                 <span className="block truncate">Copyright</span>
               </TableHead>
               <SortableHeader
                 column="score"
                 label="PageSpeed"
-                className="w-[8%]"
+                className="w-[7%]"
                 currentSort={currentSort}
                 params={searchParams}
               />
@@ -250,6 +287,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
                 currentSort={currentSort}
                 params={searchParams}
               />
+              <TableHead className={cn(STICKY_HEAD_CLASS, "w-[9%]")}>Outreach</TableHead>
               <TableHead className={cn(STICKY_HEAD_CLASS, "w-[7%] text-right")}>Azioni</TableHead>
             </TableRow>
           </TableHeader>
@@ -288,11 +326,15 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
                 <TableCell>
                   <StatusBadge status={lead.status} />
                 </TableCell>
+                <TableCell>
+                  <LeadOutreachBadge status={lead.outreachStatus} />
+                </TableCell>
                 <TableCell className="text-right">
                   <LeadRowActions
                     id={lead.id}
                     companyName={lead.companyName}
                     status={lead.status}
+                    favorite={lead.favorite ?? false}
                     onOpenDetail={(id, name) =>
                       setDetail({ leadId: id, companyName: name })
                     }
@@ -302,7 +344,7 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
             ))}
             {rows.length === 0 && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={8} className="p-0">
+                <TableCell colSpan={9} className="p-0">
                   {emptyRow}
                 </TableCell>
               </TableRow>

@@ -3,15 +3,18 @@ import {
   filterLeads,
   sortLeads,
   parseLeadStatusFilter,
+  parseOutreachStatusFilter,
   parseScoreFilter,
   parseSourceFilter,
   parseAdsFilter,
+  parseFavoriteFilter,
   parseSortOption,
   parseYearFilter,
   uniqueCopyrightYears,
   toggleColumnSort,
   type LeadReadModel,
   type LeadStatusFilter,
+  type OutreachStatusFilter,
   type ScoreFilter,
   type SourceFilter,
   type SortOption
@@ -27,6 +30,7 @@ function makeLead(
   return {
     source: 'google_maps',
     status: 'new',
+    outreachStatus: 'not_contacted',
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     ...overrides
@@ -38,6 +42,7 @@ function row(lead: Lead, score?: number): LeadReadModel {
 }
 
 const ALL: LeadStatusFilter = 'all';
+const ALL_OUTREACH: OutreachStatusFilter = 'all';
 const ALL_SCORE: ScoreFilter = 'all';
 const ALL_SOURCE: SourceFilter = 'all';
 const ALL_SORT: SortOption = 'date-desc';
@@ -56,6 +61,16 @@ describe('lead-filters parsers', () => {
   it('parseLeadStatusFilter accepts valid statuses', () => {
     expect(parseLeadStatusFilter('new')).toBe('new');
     expect(parseLeadStatusFilter('qualified')).toBe('qualified');
+  });
+
+  it('parseOutreachStatusFilter returns "all" for unknown input', () => {
+    expect(parseOutreachStatusFilter(undefined)).toBe('all');
+    expect(parseOutreachStatusFilter('contattato')).toBe('all');
+  });
+
+  it('parseOutreachStatusFilter accepts valid outreach statuses', () => {
+    expect(parseOutreachStatusFilter('not_contacted')).toBe('not_contacted');
+    expect(parseOutreachStatusFilter('in_talks')).toBe('in_talks');
   });
 
   it('parseScoreFilter returns "all" for unknown input', () => {
@@ -86,6 +101,15 @@ describe('lead-filters parsers', () => {
   it('parseAdsFilter accepts valid ads filters', () => {
     expect(parseAdsFilter('with')).toBe('with');
     expect(parseAdsFilter('without')).toBe('without');
+  });
+
+  it('parseFavoriteFilter returns "all" for unknown input', () => {
+    expect(parseFavoriteFilter(undefined)).toBe('all');
+    expect(parseFavoriteFilter('starred')).toBe('all');
+  });
+
+  it('parseFavoriteFilter accepts valid favorite filters', () => {
+    expect(parseFavoriteFilter('favorite')).toBe('favorite');
   });
 
   it('parseSortOption returns "date-desc" for unknown input', () => {
@@ -143,6 +167,7 @@ describe('filterLeads — status', () => {
     expect(
       filterLeads(rows, {
         status: ALL,
+        outreachStatus: ALL_OUTREACH,
         score: ALL_SCORE,
         source: ALL_SOURCE,
         q: NO_Q,
@@ -154,6 +179,7 @@ describe('filterLeads — status', () => {
   it('filters by new', () => {
     const result = filterLeads(rows, {
       status: 'new',
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: NO_Q,
@@ -166,6 +192,7 @@ describe('filterLeads — status', () => {
   it('filters by qualified', () => {
     const result = filterLeads(rows, {
       status: 'qualified',
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: NO_Q,
@@ -178,11 +205,75 @@ describe('filterLeads — status', () => {
   it('filters by analyzed (only the analyzed status)', () => {
     const result = filterLeads(rows, {
       status: 'analyzed',
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: NO_Q,
       sort: ALL_SORT
     });
+    expect(result.map((r) => r.lead.id)).toEqual(['2']);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/*  filterLeads — outreach status                                     */
+/* ------------------------------------------------------------------ */
+
+describe('filterLeads — outreach status', () => {
+  const rows: LeadReadModel[] = [
+    row(makeLead({ id: '1', companyName: 'A', outreachStatus: 'not_contacted' })),
+    row(makeLead({ id: '2', companyName: 'B', outreachStatus: 'audit_sent' })),
+    row(makeLead({ id: '3', companyName: 'C', outreachStatus: 'in_talks' })),
+    row(makeLead({ id: '4', companyName: 'D', outreachStatus: 'closed_won' })),
+    row(makeLead({ id: '5', companyName: 'E', outreachStatus: 'rejected' }))
+  ];
+
+  it('shows all when outreachStatus=all', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      outreachStatus: ALL_OUTREACH,
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT
+    });
+    expect(result).toHaveLength(5);
+  });
+
+  it('filters by not_contacted', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      outreachStatus: 'not_contacted',
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT
+    });
+    expect(result.map((r) => r.lead.id)).toEqual(['1']);
+  });
+
+  it('filters by closed_won', () => {
+    const result = filterLeads(rows, {
+      status: ALL,
+      outreachStatus: 'closed_won',
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT
+    });
+    expect(result.map((r) => r.lead.id)).toEqual(['4']);
+  });
+
+  it('composes with the qualification status', () => {
+    const result = filterLeads(rows, {
+      status: 'new',
+      outreachStatus: 'audit_sent',
+      score: ALL_SCORE,
+      source: ALL_SOURCE,
+      q: NO_Q,
+      sort: ALL_SORT
+    });
+    // The lead named 'B' is new + audit_sent: the only row that satisfies both.
     expect(result.map((r) => r.lead.id)).toEqual(['2']);
   });
 });
@@ -202,6 +293,7 @@ describe('filterLeads — score', () => {
   it('high: score >= 90', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: 'high',
       source: ALL_SOURCE,
       q: NO_Q,
@@ -214,6 +306,7 @@ describe('filterLeads — score', () => {
   it('medium: 50 <= score < 90', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: 'medium',
       source: ALL_SOURCE,
       q: NO_Q,
@@ -226,6 +319,7 @@ describe('filterLeads — score', () => {
   it('low: score < 50', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: 'low',
       source: ALL_SOURCE,
       q: NO_Q,
@@ -238,6 +332,7 @@ describe('filterLeads — score', () => {
   it('none: score is undefined', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: 'none',
       source: ALL_SOURCE,
       q: NO_Q,
@@ -251,6 +346,7 @@ describe('filterLeads — score', () => {
     expect(
       filterLeads(rows, {
         status: ALL,
+        outreachStatus: ALL_OUTREACH,
         score: ALL_SCORE,
         source: ALL_SOURCE,
         q: NO_Q,
@@ -274,6 +370,7 @@ describe('filterLeads — source', () => {
   it('filters by google_maps', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: 'google_maps',
       q: NO_Q,
@@ -286,6 +383,7 @@ describe('filterLeads — source', () => {
   it('filters by outscraper', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: 'outscraper',
       q: NO_Q,
@@ -298,6 +396,7 @@ describe('filterLeads — source', () => {
     expect(
       filterLeads(rows, {
         status: ALL,
+        outreachStatus: ALL_OUTREACH,
         score: ALL_SCORE,
         source: ALL_SOURCE,
         q: NO_Q,
@@ -334,6 +433,7 @@ describe('filterLeads — tech stack', () => {
     expect(
       filterLeads(rows, {
         status: ALL,
+        outreachStatus: ALL_OUTREACH,
         score: ALL_SCORE,
         source: ALL_SOURCE,
         q: NO_Q,
@@ -345,6 +445,7 @@ describe('filterLeads — tech stack', () => {
   it('matches any-of selected tech (OR)', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: NO_Q,
@@ -356,6 +457,7 @@ describe('filterLeads — tech stack', () => {
   it('matches a single tech', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: NO_Q,
@@ -367,6 +469,7 @@ describe('filterLeads — tech stack', () => {
   it('partial (substring) match is case-insensitive', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: NO_Q,
@@ -378,6 +481,7 @@ describe('filterLeads — tech stack', () => {
   it('no tech on the lead never matches', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: NO_Q,
@@ -396,6 +500,7 @@ describe('filterLeads — ads tracker', () => {
 
   const base = {
     status: ALL,
+    outreachStatus: ALL_OUTREACH,
     score: ALL_SCORE,
     source: ALL_SOURCE,
     q: NO_Q,
@@ -451,6 +556,7 @@ describe('filterLeads — copyright year range', () => {
 
   const base: {
     status: LeadStatusFilter;
+    outreachStatus: OutreachStatusFilter;
     score: ScoreFilter;
     source: SourceFilter;
     q: string;
@@ -458,6 +564,7 @@ describe('filterLeads — copyright year range', () => {
     techStack: string[];
   } = {
     status: ALL,
+    outreachStatus: ALL_OUTREACH,
     score: ALL_SCORE,
     source: ALL_SOURCE,
     q: NO_Q,
@@ -515,6 +622,7 @@ describe('filterLeads — text search', () => {
   it('matches company name', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: 'dentist',
@@ -527,6 +635,7 @@ describe('filterLeads — text search', () => {
   it('matches city', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: 'roma',
@@ -539,6 +648,7 @@ describe('filterLeads — text search', () => {
   it('matches website', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: 'autofficina',
@@ -552,6 +662,7 @@ describe('filterLeads — text search', () => {
     expect(
       filterLeads(rows, {
         status: ALL,
+        outreachStatus: ALL_OUTREACH,
         score: ALL_SCORE,
         source: ALL_SOURCE,
         q: '',
@@ -563,6 +674,7 @@ describe('filterLeads — text search', () => {
   it('case-insensitive', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: 'MILANO',
@@ -608,6 +720,7 @@ describe('filterLeads — composition', () => {
   it('status + q compose', () => {
     const result = filterLeads(rows, {
       status: 'qualified',
+      outreachStatus: ALL_OUTREACH,
       score: ALL_SCORE,
       source: ALL_SOURCE,
       q: 'milano',
@@ -620,6 +733,7 @@ describe('filterLeads — composition', () => {
   it('score + source compose', () => {
     const result = filterLeads(rows, {
       status: ALL,
+      outreachStatus: ALL_OUTREACH,
       score: 'low',
       source: 'google_maps',
       q: NO_Q,
@@ -632,6 +746,7 @@ describe('filterLeads — composition', () => {
   it('all filters active, no match', () => {
     const result = filterLeads(rows, {
       status: 'discarded',
+      outreachStatus: ALL_OUTREACH,
       score: 'high',
       source: 'serpapi',
       q: 'nonexistent',

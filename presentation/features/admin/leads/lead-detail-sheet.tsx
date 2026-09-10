@@ -1,12 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
 import { getLeadDetailAction } from "@/application/lead/admin.actions";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import { LeadScoreBadge } from "@/presentation/features/admin/leads/lead-score-badge";
 import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
+import {
+  LeadOutreachEditor,
+  SaveOutreachButton,
+} from "@/presentation/features/admin/leads/lead-outreach-editor";
+import type {
+  LeadOutreachEditorHandle,
+  LeadOutreachEditorState,
+} from "@/presentation/features/admin/leads/lead-outreach-editor";
 import { WebsiteLink } from "@/presentation/features/admin/leads/lead-website-link";
 import {
   Sheet,
@@ -15,6 +25,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/presentation/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/presentation/components/ui/alert-dialog";
 import { cn } from "@/presentation/lib/utils";
 
 interface LeadDetailSheetProps {
@@ -263,6 +283,12 @@ export function LeadDetailSheet({
   const [lead, setLead] = useState<Lead | null>(null);
   const [analyses, setAnalyses] = useState<LeadAnalysis[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const editorRef = useRef<LeadOutreachEditorHandle>(null);
+  const [outreachState, setOutreachState] = useState<LeadOutreachEditorState>({
+    dirty: false,
+    pending: false,
+  });
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   // Fetch on open. State is only written after the awaited server action, so
   // the effect performs no synchronous setState (the parent keys this
@@ -303,16 +329,42 @@ export function LeadDetailSheet({
     setLead(null);
     setAnalyses([]);
     setError(null);
+    setOutreachState({ dirty: false, pending: false });
+  };
+
+  // Intercepts a close attempt: if the outreach draft is dirty, ask for
+  // confirmation before discarding it instead of closing right away.
+  const handleOpenChange = (next: boolean) => {
+    if (!next && outreachState.dirty) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    onOpenChange(next);
+    if (!next) reset();
+  };
+
+  const discardAndClose = () => {
+    setConfirmCloseOpen(false);
+    setOutreachState({ dirty: false, pending: false });
+    onOpenChange(false);
+    reset();
+  };
+
+  // Saves the draft (in the background via the editor) and closes the sheet.
+  const saveAndClose = () => {
+    setConfirmCloseOpen(false);
+    editorRef.current?.save();
+    setOutreachState({ dirty: false, pending: false });
+    onOpenChange(false);
+    reset();
   };
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(next) => {
-        onOpenChange(next);
-        if (!next) reset();
-      }}
-    >
+    <>
+      <Sheet
+        open={open}
+        onOpenChange={handleOpenChange}
+      >
       <SheetContent className="w-full sm:max-w-lg gap-6 p-6">
         <SheetHeader>
           <div className="flex items-center justify-between gap-3 pr-8">
@@ -357,6 +409,20 @@ export function LeadDetailSheet({
 
                 <section>
                   <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
+                    Stato Outreach &amp; Vendita
+                  </h3>
+                  <LeadOutreachEditor
+                    ref={editorRef}
+                    leadId={lead.id}
+                    outreachStatus={lead.outreachStatus}
+                    lastContactedAt={lead.lastContactedAt}
+                    outreachNotes={lead.outreachNotes}
+                    onStateChange={setOutreachState}
+                  />
+                </section>
+
+                <section>
+                  <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted mb-4">
                     Analisi PageSpeed
                   </h3>
                   <PageSpeedSection lead={lead} analyses={analyses} />
@@ -377,11 +443,45 @@ export function LeadDetailSheet({
         )}
 
         <SheetFooter>
-          {lead && lead.status === "qualified" && (
-            <LeadCreateQuoteButton leadId={lead.id} />
+          {lead && (
+            <div className="flex items-center justify-center gap-2">
+              <SaveOutreachButton
+                state={outreachState}
+                onSave={() => editorRef.current?.save()}
+              />
+              {lead.status === "qualified" && (
+                <LeadCreateQuoteButton leadId={lead.id} />
+              )}
+            </div>
           )}
         </SheetFooter>
       </SheetContent>
     </Sheet>
+
+    <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+<AlertDialogContent className="sm:max-w-[520px]">
+          <button
+            type="button"
+            aria-label="Abbandona e chiudi"
+            onClick={discardAndClose}
+            className="absolute top-4 right-4 inline-flex items-center justify-center size-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-[var(--coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={16} aria-hidden />
+          </button>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hai modifiche non salvate allo stato di vendita. Cosa vuoi fare?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="grid grid-cols-2 gap-[10px]">
+            <AlertDialogCancel className="w-full">Indietro</AlertDialogCancel>
+            <AlertDialogAction className="w-full" onClick={saveAndClose}>
+              Salva
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

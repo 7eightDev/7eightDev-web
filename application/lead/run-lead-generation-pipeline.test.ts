@@ -54,6 +54,7 @@ function makeRepository(existingLeads: Lead[] = []) {
       jobs.push(job);
     },
     async setJobFavorite() {},
+    async setLeadFavorite() {},
     async deleteJob() {},
     async findPaginated({ jobId }: { jobId?: string }) {
       const all = [...leads.values()];
@@ -314,6 +315,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://existing.example',
       source: 'outscraper',
       status: 'new',
+      outreachStatus: 'not_contacted',
       createdAt: NOW().toISOString(),
       updatedAt: NOW().toISOString()
     };
@@ -367,6 +369,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://acme.example',
       source: 'outscraper',
       status: 'analyzed',
+      outreachStatus: 'not_contacted',
       createdAt: '2026-08-30T10:00:00.000Z',
       updatedAt: '2026-08-30T10:00:00.000Z'
     };
@@ -418,6 +421,7 @@ describe('runLeadGenerationPipeline', () => {
       city: 'Varese',
       source: 'outscraper',
       status: 'new',
+      outreachStatus: 'not_contacted',
       createdAt: '2026-08-30T10:00:00.000Z',
       updatedAt: '2026-08-30T10:00:00.000Z'
     };
@@ -464,6 +468,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://acme.example',
       source: 'outscraper',
       status: 'analyzed',
+      outreachStatus: 'not_contacted',
       createdAt: '2026-08-29T10:00:00.000Z',
       updatedAt: '2026-08-29T10:00:00.000Z'
     };
@@ -544,6 +549,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://acme.example',
       source: 'outscraper',
       status: 'qualified',
+      outreachStatus: 'not_contacted',
       createdAt: '2026-08-30T10:00:00.000Z',
       updatedAt: '2026-08-30T10:00:00.000Z'
     };
@@ -649,6 +655,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://acme.example',
       source: 'outscraper',
       status: 'discarded',
+      outreachStatus: 'not_contacted',
       analysisError: 'PageSpeed request failed with status 429',
       createdAt: '2026-08-30T10:00:00.000Z',
       updatedAt: '2026-08-30T10:00:00.000Z'
@@ -694,6 +701,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://alpha.example',
       source: 'outscraper',
       status: 'qualified',
+      outreachStatus: 'not_contacted',
       createdAt: '2026-08-30T10:00:00.000Z',
       updatedAt: '2026-08-30T10:00:00.000Z'
     };
@@ -953,6 +961,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://acme.example',
       source: 'outscraper',
       status: 'analyzed',
+      outreachStatus: 'not_contacted',
       copyright: '© 2018 Rotta & Figli',
       createdAt: '2026-08-30T10:00:00.000Z',
       updatedAt: '2026-08-30T10:00:00.000Z'
@@ -994,6 +1003,7 @@ describe('runLeadGenerationPipeline', () => {
       website: 'https://acme.example',
       source: 'outscraper',
       status: 'analyzed',
+      outreachStatus: 'not_contacted',
       copyright: 'self.__next_f.push([1,"footer",'
     } as Lead;
     const repository = makeRepository([existingLead]);

@@ -2,6 +2,8 @@ export type LeadSource = 'google_maps' | 'outscraper' | 'serpapi';
 
 export type LeadStatus = 'new' | 'analyzed' | 'qualified' | 'discarded';
 
+export type LeadOutreachStatus = 'not_contacted' | 'audit_sent' | 'in_talks' | 'closed_won' | 'rejected';
+
 export interface Lead {
   readonly id: string;
   readonly jobId?: string;
@@ -18,6 +20,9 @@ export interface Lead {
 
   readonly source: LeadSource;
   readonly status: LeadStatus;
+  readonly outreachStatus: LeadOutreachStatus;
+  readonly lastContactedAt?: string;
+  readonly outreachNotes?: string;
 
   // Set when the PageSpeed analysis failed (lead `discarded`); carries the
   // reason shown in the admin detail view.
@@ -35,6 +40,11 @@ export interface Lead {
 
   /** Detected ad-tracking platforms, e.g. ['Google Ads', 'Meta Pixel', 'GTM']. */
   readonly adsTrackers?: readonly string[];
+
+  /** Pinned via the star in the leads list: leads the user intends to contact.
+   *  Optional because the pipeline creates leads without the flag; the UI
+   *  treats a missing value as not-favorite. */
+  readonly favorite?: boolean;
 
   readonly createdAt: string;
   readonly updatedAt: string;

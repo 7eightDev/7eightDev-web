@@ -1,17 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useOptimistic, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  BanIcon,
   Delete02Icon,
   EyeIcon,
   FileAddIcon,
+  Mail01Icon,
+  MoreHorizontalIcon,
+  SentIcon,
+  StarIcon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import {
   deleteLeadAction,
   createQuoteFromLeadAction,
+  updateLeadOutreachAction,
+  toggleLeadFavoriteAction,
 } from "@/application/lead/admin.actions";
-import type { LeadStatus } from "@/domain/lead/lead.types";
+import type { LeadOutreachStatus, LeadStatus } from "@/domain/lead/lead.types";
+import { cn } from "@/presentation/lib/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -34,6 +44,7 @@ interface LeadRowActionsProps {
   id: string;
   companyName: string;
   status: LeadStatus;
+  favorite: boolean;
   /** Called when the user asks for the slide-over detail. */
   onOpenDetail: (id: string, companyName: string) => void;
 }
@@ -42,18 +53,22 @@ interface LeadRowActionsProps {
 // control per row is a single "…" toggle that slides the action cluster in
 // from the right (mirrors the quotes list pattern).
 const iconBtn =
-  "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "inline-flex items-center justify-center w-9 h-9 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+const sendBtn =
+  "inline-flex items-center justify-center w-9 h-9 rounded-lg bg-accent text-[#0a0b0d] cursor-pointer transition-all duration-150 hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const toggleBtn =
-  "relative z-[5] inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "relative z-20 inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const dangerIconBtn =
-  "inline-flex items-center justify-center w-8 h-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-[var(--coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "inline-flex items-center justify-center w-9 h-9 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-accent-coral/10 hover:text-accent-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-coral focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export function LeadRowActions({
   id,
   companyName,
   status,
+  favorite,
   onOpenDetail,
 }: LeadRowActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,6 +76,11 @@ export function LeadRowActions({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const cellRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [optimisticFavorite, setOptimisticFavorite] = useOptimistic<
+    boolean,
+    boolean
+  >(favorite, (_state, next) => next);
 
   // The slide-in lives inside the row (no portal), so dismissal is ours to
   // manage: collapse on outside pointer-down or Escape.
@@ -94,6 +114,22 @@ export function LeadRowActions({
     });
   };
 
+  const setOutreach = (outreachStatus: LeadOutreachStatus) => {
+    setMenuOpen(false);
+    startTransition(async () => {
+      await updateLeadOutreachAction({ leadId: id, outreachStatus });
+      // Refresh the server page so the row badge reflects the persisted status.
+      router.refresh();
+    });
+  };
+
+  const toggleFavorite = () => {
+    startTransition(async () => {
+      setOptimisticFavorite(!optimisticFavorite);
+      await toggleLeadFavoriteAction({ leadId: id });
+    });
+  };
+
   const remove = () => {
     setError(null);
     startTransition(async () => {
@@ -108,7 +144,7 @@ export function LeadRowActions({
       <div ref={cellRef} className="relative inline-flex items-center justify-end self-stretch">
         <div
           inert={!menuOpen}
-          className={`absolute top-1/2 right-0 z-[5] flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-14 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+          className={`absolute -top-4 -bottom-4 -right-5 z-10 flex items-center gap-1 rounded-l-lg bg-[rgba(35,38,46,0.82)] pl-4 pr-24 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
             menuOpen
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"
@@ -122,7 +158,7 @@ export function LeadRowActions({
                 aria-label={`Apri il dettaglio di ${companyName}`}
                 className={iconBtn}
               >
-                <HugeiconsIcon icon={EyeIcon} size={17} aria-hidden />
+                <HugeiconsIcon icon={EyeIcon} size={18} aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent>Dettaglio</TooltipContent>
@@ -136,14 +172,74 @@ export function LeadRowActions({
                   onClick={createQuote}
                   disabled={pending}
                   aria-label={`Crea preventivo da ${companyName}`}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-accent/15 text-accent cursor-pointer transition-all duration-150 hover:bg-accent hover:text-[#0a0b0d] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className={sendBtn}
                 >
-                  <HugeiconsIcon icon={FileAddIcon} size={17} aria-hidden />
+                  <HugeiconsIcon icon={FileAddIcon} size={18} aria-hidden />
                 </button>
               </TooltipTrigger>
               <TooltipContent>Crea preventivo</TooltipContent>
             </Tooltip>
           )}
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("audit_sent")}
+                disabled={pending}
+                aria-label={`Segna audit inviato per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={SentIcon} size={18} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Audit inviato</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("in_talks")}
+                disabled={pending}
+                aria-label={`Segna in trattativa per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={Mail01Icon} size={18} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>In trattativa</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("closed_won")}
+                disabled={pending}
+                aria-label={`Segna cliente acquisito per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={Tick02Icon} size={18} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Cliente acquisito</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setOutreach("rejected")}
+                disabled={pending}
+                aria-label={`Segna rifiutato per ${companyName}`}
+                className={iconBtn}
+              >
+                <HugeiconsIcon icon={BanIcon} size={18} aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Rifiutato</TooltipContent>
+          </Tooltip>
 
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <Tooltip>
@@ -154,7 +250,7 @@ export function LeadRowActions({
                     aria-label={`Elimina ${companyName}`}
                     className={dangerIconBtn}
                   >
-                    <HugeiconsIcon icon={Delete02Icon} size={17} aria-hidden />
+                    <HugeiconsIcon icon={Delete02Icon} size={18} aria-hidden />
                   </button>
                 </AlertDialogTrigger>
               </TooltipTrigger>
@@ -202,6 +298,34 @@ export function LeadRowActions({
 
         <button
           type="button"
+          onClick={toggleFavorite}
+          disabled={pending}
+          aria-label={
+            optimisticFavorite
+              ? `Rimuovi ${companyName} dai preferiti`
+              : `Aggiungi ${companyName} ai preferiti`
+          }
+          aria-pressed={optimisticFavorite}
+          title={
+            optimisticFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"
+          }
+          className={cn(
+            "relative z-20 inline-flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150 hover:bg-foreground/[0.06] disabled:opacity-50 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer",
+            optimisticFavorite
+              ? "text-accent-amber hover:text-accent-amber"
+              : "text-soft hover:text-foreground"
+          )}
+        >
+          <HugeiconsIcon
+            icon={StarIcon}
+            size={16}
+            aria-hidden
+            className={cn(optimisticFavorite && "fill-current")}
+          />
+        </button>
+
+        <button
+          type="button"
           onClick={() => setMenuOpen((v) => !v)}
           aria-label={`Azioni per ${companyName}`}
           aria-expanded={menuOpen}
@@ -211,7 +335,7 @@ export function LeadRowActions({
               : "text-soft hover:text-foreground"
           }`}
         >
-          <HugeiconsIcon icon={EyeIcon} size={16} aria-hidden />
+          <HugeiconsIcon icon={MoreHorizontalIcon} size={18} aria-hidden />
         </button>
       </div>
     </TooltipProvider>
