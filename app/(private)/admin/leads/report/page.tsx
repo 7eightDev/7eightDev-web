@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { leadRepository } from "@/infrastructure/container";
 import { LEAD_REPORT_SCENARIOS } from "@/infrastructure/lead/lead-email-preview.fixtures";
 import { renderLeadReportHtml } from "@/infrastructure/lead/report/lead-report.template";
@@ -16,19 +15,18 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Anteprima report lead — 7eightDev" };
 
 /**
- * Dev-only studio for the lead audit report + presentation email: preview the
- * PDF report markup and the email, test-send via real Resend to any address,
- * and download the exact PDF bytes. 404s in production (same stance as the
- * quote email preview at `/admin/email`). `?lead=<uuid>` deep-links a real
- * lead from its row/detail actions; without it, only demo fixtures render.
+ * Studio per il report audit + email di presentazione: anteprima del markup
+ * PDF e dell'email, invio di test via Resend reale a un indirizzo qualsiasi e
+ * download del PDF esatto. `?lead=<uuid>` apre un lead reale dal suo dettaglio;
+ * senza query mostra gli scenari demo. L'invio di test resta dev-only (la
+ * server action si auto-protegge in produzione); lo studio è raggiungibile in
+ * ogni ambiente perché protetto da Clerk sotto `(private)`.
  */
 export default async function LeadReportPreviewPage({
   searchParams,
 }: {
   searchParams: Promise<{ lead?: string }>;
 }) {
-  if (process.env.NODE_ENV === "production") notFound();
-
   const { lead: focusLeadId } = await searchParams;
   const appBaseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
   const defaultRecipient =

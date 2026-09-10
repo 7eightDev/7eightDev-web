@@ -510,13 +510,11 @@ export function LeadDetailDialog({
                     state={outreachState}
                     onSave={() => editorRef.current?.save()}
                   />
-                  {lead!.email && (
-                    <LeadSendAuditButton
-                      leadId={lead!.id}
-                      companyName={lead!.companyName}
-                      recipientEmail={lead!.email}
-                    />
-                  )}
+                  <LeadSendAuditButton
+                    leadId={lead!.id}
+                    companyName={lead!.companyName}
+                    recipientEmail={lead!.email}
+                  />
                   {lead!.status === "qualified" && (
                     <LeadCreateQuoteButton leadId={lead!.id} />
                   )}

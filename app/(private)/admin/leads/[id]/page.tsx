@@ -56,13 +56,11 @@ export default async function LeadDetailPage({
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status={lead.status} />
-          {lead.email && (
-            <LeadSendAuditButton
-              leadId={lead.id}
-              companyName={lead.companyName}
-              recipientEmail={lead.email}
-            />
-          )}
+          <LeadSendAuditButton
+            leadId={lead.id}
+            companyName={lead.companyName}
+            recipientEmail={lead.email}
+          />
           {lead.status === "qualified" && (
             <LeadCreateQuoteButton leadId={lead.id} />
           )}

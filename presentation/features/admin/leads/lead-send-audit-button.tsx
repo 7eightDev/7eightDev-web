@@ -41,7 +41,6 @@ export function LeadSendAuditButton({
   >({ state: "idle" });
   const [pending, startTransition] = useTransition();
   const router = useRouter();
-  const isDev = process.env.NODE_ENV !== "production";
 
   const previewHref = `/admin/leads/report?lead=${encodeURIComponent(leadId)}`;
 
@@ -72,18 +71,16 @@ export function LeadSendAuditButton({
   return (
     <>
       <div className="flex items-center gap-2">
-        {isDev && (
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="cursor-pointer border border-border text-soft hover:text-foreground shrink-0"
-          >
-            <a href={previewHref} target="_blank" rel="noreferrer">
-              <Eye size={14} aria-hidden /> Anteprima report
-            </a>
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="cursor-pointer border border-border text-soft hover:text-foreground shrink-0"
+        >
+          <a href={previewHref} target="_blank" rel="noreferrer">
+            <Eye size={14} aria-hidden /> Anteprima report
+          </a>
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -103,11 +100,19 @@ export function LeadSendAuditButton({
             </AlertDialogTitle>
             <AlertDialogDescription>
               Verr&agrave; generato il report PDF con i dati dell&apos;analisi e
-              inviato{recipientEmail ? ` a ${recipientEmail}` : " (nessuna email disponibile)"}{" "}
-              insieme all&apos;email di presentazione. Alla conferma il lead passa
-              a «Audit inviato».
+              inviato{recipientEmail ? ` a ${recipientEmail}` : " "} insieme
+              all&apos;email di presentazione. Alla conferma il lead passa a
+              «Audit inviato».
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {!recipientEmail && (
+            <p className="mt-[14px] font-mono text-[12.5px] text-[var(--coral)]">
+              Il lead non ha un indirizzo email salvato (spesso assente dai dati
+              Google Maps). Inserisci prima l&apos;email o usa «Anteprima report»
+              per inviare l&apos;audit via altri canali.
+            </p>
+          )}
 
           {send.state === "error" && (
             <p

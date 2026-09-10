@@ -104,13 +104,17 @@ modello trasparente e citabile (≈20% di conversioni perse per ogni secondo di 
 oltre la soglia «good» di 2.5s, cap al 80%), chiaramente etichettato come stima
 nel report.
 
-### Strumento di test (dev)
+### Strumento di test
 
-`/admin/leads/report` riproduce il pattern dello studio email di `/admin/email`
-(404 in produzione): anteprima di email e report, invio di test via Resend reale
-a un indirizzo qualsiasi (nessun dato modificato) e download del PDF esatto. Da
-`/admin/leads`, il pulsante **«Anteprima report»** apre lo studio sul lead reale;
-**«Invia audit»** invia per davvero e passa il lead ad `audit_sent`.
+`/admin/leads/report` è lo studio del report audit: anteprima di email e
+report, **download del PDF esatto** e invio di test via Resend reale a un
+indirizzo qualsiasi (nessun dato modificato — l'invio di test resta dev-only,
+la server action si auto-protegge in produzione; lo studio è raggiungibile in
+ogni ambiente perché protetto da Clerk). Da `/admin/leads`, il pulsante
+**«Anteprima report»** apre lo studio sul lead reale; **«Invia audit»** invia
+per davvero e passa il lead ad `audit_sent`. Entrambi sono sempre visibili nel
+dettaglio lead, anche quando il lead non ha un'email (i dati Google Maps
+spesso non la includono).
 
 ### Providers
 
