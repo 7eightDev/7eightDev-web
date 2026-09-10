@@ -348,6 +348,15 @@ export function LeadDetailSheet({
     reset();
   };
 
+  // Saves the draft (in the background via the editor) and closes the sheet.
+  const saveAndClose = () => {
+    setConfirmCloseOpen(false);
+    editorRef.current?.save();
+    setOutreachState({ dirty: false, pending: false });
+    onOpenChange(false);
+    reset();
+  };
+
   return (
     <>
       <Sheet
@@ -448,21 +457,19 @@ export function LeadDetailSheet({
     </Sheet>
 
     <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Hai modifiche non salvate allo stato di vendita. Se esci ora,
-            andranno perse.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-wrap">
-          <AlertDialogCancel>Continua a modificare</AlertDialogCancel>
-          <AlertDialogAction onClick={discardAndClose}>
-            Esci senza salvare
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+<AlertDialogContent className="sm:max-w-[520px]">
+  <AlertDialogHeader>
+    <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
+    <AlertDialogDescription>
+      Hai modifiche non salvate allo stato di vendita. Cosa vuoi fare?
+    </AlertDialogDescription>
+  </AlertDialogHeader>
+  <AlertDialogFooter className="flex-wrap">
+    <AlertDialogCancel onClick={discardAndClose}>Abbandona</AlertDialogCancel>
+    <AlertDialogCancel>Indietro</AlertDialogCancel>
+    <AlertDialogAction onClick={saveAndClose}>Salva</AlertDialogAction>
+  </AlertDialogFooter>
+</AlertDialogContent>
     </AlertDialog>
     </>
   );
