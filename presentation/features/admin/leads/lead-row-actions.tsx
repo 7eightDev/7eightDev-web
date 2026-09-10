@@ -15,6 +15,7 @@ import {
   createQuoteFromLeadAction,
   toggleLeadFavoriteAction,
 } from "@/application/lead/admin.actions";
+import { storeLeadQuoteInput } from "@/presentation/features/admin/leads/lead-quote-draft";
 import type { LeadStatus } from "@/domain/lead/lead.types";
 import { cn } from "@/presentation/lib/utils";
 import {
@@ -109,8 +110,13 @@ export function LeadRowActions({
     setError(null);
     startTransition(async () => {
       const result = await createQuoteFromLeadAction(id);
-      if (!result.ok) setError(result.error ?? "Creazione preventivo non riuscita.");
-      else setQuoteOpen(false);
+      if (!result.ok || !result.input) {
+        setError(result.error ?? "Creazione preventivo non riuscita.");
+      } else {
+        storeLeadQuoteInput(result.input);
+        setQuoteOpen(false);
+        router.push("/admin/quotes/new");
+      }
     });
   };
 
@@ -234,11 +240,12 @@ export function LeadRowActions({
             <AlertDialogContent onCloseAutoFocus={() => setError(null)}>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  Creare preventivo per «{companyName}»?
+                  Preparare preventivo per «{companyName}»?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Verrà creato un preventivo in bozza basato sui dati del lead.
-                  Potrai modificarlo prima dell&apos;invio.
+                  I dati del lead verranno usati per precompilare un nuovo
+                  preventivo. Potrai verificarlo e modificarlo prima del
+                  salvataggio.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -263,7 +270,7 @@ export function LeadRowActions({
                     confirmCreateQuote();
                   }}
                 >
-                  {pending ? "Creazione…" : "Crea preventivo"}
+                  {pending ? "Preparazione…" : "Vai al preventivo"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

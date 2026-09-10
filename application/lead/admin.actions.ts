@@ -1,11 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { startRunLeadJob } from "@/application/lead/start-run-lead-job";
 import { rerunLeadGenerationJob } from "@/application/lead/rerun-lead-generation-job";
 import { createQuoteFromLead } from "@/application/lead/create-quote-from-lead";
-import { createQuote } from "@/application/quote/create-quote";
+import type { CreateQuoteInput } from "@/application/quote/quote.schemas";
 import {
   startLeadGenerationSchema,
   leadIdSchema,
@@ -20,7 +19,6 @@ import {
   leadDiscovery,
   leadRepository,
   pageSpeedAnalyzer,
-  quoteRepository,
   leadGenerationRateLimiter,
   techStackDetector,
 } from "@/infrastructure/container";
@@ -30,6 +28,8 @@ export interface LeadActionResult {
   readonly error?: string;
   readonly jobId?: string;
   readonly lastContactedAt?: string;
+  /** Pre-populated input when creating a quote from a lead. */
+  readonly input?: CreateQuoteInput;
 }
 
 /** Server action: kick off a lead generation search (query + location + quantity). */
@@ -244,9 +244,10 @@ export async function getLeadDetailAction(
 }
 
 /**
- * Server action: create a draft quote pre-populated from a qualified lead.
- * Composes the CreateQuoteInput from the lead + catalog, persists the draft via
- * the quote create use case, then redirects to the composer to review it.
+ * Server action: prepare a CreateQuoteInput from a qualified lead without
+ * persisting it. The client stores the input in sessionStorage and redirects
+ * to the quote composer for review. The quote is only created when the user
+ * explicitly saves from the composer.
  */
 export async function createQuoteFromLeadAction(
   leadId: string
@@ -262,12 +263,5 @@ export async function createQuoteFromLeadAction(
   );
   if (!prepared.ok) return { ok: false, error: prepared.error };
 
-  const result = await createQuote(
-    { repository: quoteRepository },
-    prepared.input
-  );
-  if (!result.ok) return { ok: false, error: result.error };
-
-  revalidatePath("/admin/quotes");
-  redirect(`/admin/quotes/${result.quote.id}/edit`);
+  return { ok: true, input: prepared.input };
 }
