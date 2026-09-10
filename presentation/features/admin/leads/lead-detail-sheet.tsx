@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
 import { getLeadDetailAction } from "@/application/lead/admin.actions";
 import { formatDateIt } from "@/presentation/lib/format-date";
@@ -458,18 +460,27 @@ export function LeadDetailSheet({
 
     <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
 <AlertDialogContent className="sm:max-w-[520px]">
-  <AlertDialogHeader>
-    <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
-    <AlertDialogDescription>
-      Hai modifiche non salvate allo stato di vendita. Cosa vuoi fare?
-    </AlertDialogDescription>
-  </AlertDialogHeader>
-  <AlertDialogFooter className="flex-wrap">
-    <AlertDialogCancel onClick={discardAndClose}>Abbandona</AlertDialogCancel>
-    <AlertDialogCancel>Indietro</AlertDialogCancel>
-    <AlertDialogAction onClick={saveAndClose}>Salva</AlertDialogAction>
-  </AlertDialogFooter>
-</AlertDialogContent>
+          <button
+            type="button"
+            aria-label="Abbandona e chiudi"
+            onClick={discardAndClose}
+            className="absolute top-4 right-4 inline-flex items-center justify-center size-8 rounded-lg text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-[var(--coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={16} aria-hidden />
+          </button>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hai modifiche non salvate allo stato di vendita. Cosa vuoi fare?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="grid grid-cols-2 gap-[10px]">
+            <AlertDialogCancel className="w-full">Indietro</AlertDialogCancel>
+            <AlertDialogAction className="w-full" onClick={saveAndClose}>
+              Salva
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
     </AlertDialog>
     </>
   );
