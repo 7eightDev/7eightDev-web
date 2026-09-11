@@ -1,4 +1,5 @@
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
+import { emailAssetsBaseUrl } from "@/infrastructure/shared/email-assets-url";
 
 /**
  * Value-first "presentation" email sent to a potential client together with
@@ -106,7 +107,7 @@ function kpiRow(label: string, value: string): string {
 }
 
 function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string }): string {
-  const logo = `${opts.appBaseUrl.replace(/\/+$/, "")}/icon-192.png`;
+  const logo = `${emailAssetsBaseUrl(opts.appBaseUrl)}/icon-192.png`;
   return `<!doctype html>
 <html lang="it">
   <head>

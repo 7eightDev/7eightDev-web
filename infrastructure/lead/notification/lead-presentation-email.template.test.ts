@@ -1,0 +1,36 @@
+import { renderLeadPresentationEmail } from "./lead-presentation-email.template";
+import { findLeadReportScenario } from "@/infrastructure/lead/lead-email-preview.fixtures";
+
+const SCENARIO = findLeadReportScenario("slow-ads");
+if (!SCENARIO) throw new Error("Scenario fixture slow-ads mancante");
+
+const REAL_ORIGIN = process.env.EMAIL_APP_BASE_URL;
+afterEach(() => {
+  if (REAL_ORIGIN === undefined) delete process.env.EMAIL_APP_BASE_URL;
+  else process.env.EMAIL_APP_BASE_URL = REAL_ORIGIN;
+});
+
+describe("lead presentation email logo origin", () => {
+  it("never embeds a loopback origin for the logo", () => {
+    delete process.env.EMAIL_APP_BASE_URL;
+    const { html } = renderLeadPresentationEmail(
+      SCENARIO.lead,
+      SCENARIO.analysis,
+      "audit-7eightdev-test.pdf",
+      "http://localhost:3000"
+    );
+    expect(html).toContain("https://7eightdev.com/icon-192.png");
+    expect(html).not.toContain("localhost");
+  });
+
+  it("honors EMAIL_APP_BASE_URL when set", () => {
+    process.env.EMAIL_APP_BASE_URL = "https://7eightdev-web.vercel.app";
+    const { html } = renderLeadPresentationEmail(
+      SCENARIO.lead,
+      SCENARIO.analysis,
+      "audit-7eightdev-test.pdf",
+      "http://localhost:3000"
+    );
+    expect(html).toContain("https://7eightdev-web.vercel.app/icon-192.png");
+  });
+});

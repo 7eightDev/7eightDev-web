@@ -6,6 +6,7 @@ import type {
 } from "@/domain/quote/quote-notification.port";
 import type { Quote } from "@/domain/quote/quote.types";
 import { formatMoney } from "@/domain/shared/money";
+import { emailAssetsBaseUrl } from "@/infrastructure/shared/email-assets-url";
 
 export interface ResendQuoteNotificationConfig {
   /** Resend API key (server-only secret). */
@@ -305,7 +306,10 @@ function emailShell(opts: {
   preheader: string;
   inner: string;
 }): string {
-  const logo = `${opts.appBaseUrl.replace(/\/+$/, "")}/icon-192.png`;
+  // Logo must resolve in the recipient's mailbox, so it never uses a loopback
+  // origin: appBaseUrl is for the quote CTA link, the image origin follows
+  // EMAIL_APP_BASE_URL / the public fallback.
+  const logo = `${emailAssetsBaseUrl(opts.appBaseUrl)}/icon-192.png`;
   return `<!doctype html>
 <html lang="it">
   <head>
