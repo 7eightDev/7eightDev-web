@@ -8,7 +8,7 @@ interface LogoMarkProps {
   className?: string;
 }
 
-export function LogoMark({ size = 40, radius = 11, bg = "#101216", stroke = "#23262e", className }: LogoMarkProps) {
+export function LogoMark({ size = 40, radius = 11, bg = "var(--surface)", stroke = "var(--border)", className }: LogoMarkProps) {
   const s = size;
   return (
     <svg width={s} height={s} viewBox="0 0 48 48" fill="none" aria-hidden="true" className={cn("block", className)}>
@@ -29,7 +29,7 @@ interface LogoLockupProps {
   className?: string;
 }
 
-export function LogoLockup({ size = 22, cursor = false, gap = 11, markSize, color = "#eef1f5", className }: LogoLockupProps) {
+export function LogoLockup({ size = 22, cursor = false, gap = 11, markSize, color = "var(--text)", className }: LogoLockupProps) {
   return (
     <div className={cn("flex items-center", className)} style={{ gap }}>
       <LogoMark size={markSize || size * 1.9} radius={Math.round((markSize || size * 1.9) * 0.26)} />

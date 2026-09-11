@@ -50,7 +50,7 @@ export function LeadCreateQuoteButton({ leadId }: { leadId: string }) {
         size="sm"
         onClick={() => setConfirmOpen(true)}
         disabled={pending}
-        className="cursor-pointer bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px"
+        className="cursor-pointer bg-accent text-on-accent hover:brightness-105 hover:-translate-y-px"
       >
         <HugeiconsIcon
           icon={FileAddIcon}

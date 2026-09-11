@@ -109,7 +109,7 @@ export function QuoteView({ quote }: QuoteViewProps) {
   return (
     <>
       {/* top bar */}
-      <header className="sticky top-0 z-40 bg-[rgba(10,11,13,0.85)] backdrop-blur-[14px] border-b border-border print:hidden">
+      <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-[14px] border-b border-border print:hidden">
         <Container className="max-w-[980px] h-16 flex items-center justify-between gap-3 px-5 sm:px-8">
           <div className="flex items-center gap-4 min-w-0">
             <LogoLockup size={15} />
@@ -130,7 +130,7 @@ export function QuoteView({ quote }: QuoteViewProps) {
             {!accepted && (
               <a
                 href="#accetta"
-                className="font-mono text-sm font-semibold px-4 py-[9px] rounded-[9px] bg-accent text-[#0a0b0d] transition-all duration-150 hover:brightness-105 hover:-translate-y-px"
+                className="font-mono text-sm font-semibold px-4 py-[9px] rounded-[9px] bg-accent text-on-accent transition-all duration-150 hover:brightness-105 hover:-translate-y-px"
               >
                 Accetta
               </a>

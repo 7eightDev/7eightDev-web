@@ -97,7 +97,7 @@ export function AcceptancePanel({
               className={cn(
                 "font-mono text-[15px] font-semibold px-6 py-[15px] rounded-[9px] border border-transparent transition-all duration-150 whitespace-nowrap w-full sm:w-auto",
                 canSubmit
-                  ? "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
+                  ? "bg-accent text-on-accent cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
                   : "bg-raised text-muted cursor-not-allowed"
               )}
             >

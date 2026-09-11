@@ -144,7 +144,7 @@ function AlertDialogAction({
       data-slot="alert-dialog-action"
       className={cn(
         actionClass,
-        "bg-accent text-[#0a0b0d] hover:brightness-105",
+        "bg-accent text-on-accent hover:brightness-105",
         className
       )}
       {...props}

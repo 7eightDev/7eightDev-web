@@ -75,7 +75,7 @@ export default async function QuotesPage({
         </h1>
         <Link
           href="/admin/quotes/new"
-          className="font-mono text-sm font-semibold rounded-full bg-accent text-[#0a0b0d] transition-all duration-150 hover:brightness-105 hover:-translate-y-px flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-[9px]"
+          className="font-mono text-sm font-semibold rounded-full bg-accent text-on-accent transition-all duration-150 hover:brightness-105 hover:-translate-y-px flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-[9px]"
         >
           <span className="sm:hidden text-lg">+</span>
           <span className="hidden sm:inline">+ Nuovo preventivo</span>
