@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+
+const emptySubscribe = () => () => {};
+// Hijacks React's subscription machinery: returns `false` on the server and
+// `true` once mounted on the client — the lint-safe equivalent of a
+// `mounted` useState/useEffect pair, with no setState-in-effect.
+const useMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false);
 
 /**
  * Dark/light toggle. Rendered inside next-themes' provider; dark is the
@@ -11,9 +17,7 @@ import { Moon, Sun } from "lucide-react";
  */
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   if (!mounted) {
     return <div className="size-9 rounded-[9px]" aria-hidden />;
