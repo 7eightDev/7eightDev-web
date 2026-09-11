@@ -12,10 +12,13 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { StarIcon } from "@hugeicons/core-free-icons";
-import { ToggleGroup, ToggleGroupItem } from "@/presentation/components/ui/toggle-group";
+import {
+  ArrowDown01Icon,
+  Cancel01Icon,
+  FilterRemoveIcon,
+  StarIcon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/presentation/components/ui/button";
-import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { LeadJobDrawer } from "@/presentation/features/admin/leads/lead-job-drawer";
 import { cn } from "@/presentation/lib/utils";
 import type { LeadGenerationJob } from "@/domain/lead/lead.types";
@@ -73,30 +76,13 @@ interface LeadFilterBarProps {
   availableYears: number[];
 }
 
-const ALL_STATUSES: LeadStatusFilter[] = [
-  "all",
-  "new",
-  "analyzed",
-  "qualified",
-  "discarded",
-];
-
-const ALL_OUTREACH_STATUSES: OutreachStatusFilter[] = [
-  "all",
-  "not_contacted",
-  "audit_sent",
-  "in_talks",
-  "closed_won",
-  "rejected",
-];
-
 const selectBase =
-  "h-9 w-fit items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] text-soft cursor-pointer transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "h-9 w-fit items-center justify-between gap-2 rounded-full border border-border bg-surface px-3 font-mono text-[12.5px] text-soft cursor-pointer transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const selectActive = "text-accent border-accent bg-accent/[0.06]";
 
 const inputBase =
-  "h-9 rounded-lg border border-border bg-surface px-3 font-hanken text-[13px] text-foreground placeholder:text-dim outline-none transition-colors focus:border-accent min-w-[180px]";
+  "h-9 rounded-full border border-border bg-surface px-3 font-hanken text-[13px] text-foreground placeholder:text-dim outline-none transition-colors focus:border-accent min-w-[180px]";
 
 /**
  * Two-tier sticky leads toolbar. Row 1 is the action header (title + job
@@ -329,6 +315,28 @@ export function LeadFilterBar({
               </span>
             </Button>
           )}
+          <button
+            type="button"
+            onClick={setFavorite}
+            aria-pressed={favorite === "favorite"}
+            title={
+              favorite === "favorite" ? "Mostra tutti i lead" : "Solo lead preferiti (stella)"
+            }
+            className={cn(
+              "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border px-2 sm:px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
+              favorite === "favorite"
+                ? "border-accent-amber bg-accent-amber/10 text-accent-amber hover:brightness-110"
+                : "border-border bg-surface text-soft hover:text-foreground hover:border-accent/40"
+            )}
+          >
+            <HugeiconsIcon
+              icon={StarIcon}
+              size={15}
+              aria-hidden
+              className={cn(favorite === "favorite" && "fill-current")}
+            />
+            <span className="hidden sm:inline">Preferiti</span>
+          </button>
           <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
             <Link href={exportHref}>Esporta CSV</Link>
           </Button>
@@ -350,18 +358,21 @@ export function LeadFilterBar({
         </div>
       </div>
 
-      {/* Row 2: operational filter band (search | status | clear) */}
-      <div className="mx-auto mt-6 flex w-full max-w-full sm:max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      {/* Filter controls block — two vertical levels, both aligned to the same
+        width. Level 1: the search bar, full width of the block. Level 2: a
+        single non-wrapping horizontal row with the two status selects (equal
+        width) and the clear CTA pinned to the far right. */}
+      <div className="mx-auto mt-6 flex w-full max-w-[760px] flex-col gap-3">
+        <div className="relative">
           <input
             type="search"
             value={draftQ}
             onChange={(e) => setDraftQDebounced(e.target.value)}
-            placeholder="Cerca lead…"
+            placeholder="Cerca…"
             aria-label="Cerca lead"
             className={cn(
-              "w-full min-w-0 flex-1",
               inputBase,
+              "w-full h-11 appearance-none pl-5 pr-12 text-lg",
               qActive && "border-accent"
             )}
           />
@@ -370,100 +381,96 @@ export function LeadFilterBar({
               type="button"
               onClick={clearSearch}
               aria-label="Cancella ricerca"
-              className="h-8 w-8 shrink-0 rounded-lg font-mono text-[13px] text-soft hover:text-foreground transition-colors cursor-pointer"
+              title="Cancella ricerca"
+              className="absolute inset-y-0 right-1.5 my-auto inline-flex size-7 items-center justify-center rounded-full bg-raised text-soft cursor-pointer transition-all duration-150 hover:bg-foreground/[0.06] hover:text-[var(--coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              ×
+              <HugeiconsIcon icon={Cancel01Icon} size={16} aria-hidden />
             </button>
           )}
         </div>
 
-        <ToggleGroup
-          type="single"
-          value={status}
-          onValueChange={(v) => v && setStatus(v as LeadStatusFilter)}
-          aria-label="Filtro per stato"
-          className="h-9 rounded-lg border border-border bg-surface p-0.5"
-        >
-          {ALL_STATUSES.map((value) => (
-            <ToggleGroupItem
-              key={value}
-              value={value}
-              title={LEAD_STATUS_FILTER_LABEL[value]}
+        <div className="flex flex-nowrap items-end justify-center gap-3">
+          <div className="flex w-[170px] flex-col gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+              Stato audit
+            </span>
+            <div className="relative">
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as LeadStatusFilter)}
+                aria-label="Filtro per stato audit"
+                className={cn(
+                  selectBase,
+                  "w-full appearance-none pr-10",
+                  status !== DEFAULT_LEAD_STATUS_FILTER && selectActive
+                )}
+              >
+                <option value={DEFAULT_LEAD_STATUS_FILTER}>tutti</option>
+                {(Object.keys(LEAD_STATUS_FILTER_LABEL) as LeadStatusFilter[])
+                  .filter((v) => v !== DEFAULT_LEAD_STATUS_FILTER)
+                  .map((value) => (
+                    <option key={value} value={value}>
+                      {LEAD_STATUS_FILTER_LABEL[value]}
+                    </option>
+                  ))}
+              </select>
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 inline-flex size-7 items-center justify-center rounded-full bg-raised text-soft"
+              >
+                <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
+              </span>
+            </div>
+          </div>
+
+          <div className="flex w-[170px] flex-col gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+              Stato vendita
+            </span>
+            <div className="relative">
+              <select
+                value={outreach}
+                onChange={(e) => setOutreach(e.target.value as OutreachStatusFilter)}
+                aria-label="Filtro per stato vendita"
+                className={cn(
+                  selectBase,
+                  "w-full appearance-none pr-10",
+                  outreach !== DEFAULT_OUTREACH_STATUS_FILTER && selectActive
+                )}
+              >
+                <option value={DEFAULT_OUTREACH_STATUS_FILTER}>tutti</option>
+                {(Object.keys(OUTREACH_STATUS_FILTER_LABEL) as OutreachStatusFilter[])
+                  .filter((v) => v !== DEFAULT_OUTREACH_STATUS_FILTER)
+                  .map((value) => (
+                    <option key={value} value={value}>
+                      {OUTREACH_STATUS_FILTER_LABEL[value]}
+                    </option>
+                  ))}
+              </select>
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 right-1 -translate-y-1/2 inline-flex size-7 items-center justify-center rounded-full bg-raised text-soft"
+              >
+                <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
+              </span>
+            </div>
+          </div>
+
+          {hasActive && (
+            <button
+              type="button"
+              onClick={clearAll}
+              aria-label="Rimuovi filtri"
+              title="Rimuovi filtri"
               className={cn(
-                "h-full font-mono text-[11px] px-2.5 rounded-md transition-colors",
-                "data-[state=on]:text-accent data-[state=on]:bg-accent/[0.08]",
-                "data-[state=off]:text-soft data-[state=off]:hover:text-foreground"
+                "shrink-0 inline-flex size-9 items-center justify-center rounded-full border transition-colors duration-150 cursor-pointer",
+                "text-accent border-accent bg-accent/[0.08] hover:brightness-110"
               )}
             >
-              {LEAD_STATUS_FILTER_LABEL[value]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-
-        {hasActive && (
-          <button
-            type="button"
-            onClick={clearAll}
-            aria-label="Azzera filtri"
-            title="Azzera filtri"
-            className={cn(
-              "inline-flex items-center gap-1.5 h-9 rounded-lg border border-border bg-surface px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
-              "text-accent border-accent bg-accent/[0.08] hover:brightness-110"
-            )}
-          >
-            Azzera filtri
-          </button>
-        )}
-      </div>
-
-      {/* Quick outreach band: sales funnel stage filter */}
-      <div className="mx-auto flex w-full max-w-full sm:max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
-          Outreach
-        </span>
-        <ToggleGroup
-          type="single"
-          value={outreach}
-          onValueChange={(v) => v && setOutreach(v as OutreachStatusFilter)}
-          aria-label="Filtro per stato outreach"
-          className="h-9 rounded-lg border border-border bg-surface p-0.5"
-        >
-          {ALL_OUTREACH_STATUSES.map((value) => (
-            <ToggleGroupItem
-              key={value}
-              value={value}
-              title={OUTREACH_STATUS_FILTER_LABEL[value]}
-              className={cn(
-                "h-full font-mono text-[11px] px-2.5 rounded-md transition-colors",
-                "data-[state=on]:text-accent data-[state=on]:bg-accent/[0.08]",
-                "data-[state=off]:text-soft data-[state=off]:hover:text-foreground"
-              )}
-            >
-              {OUTREACH_STATUS_FILTER_LABEL[value]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-
-        <button
-          type="button"
-          onClick={setFavorite}
-          aria-pressed={favorite === "favorite"}
-          title="Solo lead preferiti (stella)"
-          className={cn(
-            "ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
-            favorite === "favorite"
-              ? "border-accent-amber bg-accent-amber/10 text-accent-amber hover:brightness-110"
-              : "border-border bg-surface text-soft hover:text-foreground hover:border-accent/40"
+              <HugeiconsIcon icon={FilterRemoveIcon} size={17} aria-hidden />
+            </button>
           )}
-        >
-          <HugeiconsIcon
-            icon={StarIcon}
-            size={14}
-            aria-hidden
-            className={cn(favorite === "favorite" && "fill-current")}
-          />
-          Preferiti
-        </button>
+        </div>
       </div>
 
       {/* Advanced filters toggle: centered chevron on a divider line */}
@@ -509,7 +516,7 @@ export function LeadFilterBar({
               : { duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }
           }
         >
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-raised px-4 py-3">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] sm:min-w-[150px]">
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
