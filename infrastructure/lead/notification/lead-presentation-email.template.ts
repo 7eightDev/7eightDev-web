@@ -57,14 +57,14 @@ export function renderLeadPresentationEmail(
   ].join("\n");
 
   const inner = `
-    <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#EEF1F5;">Gentile <strong style="color:#EEF1F5;">${escapeHtml(company)}</strong>,</p>
-    <p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#AAB2BF;">
+    <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#0F172A;">Gentile <strong style="color:#0F172A;">${escapeHtml(company)}</strong>,</p>
+    <p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#475569;">
       prima di contattarti ho voluto guardare con attenzione il vostro sito
-      (<a href="${escapeHtml(lead.website ?? `https://${domain}`)}" style="color:#C7F94E;text-decoration:underline;text-underline-offset:2px;text-decoration-color:#C7F94E;">${escapeHtml(domain)}</a>). Non vi prometto nulla —
+      (<a href="${escapeHtml(lead.website ?? `https://${domain}`)}" style="color:#15803D;text-decoration:underline;text-underline-offset:2px;">${escapeHtml(domain)}</a>). Non vi prometto nulla —
       vi mostro i dati: ho eseguito un&apos;analisi automatica delle performance basata sui
-      <strong style="color:#EEF1F5;">Core Web Vitals di Google</strong>.
+      <strong style="color:#0F172A;">Core Web Vitals di Google</strong>.
     </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#16191F" style="background:#16191F;border:1px solid #23262E;border-radius:12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
       <tr><td style="padding:16px 20px;border-left:3px solid #C7F94E;border-radius:12px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           ${kpiRow("Performance score", scoreLine)}
@@ -73,21 +73,21 @@ export function renderLeadPresentationEmail(
         </table>
       </td></tr>
     </table>
-    <p style="margin:18px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#AAB2BF;">
-      Se fate <strong style="color:#EEF1F5;">pubblicità a pagamento</strong>, la lentezza del sito ha un costo
+    <p style="margin:18px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#475569;">
+      Se fate <strong style="color:#0F172A;">pubblicità a pagamento</strong>, la lentezza del sito ha un costo
       diretto: una parte del budget va persa perché i visitatori abbandonano prima che la pagina
       finisca di caricare e converte.
     </p>
-    <p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#AAB2BF;">
-      Nel <strong style="color:#C7F94E;">report allegato</strong> (${escapeHtml(reportFilename)}) trovate
+    <p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#475569;">
+      Nel <strong style="color:#15803D;">report allegato</strong> (${escapeHtml(reportFilename)}) trovate
       l&apos;analisi completa: i numeri, il dettaglio tecnico e una stima di quanto la situazione
       possa costarvi ogni mese.
     </p>
-    <p style="margin:20px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#AAB2BF;">
-      Se i numeri vi interessano, <strong style="color:#EEF1F5;">rispondete a questa email</strong>: vi spiego
+    <p style="margin:20px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#475569;">
+      Se i numeri vi interessano, <strong style="color:#0F172A;">rispondete a questa email</strong>: vi spiego
       senza impegno quali interventi recupererebbero clienti e budget.
     </p>
-    <p style="margin:22px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#AAB2BF;">
+    <p style="margin:22px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#475569;">
       Cordiali saluti,<br />— 7eightDev
     </p>`;
 
@@ -100,17 +100,17 @@ export function renderLeadPresentationEmail(
 
 function kpiRow(label: string, value: string): string {
   return `
-    <tr><td style="padding:8px 0;border-bottom:1px solid #23262E;">
+    <tr><td style="padding:8px 0;border-bottom:1px solid #E2E8F0;">
       <span style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#6B7280;margin:0 0 3px;">${escapeHtml(label)}</span>
-      <span style="display:block;font-size:15px;line-height:1.4;font-weight:bold;color:#EEF1F5;">${escapeHtml(value)}</span>
+      <span style="display:block;font-size:15px;line-height:1.4;font-weight:bold;color:#0F172A;">${escapeHtml(value)}</span>
     </td></tr>`;
 }
 
 function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string }): string {
   const logo = `${emailAssetsBaseUrl(opts.appBaseUrl)}/icon-192.png`;
-  // Light email canvas: only the content card stays dark. The brand header
-  // lives inside the card (white text would vanish on the client's light
-  // background), and the footer is tinted for light backgrounds.
+  // Fully light email: the brand header row and a white content card sit above
+  // the client's own background; the brand green is swapped for a darker tone
+  // that stays readable on white.
   return `<!doctype html>
 <html lang="it">
   <head>
@@ -122,15 +122,17 @@ function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
       <tr><td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
-          <tr><td bgcolor="#101216" style="background:#101216;border:1px solid #23262E;border-radius:16px;padding:32px 32px 28px;">
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr>
+          <tr><td style="padding:0 4px 20px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
               <td style="vertical-align:middle;padding-right:10px;">
                 <img src="${logo}" width="36" height="36" alt="7eightDev" style="display:block;border-radius:8px;" />
               </td>
-              <td style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:-0.5px;color:#EEF1F5;">
-                7eight<span style="color:#C7F94E;">Dev</span>
+              <td style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:-0.5px;color:#0F172A;">
+                7eight<span style="color:#15803D;">Dev</span>
               </td>
             </tr></table>
+          </td></tr>
+          <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:32px;">
             ${opts.inner}
           </td></tr>
           <tr><td style="padding:20px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#6B7280;">

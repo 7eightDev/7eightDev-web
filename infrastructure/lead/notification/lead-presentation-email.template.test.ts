@@ -36,7 +36,7 @@ describe("lead presentation email logo origin", () => {
 });
 
 describe("lead presentation email layout", () => {
-  it("keeps the dark background only on the content card", () => {
+  it("keeps the email fully light with no dark backgrounds", () => {
     const { html } = renderLeadPresentationEmail(
       SCENARIO.lead,
       SCENARIO.analysis,
@@ -45,22 +45,25 @@ describe("lead presentation email layout", () => {
     );
     expect(html).not.toContain("background:#0A0B0D");
     expect(html).not.toContain('bgcolor="#0A0B0D"');
-    expect(html).toContain('bgcolor="#101216"');
+    expect(html).not.toContain("background:#101216");
+    expect(html).not.toContain('bgcolor="#101216"');
+    expect(html).toContain('bgcolor="#FFFFFF"');
   });
 
-  it("renders the brand header inside the card", () => {
+  it("renders the brand header above the white content card", () => {
     const { html } = renderLeadPresentationEmail(
       SCENARIO.lead,
       SCENARIO.analysis,
       "audit-7eightdev-test.pdf",
       "http://localhost:3000"
     );
-    const cardStart = html.indexOf('bgcolor="#101216"');
+    const cardStart = html.indexOf('bgcolor="#FFFFFF"');
     const wordmark = html.indexOf("7eight<span");
-    expect(wordmark).toBeGreaterThan(cardStart);
+    expect(wordmark).toBeGreaterThan(-1);
+    expect(wordmark).toBeLessThan(cardStart);
   });
 
-  it("links the site domain with an explicit brand-green color", () => {
+  it("links the site domain with a readable green on the light background", () => {
     const { html } = renderLeadPresentationEmail(
       SCENARIO.lead,
       SCENARIO.analysis,
@@ -68,7 +71,7 @@ describe("lead presentation email layout", () => {
       "http://localhost:3000"
     );
     expect(html).toContain(
-      '<a href="https://www.studiosorriso.it" style="color:#C7F94E;'
+      '<a href="https://www.studiosorriso.it" style="color:#15803D;'
     );
     // No client-default link color (Gmail's #1155CC) — the anchor carries its
     // own inline color so mail clients can't repaint it.
