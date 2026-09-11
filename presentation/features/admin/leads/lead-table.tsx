@@ -84,7 +84,10 @@ const OUTREACH_LABEL: Record<LeadOutreachStatus, string> = {
 
 const MAX_VISIBLE_TECH = 3;
 
-const STICKY_HEAD_CLASS = "sticky top-0 z-10 border-b border-border bg-surface";
+// Sticky column header must sit above every row control (favorite star and
+// the "…" toggle are z-20, the slide-in action cluster z-10), so scrolled
+// rows paint underneath it instead of poking through.
+const STICKY_HEAD_CLASS = "sticky top-0 z-30 border-b border-border bg-surface";
 
 function SortableHeader({
   column,
