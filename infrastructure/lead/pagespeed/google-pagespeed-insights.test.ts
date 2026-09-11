@@ -29,11 +29,11 @@ const successfulPageSpeedResponse = {
 };
 
 describe('parsePageSpeedResponse', () => {
-  it('maps Lighthouse performance and core metrics', () => {
+  it('maps Lighthouse performance and core metrics (time in seconds)', () => {
     expect(parsePageSpeedResponse(successfulPageSpeedResponse)).toEqual({
       performanceScore: 49,
-      lcp: 2450.2,
-      fcp: 1100,
+      lcp: 2.4502,
+      fcp: 1.1,
       cls: 0.08,
       tbt: 320
     });
@@ -70,8 +70,8 @@ describe('GooglePageSpeedInsights', () => {
       })
     ).resolves.toEqual({
       performanceScore: 49,
-      lcp: 2450.2,
-      fcp: 1100,
+      lcp: 2.4502,
+      fcp: 1.1,
       cls: 0.08,
       tbt: 320
     });

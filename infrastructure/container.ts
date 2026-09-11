@@ -2,6 +2,8 @@ import type { CatalogRepository } from "@/domain/catalog/catalog.repository";
 import type { AdsDetectionPort } from "@/domain/lead/lead.ads";
 import type { CopyrightPort } from "@/domain/lead/lead.copyright";
 import type { LeadDiscoveryPort } from "@/domain/lead/lead.discovery";
+import type { LeadNotificationPort } from "@/domain/lead/lead-notification.port";
+import type { LeadReportPort } from "@/domain/lead/lead-report.port";
 import type { LeadRepository } from "@/domain/lead/lead.repository";
 import type { PageSpeedPort } from "@/domain/lead/lead.pagespeed";
 import type { TechStackPort } from "@/domain/lead/lead.tech";
@@ -11,8 +13,11 @@ import { PrismaCatalogRepository } from "@/infrastructure/catalog/prisma-catalog
 import { HtmlAdsDetector } from "@/infrastructure/lead/ads/html-ads-detector";
 import { HtmlCopyrightDetector } from "@/infrastructure/lead/copyright/html-copyright-detector";
 import { GooglePlacesLeadDiscovery } from "@/infrastructure/lead/discovery/google-places-lead-discovery";
+import { NullLeadNotificationAdapter } from "@/infrastructure/lead/notification/null-lead-notification.adapter";
+import { ResendLeadNotificationAdapter } from "@/infrastructure/lead/notification/resend-lead-notification.adapter";
 import { PrismaLeadRepository } from "@/infrastructure/lead/prisma-lead.repository";
 import { GooglePageSpeedInsights } from "@/infrastructure/lead/pagespeed/google-pagespeed-insights";
+import { PuppeteerLeadReportAdapter } from "@/infrastructure/lead/report/puppeteer-report.adapter";
 import { HtmlTechDetector } from "@/infrastructure/lead/tech-stack/html-tech-detector";
 import { NullQuoteNotificationAdapter } from "@/infrastructure/quote/null-quote-notification.adapter";
 import { PrismaQuoteRepository } from "@/infrastructure/quote/prisma-quote.repository";
@@ -74,6 +79,19 @@ export const leadDiscovery: LeadDiscoveryPort = new GooglePlacesLeadDiscovery(
  */
 export const quoteNotifier: QuoteNotificationPort = buildQuoteNotifier();
 
+/**
+ * Lead performance report generation (PDF). Defaults to the in-house Puppeteer
+ * adapter; swap this binding to point at n8n / Canva Connect / NotebookLM (a
+ * future adapter) without touching any caller.
+ */
+export const leadReportGenerator: LeadReportPort = new PuppeteerLeadReportAdapter();
+
+/**
+ * Outbound lead outreach email (presentation + PDF attachment). Uses Resend
+ * when fully configured, otherwise a no-op so the app still runs without a key.
+ */
+export const leadNotifier: LeadNotificationPort = buildLeadNotifier();
+
 /** PageSpeed analysis for lead qualification. API gratuita, nessun addebito. */
 export const pageSpeedAnalyzer: PageSpeedPort = new GooglePageSpeedInsights({
   apiKey: process.env.GOOGLE_PAGESPEED_API_KEY,
@@ -129,4 +147,22 @@ function buildQuoteNotifier(): QuoteNotificationPort {
       "QUOTE_REPLY_TO / APP_BASE_URL) — uso NullQuoteNotificationAdapter."
   );
   return new NullQuoteNotificationAdapter();
+}
+
+function buildLeadNotifier(): LeadNotificationPort {
+  const config = emailConfigFromEnv();
+  if (config) {
+    return new ResendLeadNotificationAdapter({
+      apiKey: config.apiKey,
+      from: config.from,
+      replyTo: config.replyTo,
+      appBaseUrl: config.appBaseUrl,
+    });
+  }
+
+  log.warn(
+    "Configurazione email incompleta (RESEND_API_KEY / QUOTE_FROM_EMAIL / " +
+      "QUOTE_REPLY_TO / APP_BASE_URL) — uso NullLeadNotificationAdapter."
+  );
+  return new NullLeadNotificationAdapter();
 }

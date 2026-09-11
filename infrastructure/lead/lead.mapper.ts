@@ -5,6 +5,7 @@ import type {
   LeadOutreachStatus
 } from '@/domain/lead/lead.types';
 import { isCopyrightPayload } from '@/domain/lead/lead.copyright';
+import { timeMetricToSeconds } from '@/infrastructure/lead/lead.metrics';
 
 export interface LeadRow {
   id: string;
@@ -130,8 +131,10 @@ export function rowToLeadAnalysis(row: LeadAnalysisRow): LeadAnalysis {
     leadId: row.leadId,
     strategy: row.strategy,
     performanceScore: row.performanceScore ?? undefined,
-    lcp: row.lcp ?? undefined,
-    fcp: row.fcp ?? undefined,
+    // Legacy rows may hold LCP/FCP in ms (PageSpeed API unit) — normalize at
+    // read so every consumer sees the canonical seconds.
+    lcp: timeMetricToSeconds(row.lcp) ?? undefined,
+    fcp: timeMetricToSeconds(row.fcp) ?? undefined,
     cls: row.cls ?? undefined,
     tbt: row.tbt ?? undefined,
     analyzedAt: row.analyzedAt.toISOString()
@@ -144,8 +147,8 @@ export function leadAnalysisToRow(analysis: LeadAnalysis): LeadAnalysisRow {
     leadId: analysis.leadId,
     strategy: analysis.strategy,
     performanceScore: analysis.performanceScore ?? null,
-    lcp: analysis.lcp ?? null,
-    fcp: analysis.fcp ?? null,
+    lcp: timeMetricToSeconds(analysis.lcp) ?? null,
+    fcp: timeMetricToSeconds(analysis.fcp) ?? null,
     cls: analysis.cls ?? null,
     tbt: analysis.tbt ?? null,
     analyzedAt: new Date(analysis.analyzedAt)

@@ -42,6 +42,11 @@ Scopri aziende      → Analizza il sito    → Qualifica     → Preventivo
    una **bozza preventivo** pre-compilata: cliente già valorizzato, servizi
    del catalogo suggeriti in base alla gravità del problema, scadenza +30
    giorni. L'admin la revisiona nel composer prima di inviarla.
+6. **Outreach value-first** — l'admin invia al prospect un'**email di
+   presentazione** con un **report PDF** allegato (audit grafico delle
+   performance, Core Web Vitals, segnali tecnici e budget pubblicitario
+   sprecato). L'email si basa sul valore, non su un preventivo: i dati parlano
+   da soli e il lead passa a `audit_sent` solo a consegna confermata.
 
 ## Stack
 
@@ -76,6 +81,40 @@ presentation    — componenti React (shadcn/ui), pagine admin
 | Esecuzione di un job (per batch) | `application/lead/execute-lead-generation-job.ts` |
 | Export CSV lead qualificati | `application/lead/export-leads.ts` |
 | Preventivo da lead qualificato | `application/lead/create-quote-from-lead.ts` |
+| Generazione report PDF audit | `application/lead/generate-lead-report.ts` |
+| Invio email di presentazione (con PDF) | `application/lead/send-lead-presentation.ts` |
+
+### Port — Lead report & presentazione
+
+La generazione del report e l'invio dell'email seguono lo stesso pattern
+**port + adapter** del resto dell'app: il dominio conosce solo l'interfaccia,
+gli adapter vivono in `infrastructure` e sono intercambiabili nel container.
+
+| Concern | Port | Adapter default |
+|---|---|---|
+| Report PDF | `domain/lead/lead-report.port.ts` | `PuppeteerLeadReportAdapter` (HTML → PDF locale) |
+| Email presentazione | `domain/lead/lead-notification.port.ts` | `ResendLeadNotificationAdapter` (PDF in allegato) |
+
+Per cambiare provider (n8n, Canva Connect, NotebookLM, un servizio HTML-to-PDF…)
+basta aggiungere un nuovo adapter e cambiare il binding in
+`infrastructure/container.ts` — nessun caso d'uso o UI si tocca.
+
+La **stima del budget pubblicitario sprecato** è in `domain/lead/lead.impact.ts`:
+modello trasparente e citabile (≈20% di conversioni perse per ogni secondo di LCP
+oltre la soglia «good» di 2.5s, cap al 80%), chiaramente etichettato come stima
+nel report.
+
+### Strumento di test
+
+`/admin/leads/report` è lo studio del report audit: anteprima di email e
+report, **download del PDF esatto** e invio di test via Resend reale a un
+indirizzo qualsiasi (nessun dato modificato — l'invio di test resta dev-only,
+la server action si auto-protegge in produzione; lo studio è raggiungibile in
+ogni ambiente perché protetto da Clerk). Da `/admin/leads`, il pulsante
+**«Anteprima report»** apre lo studio sul lead reale; **«Invia audit»** invia
+per davvero e passa il lead ad `audit_sent`. Entrambi sono sempre visibili nel
+dettaglio lead, anche quando il lead non ha un'email (i dati Google Maps
+spesso non la includono).
 
 ### Providers
 
