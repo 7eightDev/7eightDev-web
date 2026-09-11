@@ -202,10 +202,10 @@ describe('DailyQuotaGuard', () => {
       expect(r.remaining).toBe(0);
     });
 
-    it('usage() reports the bucket as exhausted', async () => {
+    it('usage() reports the bucket as unavailable when the store is unreachable', async () => {
       const guard = guardWith({ [bucket]: 10 }, unreachable);
 
-      expect(await guard.usage(bucket)).toMatchObject({ used: 10, limit: 10 });
+      expect(await guard.usage(bucket)).toMatchObject({ used: 0, limit: 10, available: false });
     });
   });
 });

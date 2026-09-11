@@ -25,10 +25,12 @@ export async function GET(): Promise<Response> {
       [QUOTA_BUCKET_PLACES_TEXT_SEARCH]: {
         used: textSearch.used,
         limit: textSearch.limit,
+        available: textSearch.available,
       },
       [QUOTA_BUCKET_PLACES_AUTOCOMPLETE]: {
         used: autocomplete.used,
         limit: autocomplete.limit,
+        available: autocomplete.available,
       },
     },
   });
