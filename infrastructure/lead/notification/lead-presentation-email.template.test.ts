@@ -74,4 +74,15 @@ describe("lead presentation email layout", () => {
     // own inline color so mail clients can't repaint it.
     expect(html).not.toContain("rgb(17, 85, 204)");
   });
+
+  it("renders the LCP figure in seconds with an Italian format", () => {
+    const { html, text } = renderLeadPresentationEmail(
+      SCENARIO.lead,
+      SCENARIO.analysis,
+      "audit-7eightdev-test.pdf",
+      "http://localhost:3000"
+    );
+    expect(html).toContain("5,8 s (ideale ≤ 2,5 s)");
+    expect(text).toContain("5,8 s (ideale ≤ 2,5 s)");
+  });
 });

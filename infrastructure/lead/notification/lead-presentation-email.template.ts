@@ -31,7 +31,7 @@ export function renderLeadPresentationEmail(
     score !== undefined ? `${score} / 100` : "non disponibile";
   const lcpLine =
     lcp !== undefined
-      ? `${formatNumber(lcp)} s (ideale ≤ 2.5 s)`
+      ? `${formatSeconds(lcp)} (ideale ≤ 2,5 s)`
       : "non rilevato";
   const adsLine = lead.hasAds === true ? "Sì — campagne attive rilevate" : "No";
 
@@ -148,8 +148,13 @@ function displayDomain(url: string): string {
   return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
 
-function formatNumber(value: number): string {
-  return String(Math.round(value * 100) / 100);
+/** Client-friendly seconds, e.g. 4.831 → "4,8 s". */
+function formatSeconds(value: number): string {
+  const rounded = Math.round((value + Number.EPSILON) * 10) / 10;
+  return `${rounded.toLocaleString("it-IT", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} s`;
 }
 
 function escapeHtml(value: string): string {

@@ -74,6 +74,26 @@ describe('Lead mapper', () => {
     expect(rowToLeadGenerationJob(leadGenerationJobToRow(job))).toEqual(job);
   });
 
+  it('normalizes legacy millisecond LCP/FCP rows to seconds at read time', () => {
+    const legacyRow = {
+      ...leadAnalysisToRow(analysis),
+      lcp: 4831,
+      fcp: 2200
+    };
+
+    const mapped = rowToLeadAnalysis(legacyRow);
+
+    expect(mapped.lcp).toBeCloseTo(4.831);
+    expect(mapped.fcp).toBe(2.2);
+  });
+
+  it('keeps second-based LCP/FCP unchanged on write', () => {
+    const row = leadAnalysisToRow(analysis);
+
+    expect(row.lcp).toBe(2.1);
+    expect(row.fcp).toBe(1.4);
+  });
+
   it('maps optional lead fields to null', () => {
     const minimal: Lead = {
       id: 'lead-2',

@@ -5,6 +5,7 @@ import {
   type PageSpeedResult
 } from '@/domain/lead/lead.pagespeed';
 import { withRetry, HttpError } from '@/infrastructure/shared/retry';
+import { timeMetricToSeconds } from '@/infrastructure/lead/lead.metrics';
 
 type FetchFn = typeof fetch;
 
@@ -119,8 +120,14 @@ export function parsePageSpeedResponse(response: unknown): PageSpeedResult {
     performanceScore: normalizePerformanceScore(
       lighthouse?.categories?.performance?.score
     ),
-    lcp: metricValue(audits, 'largest-contentful-paint'),
-    fcp: metricValue(audits, 'first-contentful-paint'),
+    // Lighthouse reports LCP/FCP in ms; the domain (thresholds, impact model,
+    // report/email) uses seconds — normalize at the provider boundary.
+    lcp: timeMetricToSeconds(
+      metricValue(audits, 'largest-contentful-paint')
+    ) ?? null,
+    fcp:
+      timeMetricToSeconds(metricValue(audits, 'first-contentful-paint')) ??
+      null,
     cls: metricValue(audits, 'cumulative-layout-shift'),
     tbt: metricValue(audits, 'total-blocking-time')
   };
