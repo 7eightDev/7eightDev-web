@@ -160,39 +160,39 @@ export function renderEmail(
   // not stray <tr> rows that email clients hoist out of the <td>.
   const recurringRows = [
     monthly
-      ? `<p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#475569;">+ ${escapeHtml(monthly)} <span style="color:#6B7280;">/ mese</span></p>`
+      ? `<p class="text-body" style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#475569;">+ ${escapeHtml(monthly)} <span class="text-muted" style="color:#6B7280;">/ mese</span></p>`
       : "",
     yearly
-      ? `<p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#475569;">+ ${escapeHtml(yearly)} <span style="color:#6B7280;">/ anno</span></p>`
+      ? `<p class="text-body" style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#475569;">+ ${escapeHtml(yearly)} <span class="text-muted" style="color:#6B7280;">/ anno</span></p>`
       : "",
   ].join("");
 
   const inner = `
-    <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#0F172A;">Ciao ${escapeHtml(name)},</p>
-    <p style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.55;color:#475569;">
-      ecco il preventivo per <strong style="color:#0F172A;">${escapeHtml(project)}</strong>
-      <span style="color:#6B7280;">(${escapeHtml(quote.number)})</span>. Puoi consultarlo, scegliere le opzioni e accettarlo online.
+    <p class="text-greeting" style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#0F172A;">Ciao ${escapeHtml(name)},</p>
+    <p class="text-body" style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.55;color:#475569;">
+      ecco il preventivo per <strong class="text-strong" style="color:#0F172A;">${escapeHtml(project)}</strong>
+      <span class="text-muted" style="color:#6B7280;">(${escapeHtml(quote.number)})</span>. Puoi consultarlo, scegliere le opzioni e accettarlo online.
     </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
-      <tr><td style="padding:18px 20px;border-left:3px solid #15803D;border-radius:12px;">
-        <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6B7280;">${escapeHtml(totalCaption)}</p>
-        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:bold;color:#0F172A;">${escapeHtml(total)}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="kpi-card" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
+      <tr><td class="kpi-border" style="padding:18px 20px;border-left:3px solid #15803D;border-radius:12px;">
+        <p class="kpi-label" style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6B7280;">${escapeHtml(totalCaption)}</p>
+        <p class="kpi-value" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:bold;color:#0F172A;">${escapeHtml(total)}</p>
         ${fiscalNote ? `<p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6B7280;">${escapeHtml(fiscalNote)}</p>` : ""}
         ${recurringRows}
-        ${hasOptional ? `<p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6B7280;">Opzioni aggiuntive selezionabili direttamente nel preventivo.</p>` : ""}
-        <p style="margin:12px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#475569;">Valido fino al <strong style="color:#0F172A;">${escapeHtml(validUntil)}</strong></p>
+        ${hasOptional ? `<p class="text-muted" style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6B7280;">Opzioni aggiuntive selezionabili direttamente nel preventivo.</p>` : ""}
+        <p class="text-body" style="margin:12px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#475569;">Valido fino al <strong class="text-strong" style="color:#0F172A;">${escapeHtml(validUntil)}</strong></p>
       </td></tr>
     </table>
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px;">
-      <tr><td bgcolor="#C7F94E" style="background:#C7F94E;border-radius:10px;">
-        <a href="${publicUrl}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0A0B0D;text-decoration:none;">Apri il preventivo →</a>
+      <tr><td class="cta-btn-bg" bgcolor="#15803D" style="background:#15803D;border-radius:10px;">
+        <a href="${publicUrl}" class="cta-btn-text" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;">Apri il preventivo →</a>
       </td></tr>
     </table>
-    <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6B7280;">
+    <p class="text-muted" style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6B7280;">
       Se il pulsante non funziona, copia questo link nel browser:<br />
-      <a href="${publicUrl}" style="color:#15803D;word-break:break-all;">${publicUrl}</a>
+      <a class="link-brand" href="${publicUrl}" style="color:#15803D;word-break:break-all;">${publicUrl}</a>
     </p>
-    <p style="margin:24px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#475569;">
+    <p class="text-body" style="margin:24px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#475569;">
       Per qualsiasi domanda rispondi pure a questa email.<br />— 7eightDev
     </p>`;
 
@@ -268,24 +268,24 @@ export function renderAcceptedEmail(
     .map(
       ([label, value]) =>
         `<tr><td style="padding:10px 0 0;font-family:Arial,Helvetica,sans-serif;">
-          <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6B7280;margin:0 0 3px;">${escapeHtml(label)}</span>
-          <span style="display:block;font-size:15px;line-height:1.45;font-weight:bold;color:#0F172A;">${escapeHtml(value)}</span>
+          <span class="kpi-label" style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6B7280;margin:0 0 3px;">${escapeHtml(label)}</span>
+          <span class="kpi-value" style="display:block;font-size:15px;line-height:1.45;font-weight:bold;color:#0F172A;">${escapeHtml(value)}</span>
         </td></tr>`
     )
     .join("");
 
   const inner = `
-    <p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#0F172A;">
-      <span style="color:#15803D;">✓</span> Preventivo ${escapeHtml(quote.number)} accettato
+    <p class="text-greeting" style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#0F172A;">
+      <span class="brand-dev" style="color:#15803D;">✓</span> Preventivo ${escapeHtml(quote.number)} accettato
     </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
-      <tr><td style="padding:16px 20px;border-left:3px solid #15803D;border-radius:12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="kpi-card" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
+      <tr><td class="kpi-border" style="padding:16px 20px;border-left:3px solid #15803D;border-radius:12px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>
       </td></tr>
     </table>
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:36px 0 0;">
-      <tr><td bgcolor="#C7F94E" style="background:#C7F94E;border-radius:10px;">
-        <a href="${publicUrl}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0A0B0D;text-decoration:none;">Apri il preventivo →</a>
+      <tr><td class="cta-btn-bg" bgcolor="#15803D" style="background:#15803D;border-radius:10px;">
+        <a href="${publicUrl}" class="cta-btn-text" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;">Apri il preventivo →</a>
       </td></tr>
     </table>`;
 
@@ -318,8 +318,28 @@ function emailShell(opts: {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .email-body { background-color: #0A0B0D !important; }
+        .email-card { background-color: #14161A !important; border-color: #23262E !important; }
+        .brand-name { color: #EEF1F5 !important; }
+        .brand-dev { color: #A9C740 !important; }
+        .text-greeting { color: #EEF1F5 !important; }
+        .text-strong { color: #EEF1F5 !important; }
+        .text-body { color: #AAB2BF !important; }
+        .text-muted { color: #6B7280 !important; }
+        .kpi-card { background-color: #14161A !important; border-color: #23262E !important; }
+        .kpi-border { border-color: #A9C740 !important; }
+        .kpi-label { color: #6B7280 !important; }
+        .kpi-value { color: #EEF1F5 !important; }
+        .link-brand { color: #A9C740 !important; }
+        .cta-btn-bg { background-color: #C7F94E !important; }
+        .cta-btn-text { color: #0A0B0D !important; }
+        .footer-text { color: #6B7280 !important; }
+      }
+    </style>
   </head>
-  <body style="margin:0;padding:0;">
+  <body class="email-body" style="margin:0;padding:0;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(opts.preheader)}</div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
       <tr><td align="center">
@@ -329,15 +349,15 @@ function emailShell(opts: {
               <td style="vertical-align:middle;padding-right:10px;">
                 <img src="${logo}" width="36" height="36" alt="7eightDev" style="display:block;border-radius:8px;" />
               </td>
-              <td style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:-0.5px;color:#0F172A;">
-                7eight<span style="color:#15803D;">Dev</span>
+              <td class="brand-name" style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:-0.5px;color:#0F172A;">
+                7eight<span class="brand-dev" style="color:#15803D;">Dev</span>
               </td>
             </tr></table>
           </td></tr>
-          <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:32px;">
+          <tr><td class="email-card" bgcolor="#FFFFFF" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:32px;">
             ${opts.inner}
           </td></tr>
-          <tr><td style="padding:20px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#6B7280;">
+          <tr><td class="footer-text" style="padding:20px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#6B7280;">
             7eightDev · Engineering-first web &amp; software<br />
             Hai ricevuto questa email perché ti è stato inviato un preventivo.
           </td></tr>

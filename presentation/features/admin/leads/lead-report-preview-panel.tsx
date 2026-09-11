@@ -193,7 +193,7 @@ export function LeadReportPreviewPanel({
             "font-mono text-sm font-semibold px-5 py-[10px] rounded-lg transition-all w-full",
             pending
               ? "bg-raised text-muted cursor-not-allowed"
-              : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105"
+              : "bg-accent text-on-accent cursor-pointer hover:brightness-105"
           )}
         >
           {pending ? "Invio…" : "Invia test →"}

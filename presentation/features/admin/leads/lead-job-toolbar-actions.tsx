@@ -123,7 +123,7 @@ export function LeadJobToolbarActions({
       <div ref={cellRef} className="relative inline-flex items-center justify-end self-stretch">
         <div
           inert={!menuOpen}
-          className={`absolute top-1/2 right-0 z-10 flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-[rgba(35,38,46,0.9)] py-0.5 pr-12 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+          className={`absolute top-1/2 right-0 z-10 flex -translate-y-1/2 items-center gap-0.5 rounded-l-lg bg-raised/85 dark:bg-[rgba(35,38,46,0.9)] py-0.5 pr-12 pl-1.5 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
             menuOpen
               ? "translate-x-0 opacity-100"
               : "translate-x-full opacity-0"

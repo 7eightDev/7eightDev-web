@@ -19,7 +19,7 @@ const JOB_STYLE: Record<LeadGenerationJob["status"], string> = {
   pending: "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
   running: "text-accent-cyan border-[color-mix(in_oklab,var(--color-accent-cyan)_45%,var(--border))]",
   completed: "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
-  failed: "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+  failed: "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]",
 };
 
 const JOB_LABEL: Record<LeadGenerationJob["status"], string> = {

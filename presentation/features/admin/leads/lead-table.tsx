@@ -51,7 +51,7 @@ const STATUS_STYLE: Record<LeadStatus, string> = {
   qualified:
     "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
   discarded:
-    "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+    "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]",
 };
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
@@ -71,7 +71,7 @@ const OUTREACH_STYLE: Record<LeadOutreachStatus, string> = {
   closed_won:
     "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
   rejected:
-    "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+    "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]",
 };
 
 const OUTREACH_LABEL: Record<LeadOutreachStatus, string> = {

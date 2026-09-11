@@ -46,7 +46,7 @@ export function ItemLine({
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
               <path
                 d="M3 8.5l3 3 7-8"
-                stroke="#0a0b0d"
+                stroke="var(--on-accent)"
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"

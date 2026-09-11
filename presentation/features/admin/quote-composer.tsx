@@ -494,7 +494,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
               <div className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center font-mono text-[13px] font-bold border transition-all duration-200",
                 isActive 
-                  ? "bg-accent text-[#0a0b0d] border-accent shadow-[0_0_15px_rgba(199,249,78,0.2)]" 
+                  ? "bg-accent text-on-accent border-accent shadow-[0_0_15px_color-mix(in_oklab,var(--accent)_25%,transparent)]" 
                   : isPast
                     ? "bg-raised text-accent border-accent"
                     : "bg-surface text-muted border-border group-hover:border-soft group-hover:text-soft"
@@ -727,7 +727,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                                 className={cn(
                                   "font-mono text-[11px] px-2 py-1 rounded cursor-pointer transition-all",
                                   item.type === t.v
-                                    ? "bg-accent text-[#0a0b0d]"
+                                    ? "bg-accent text-on-accent"
                                     : "text-soft hover:text-foreground"
                                 )}>
                                 {t.label}
@@ -907,7 +907,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                       "flex-1 font-mono text-[15px] font-semibold px-6 py-[14px] rounded-[9px] transition-all duration-150 lg:hidden",
                       pending || items.length === 0
                         ? "bg-raised text-muted cursor-not-allowed"
-                        : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
+                        : "bg-accent text-on-accent cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
                     )}>
                     {pending ? "Salvataggio…" : "Crea bozza preventivo →"}
                   </button>
@@ -929,7 +929,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
                 "font-mono text-sm font-semibold px-5 py-3 rounded-xl transition-all duration-150",
                 pending || items.length === 0
                   ? "bg-raised text-muted cursor-not-allowed border border-border"
-                  : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
+                  : "bg-accent text-on-accent cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
               )}
             >
               {pending ? "Salvataggio…" : isEdit ? "Salva modifiche" : "Crea bozza preventivo →"}
@@ -1033,7 +1033,7 @@ export function QuoteComposer({ catalog, quote }: QuoteComposerProps) {
             <button type="button" onClick={submit} disabled={pending || items.length === 0}
               className={cn(
                 "px-6 py-3 rounded-xl font-mono text-sm font-bold transition-all shrink-0",
-                pending || items.length === 0 ? "bg-raised text-muted" : "bg-accent text-[#0a0b0d]"
+                pending || items.length === 0 ? "bg-raised text-muted" : "bg-accent text-on-accent"
               )}>
               {pending ? "..." : isEdit ? "Salva" : "Crea bozza"}
             </button>

@@ -8,6 +8,7 @@ import {
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { ClerkProvider } from '@clerk/nextjs';
+import { ThemeProvider } from '@/presentation/components/shared/theme-provider';
 
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -38,11 +39,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it" className={cn('font-sans dark', figtree.variable)}>
+    <html lang="it" className={cn('font-sans', figtree.variable)} suppressHydrationWarning>
       <body
         className={`${spaceGrotesk.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <ClerkProvider>{children}</ClerkProvider>
+        <ClerkProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

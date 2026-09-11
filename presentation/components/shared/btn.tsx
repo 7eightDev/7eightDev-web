@@ -7,7 +7,7 @@ const btnVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-[1px]",
+        primary: "bg-accent text-on-accent hover:brightness-105 hover:-translate-y-[1px]",
         ghost: "bg-transparent text-foreground border-border hover:border-accent hover:text-accent",
         soft: "bg-raised text-foreground border-border hover:border-accent hover:text-accent",
       },
