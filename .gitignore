@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Prisma generated client
 infrastructure/db/generated/
+
+# Local working docs (not versioned)
+docs/Lead Generation — Piano Interventi.md
