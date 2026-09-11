@@ -108,21 +108,22 @@ function kpiRow(label: string, value: string): string {
 
 function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string }): string {
   const logo = `${emailAssetsBaseUrl(opts.appBaseUrl)}/icon-192.png`;
+  // Light email canvas: only the content card stays dark. The brand header
+  // lives inside the card (white text would vanish on the client's light
+  // background), and the footer is tinted for light backgrounds.
   return `<!doctype html>
 <html lang="it">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="supported-color-schemes" content="dark" />
   </head>
-  <body style="margin:0;padding:0;background:#0A0B0D;">
+  <body style="margin:0;padding:0;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(opts.preheader)}</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0A0B0D" style="background:#0A0B0D;padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
       <tr><td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
-          <tr><td style="padding:0 4px 20px;">
-            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <tr><td bgcolor="#101216" style="background:#101216;border:1px solid #23262E;border-radius:16px;padding:32px 32px 28px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr>
               <td style="vertical-align:middle;padding-right:10px;">
                 <img src="${logo}" width="36" height="36" alt="7eightDev" style="display:block;border-radius:8px;" />
               </td>
@@ -130,8 +131,6 @@ function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string
                 7eight<span style="color:#C7F94E;">Dev</span>
               </td>
             </tr></table>
-          </td></tr>
-          <tr><td bgcolor="#101216" style="background:#101216;border:1px solid #23262E;border-radius:16px;padding:32px;">
             ${opts.inner}
           </td></tr>
           <tr><td style="padding:20px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#6B7280;">

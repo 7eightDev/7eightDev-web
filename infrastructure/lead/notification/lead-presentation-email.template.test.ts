@@ -34,3 +34,29 @@ describe("lead presentation email logo origin", () => {
     expect(html).toContain("https://7eightdev-web.vercel.app/icon-192.png");
   });
 });
+
+describe("lead presentation email layout", () => {
+  it("keeps the dark background only on the content card", () => {
+    const { html } = renderLeadPresentationEmail(
+      SCENARIO.lead,
+      SCENARIO.analysis,
+      "audit-7eightdev-test.pdf",
+      "http://localhost:3000"
+    );
+    expect(html).not.toContain("background:#0A0B0D");
+    expect(html).not.toContain('bgcolor="#0A0B0D"');
+    expect(html).toContain('bgcolor="#101216"');
+  });
+
+  it("renders the brand header inside the card", () => {
+    const { html } = renderLeadPresentationEmail(
+      SCENARIO.lead,
+      SCENARIO.analysis,
+      "audit-7eightdev-test.pdf",
+      "http://localhost:3000"
+    );
+    const cardStart = html.indexOf('bgcolor="#101216"');
+    const wordmark = html.indexOf("7eight<span");
+    expect(wordmark).toBeGreaterThan(cardStart);
+  });
+});
