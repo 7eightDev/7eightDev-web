@@ -63,7 +63,7 @@ export function GoogleQuotaBadge() {
   const nearLimit = !exhausted && remaining <= 5;
 
   const tone = exhausted
-    ? "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]"
+    ? "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]"
     : nearLimit
       ? "text-accent-amber border-[color-mix(in_oklab,var(--color-accent-amber)_45%,var(--border))]"
       : "text-soft border-border";

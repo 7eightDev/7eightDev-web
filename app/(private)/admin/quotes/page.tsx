@@ -25,7 +25,7 @@ const STATUS_STYLE: Record<Quote["status"], string> = {
   draft: "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
   sent: "text-accent-cyan border-[color-mix(in_oklab,var(--color-accent-cyan)_45%,var(--border))]",
   accepted: "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
-  rejected: "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+  rejected: "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]",
   expired: "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]",
 };
 

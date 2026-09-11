@@ -77,8 +77,8 @@ interface WebVitalProps {
 
 const WEBVITAL_TONE: Record<WebVitalTone, string> = {
   ok: "text-[var(--accent)]",
-  warn: "text-[var(--accent-amber)]",
-  bad: "text-[var(--coral)]",
+  warn: "text-accent-amber",
+  bad: "text-[var(--coral-text)]",
 };
 
 /**
@@ -143,7 +143,7 @@ function StatusBadge({ status }: { status: Lead["status"] }) {
         status === "qualified"
           ? "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]"
           : status === "discarded"
-            ? "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]"
+            ? "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]"
             : "text-muted border-[color-mix(in_oklab,var(--muted)_45%,var(--border))]"
       )}
     >
