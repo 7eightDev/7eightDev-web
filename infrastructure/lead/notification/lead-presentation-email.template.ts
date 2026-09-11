@@ -65,7 +65,7 @@ export function renderLeadPresentationEmail(
       <strong style="color:#0F172A;">Core Web Vitals di Google</strong>.
     </p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
-      <tr><td style="padding:16px 20px;border-left:3px solid #C7F94E;border-radius:12px;">
+      <tr><td style="padding:16px 20px;border-left:3px solid #15803D;border-radius:12px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           ${kpiRow("Performance score", scoreLine)}
           ${kpiRow("Caricamento principale (LCP)", lcpLine)}
@@ -101,8 +101,8 @@ export function renderLeadPresentationEmail(
 function kpiRow(label: string, value: string): string {
   return `
     <tr><td style="padding:8px 0;border-bottom:1px solid #E2E8F0;">
-      <span style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#6B7280;margin:0 0 3px;">${escapeHtml(label)}</span>
-      <span style="display:block;font-size:15px;line-height:1.4;font-weight:bold;color:#0F172A;">${escapeHtml(value)}</span>
+      <span style="display:block;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:normal;text-transform:uppercase;letter-spacing:0.5px;color:#6B7280;margin:0 0 3px;">${escapeHtml(label)}</span>
+      <span style="display:block;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.4;font-weight:bold;color:#0F172A;">${escapeHtml(value)}</span>
     </td></tr>`;
 }
 

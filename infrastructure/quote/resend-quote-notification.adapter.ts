@@ -174,7 +174,7 @@ export function renderEmail(
       <span style="color:#6B7280;">(${escapeHtml(quote.number)})</span>. Puoi consultarlo, scegliere le opzioni e accettarlo online.
     </p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
-      <tr><td style="padding:18px 20px;border-left:3px solid #C7F94E;border-radius:12px;">
+      <tr><td style="padding:18px 20px;border-left:3px solid #15803D;border-radius:12px;">
         <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#6B7280;">${escapeHtml(totalCaption)}</p>
         <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:bold;color:#0F172A;">${escapeHtml(total)}</p>
         ${fiscalNote ? `<p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6B7280;">${escapeHtml(fiscalNote)}</p>` : ""}
@@ -279,7 +279,7 @@ export function renderAcceptedEmail(
       <span style="color:#15803D;">✓</span> Preventivo ${escapeHtml(quote.number)} accettato
     </p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F1F5F9" style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;">
-      <tr><td style="padding:16px 20px;border-left:3px solid #C7F94E;border-radius:12px;">
+      <tr><td style="padding:16px 20px;border-left:3px solid #15803D;border-radius:12px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>
       </td></tr>
     </table>
