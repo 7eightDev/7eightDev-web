@@ -203,7 +203,7 @@ export function QuoteRowActions({
       >
         <div
           inert={!menuOpen}
-          className={`absolute -top-4 -bottom-4 -right-5 z-10 flex items-center gap-1 rounded-l-lg bg-[rgba(35,38,46,0.82)] pl-4 pr-16 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
+          className={`absolute -top-4 -bottom-4 -right-5 z-10 flex items-center gap-1 rounded-l-lg bg-surface/85 dark:bg-[rgba(35,38,46,0.82)] pl-4 pr-16 shadow-[-16px_0_18px_-10px_rgba(0,0,0,0.5)] backdrop-blur-[6px] transition-[transform,opacity] duration-300 ease-out ${
             menuOpen
               ? 'translate-x-0 opacity-100'
               : 'translate-x-full opacity-0'
