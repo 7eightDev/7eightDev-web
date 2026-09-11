@@ -121,16 +121,16 @@ function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string
         .email-body { background-color: #0A0B0D !important; }
         .email-card { background-color: #14161A !important; border-color: #23262E !important; }
         .brand-name { color: #EEF1F5 !important; }
-        .brand-dev { color: #4ADE80 !important; }
+        .brand-dev { color: #A9C740 !important; }
         .text-greeting { color: #EEF1F5 !important; }
         .text-strong { color: #EEF1F5 !important; }
         .text-body { color: #AAB2BF !important; }
         .text-muted { color: #6B7280 !important; }
         .kpi-card { background-color: #14161A !important; border-color: #23262E !important; }
-        .kpi-border { border-color: #4ADE80 !important; }
+        .kpi-border { border-color: #A9C740 !important; }
         .kpi-label { color: #6B7280 !important; }
         .kpi-value { color: #EEF1F5 !important; }
-        .link-brand { color: #4ADE80 !important; }
+        .link-brand { color: #A9C740 !important; }
         .footer-text { color: #6B7280 !important; }
       }
     </style>
