@@ -184,8 +184,8 @@ export function renderEmail(
       </td></tr>
     </table>
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px;">
-      <tr><td bgcolor="#C7F94E" style="background:#C7F94E;border-radius:10px;">
-        <a href="${publicUrl}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0A0B0D;text-decoration:none;">Apri il preventivo →</a>
+      <tr><td class="cta-btn-bg" bgcolor="#15803D" style="background:#15803D;border-radius:10px;">
+        <a href="${publicUrl}" class="cta-btn-text" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;">Apri il preventivo →</a>
       </td></tr>
     </table>
     <p class="text-muted" style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6B7280;">
@@ -284,8 +284,8 @@ export function renderAcceptedEmail(
       </td></tr>
     </table>
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:36px 0 0;">
-      <tr><td bgcolor="#C7F94E" style="background:#C7F94E;border-radius:10px;">
-        <a href="${publicUrl}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0A0B0D;text-decoration:none;">Apri il preventivo →</a>
+      <tr><td class="cta-btn-bg" bgcolor="#15803D" style="background:#15803D;border-radius:10px;">
+        <a href="${publicUrl}" class="cta-btn-text" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;">Apri il preventivo →</a>
       </td></tr>
     </table>`;
 
@@ -333,6 +333,8 @@ function emailShell(opts: {
         .kpi-label { color: #6B7280 !important; }
         .kpi-value { color: #EEF1F5 !important; }
         .link-brand { color: #4ADE80 !important; }
+        .cta-btn-bg { background-color: #C7F94E !important; }
+        .cta-btn-text { color: #0A0B0D !important; }
         .footer-text { color: #6B7280 !important; }
       }
     </style>
