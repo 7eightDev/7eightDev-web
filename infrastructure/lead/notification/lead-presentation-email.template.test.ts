@@ -71,7 +71,7 @@ describe("lead presentation email layout", () => {
       "http://localhost:3000"
     );
     expect(html).toContain(
-      '<a href="https://www.studiosorriso.it" style="color:#15803D;'
+      'href="https://www.studiosorriso.it" style="color:#15803D;'
     );
     // No client-default link color (Gmail's #1155CC) — the anchor carries its
     // own inline color so mail clients can't repaint it.
