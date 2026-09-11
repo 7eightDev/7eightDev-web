@@ -60,7 +60,7 @@ export function renderLeadPresentationEmail(
     <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#EEF1F5;">Gentile <strong style="color:#EEF1F5;">${escapeHtml(company)}</strong>,</p>
     <p style="margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#AAB2BF;">
       prima di contattarti ho voluto guardare con attenzione il vostro sito
-      (<strong style="color:#EEF1F5;">${escapeHtml(domain)}</strong>). Non vi prometto nulla —
+      (<a href="${escapeHtml(lead.website ?? `https://${domain}`)}" style="color:#C7F94E;text-decoration:underline;text-underline-offset:2px;text-decoration-color:#C7F94E;">${escapeHtml(domain)}</a>). Non vi prometto nulla —
       vi mostro i dati: ho eseguito un&apos;analisi automatica delle performance basata sui
       <strong style="color:#EEF1F5;">Core Web Vitals di Google</strong>.
     </p>

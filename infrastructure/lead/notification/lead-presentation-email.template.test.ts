@@ -59,4 +59,19 @@ describe("lead presentation email layout", () => {
     const wordmark = html.indexOf("7eight<span");
     expect(wordmark).toBeGreaterThan(cardStart);
   });
+
+  it("links the site domain with an explicit brand-green color", () => {
+    const { html } = renderLeadPresentationEmail(
+      SCENARIO.lead,
+      SCENARIO.analysis,
+      "audit-7eightdev-test.pdf",
+      "http://localhost:3000"
+    );
+    expect(html).toContain(
+      '<a href="https://www.studiosorriso.it" style="color:#C7F94E;'
+    );
+    // No client-default link color (Gmail's #1155CC) — the anchor carries its
+    // own inline color so mail clients can't repaint it.
+    expect(html).not.toContain("rgb(17, 85, 204)");
+  });
 });
