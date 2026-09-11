@@ -4,22 +4,50 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Light theme — the on-brand default for light clients. The app ships dark
+   first (`.dark` is set by next-themes as the default), but every token here
+   is deliberately dual so a light view stays accessible. Colors are written
+   in OKLCH: the same tone keeps its hue and chroma while lightness (`L`)
+   flips per theme, so e.g. the brand green is bright lime on dark but a
+   deep #15803D-style green on light. */
 :root {
-  --bg: #0A0B0D;
-  --surface: #101216;
-  --raised: #16191F;
-  --border: #23262E;
-  --dim: #454B57;
-  --muted: #6B7280;
-  --text-soft: #AAB2BF;
-  --text: #EEF1F5;
-  --accent: #C7F94E;
-  --coral: #FF6A4D;
+  --bg: oklch(0.979 0.003 264.5);        /* #F7F8FA */
+  --surface: oklch(1 0 0);               /* #FFFFFF */
+  --raised: oklch(0.968 0.007 247.9);    /* #F1F5F9 */
+  --border: oklch(0.929 0.013 255.5);    /* #E2E8F0 */
+  --dim: oklch(0.869 0.020 252.9);       /* #CBD5E1 */
+  --muted: oklch(0.551 0.023 264.4);     /* #6B7280 */
+  --text-soft: oklch(0.446 0.037 257.3); /* #475569 */
+  --text: oklch(0.208 0.040 265.8);      /* #0F172A */
+  --accent: oklch(0.527 0.137 150.1);    /* #15803D — dark green, readable as text on light */
+  --coral: oklch(0.706 0.188 32.9);      /* #FF6A4D */
+  --on-accent: oklch(1 0 0);             /* text/icon on accent fills */
+
+  --dot-color: rgba(15, 23, 42, 0.04);
+  --scheme: light;
 
   --background: var(--bg);
   --foreground: var(--text);
-  
+
   --radius: 0.625rem;
+}
+
+/* Dark theme (default for this app). */
+.dark {
+  --bg: oklch(0.149 0.005 264.5);        /* #0A0B0D */
+  --surface: oklch(0.182 0.009 264.3);   /* #101216 */
+  --raised: oklch(0.213 0.013 264.3);    /* #16191F */
+  --border: oklch(0.269 0.016 269.1);    /* #23262E */
+  --dim: oklch(0.412 0.022 264.3);       /* #454B57 */
+  --muted: oklch(0.551 0.023 264.4);     /* #6B7280 */
+  --text-soft: oklch(0.761 0.021 260.2); /* #AAB2BF */
+  --text: oklch(0.957 0.006 255.5);      /* #EEF1F5 */
+  --accent: oklch(0.917 0.199 124.5);    /* #C7F94E — bright lime, readable on dark */
+  --coral: oklch(0.706 0.188 32.9);      /* #FF6A4D */
+  --on-accent: oklch(0.149 0.005 264.5); /* #0a0b0d */
+
+  --dot-color: rgba(255, 255, 255, 0.025);
+  --scheme: dark;
 }
 
 @theme {
@@ -34,6 +62,10 @@
   --color-soft: var(--text-soft);
 
   --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+
+  /* Brand badge palette — fixed accent hues (not theme-dependent), derived so
+     status chips stay recognizable in both themes. */
   --color-accent-lime: #C7F94E;
   --color-accent-cyan: #46E6D4;
   --color-accent-iris: #8B7BFF;
@@ -77,6 +109,7 @@ html {
   /* Always reserve the scrollbar gutter so the centered layout doesn't shift
      horizontally when filtering shortens the page and the scrollbar vanishes. */
   scrollbar-gutter: stable;
+  color-scheme: var(--scheme);
 }
 
 body {
@@ -84,13 +117,13 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
   background-size: 26px 26px;
 }
 
 ::selection {
   background: var(--accent);
-  color: #0a0b0d;
+  color: var(--on-accent);
 }
 
 @utility no-scrollbar {
@@ -131,16 +164,17 @@ body {
   html {
     @apply font-sans;
   }
-  /* Native date/time inputs: render their controls against the dark theme so
-     the calendar icon is legible instead of near-black on a dark field. */
+  /* Native date/time inputs: render their controls against the active theme
+     so the calendar icon stays legible (dark field + dark glyph would be
+     invisible; white field + white glyph likewise). */
   input[type="date"],
   input[type="datetime-local"],
   input[type="time"],
   input[type="month"],
   input[type="week"] {
-    color-scheme: dark;
+    color-scheme: var(--scheme);
   }
-  /* color-scheme: dark already makes the glyph light; just add affordance. */
+  /* color-scheme already picks the correct glyph luminance; just add affordance. */
   input::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 0.7;
