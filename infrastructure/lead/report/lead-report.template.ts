@@ -91,6 +91,12 @@ export function renderLeadReportHtml(opts: RenderReportOpts): string {
 <style>
   @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  a {
+    color: #C7F94E;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  a:visited { color: #C7F94E; }
   html, body {
     background: #0A0B0D;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
