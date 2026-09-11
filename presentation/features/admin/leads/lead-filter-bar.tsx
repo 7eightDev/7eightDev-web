@@ -292,11 +292,11 @@ export function LeadFilterBar({
         role="toolbar"
         aria-label="Filtri lead"
         data-pending={isPending ? "" : undefined}
-        className="-mx-8 px-8 pt-8 flex flex-col gap-3 transition-opacity data-[pending]:opacity-60"
+        className="-mx-4 sm:-mx-8 px-4 sm:px-8 pt-4 sm:pt-8 flex flex-col gap-3 transition-opacity data-[pending]:opacity-60"
       >
       {/* Row 1: action header (title + job selector | global actions) */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-        <h1 className="font-space text-3xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
+        <h1 className="font-space text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
           Lead
         </h1>
 
@@ -315,7 +315,7 @@ export function LeadFilterBar({
                   : "Tutte le ricerche"
               }
               className={cn(
-                "cursor-pointer max-w-[300px] font-mono text-[12.5px]",
+                "cursor-pointer max-w-[200px] sm:max-w-[300px] font-mono text-[12.5px]",
                 jobDrawerOpen && "border-accent text-accent bg-accent/[0.06]"
               )}
             >
@@ -329,21 +329,29 @@ export function LeadFilterBar({
               </span>
             </Button>
           )}
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
             <Link href={exportHref}>Esporta CSV</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="inline-flex sm:hidden w-9 h-9 p-0 justify-center">
+            <Link href={exportHref} aria-label="Esporta CSV">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            </Link>
           </Button>
           <Button
             size="sm"
             asChild
-            className="rounded-full bg-accent text-on-accent hover:brightness-105 hover:-translate-y-px hover:bg-accent"
+            className="rounded-full bg-accent text-on-accent hover:brightness-105 hover:-translate-y-px hover:bg-accent w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-[9px]"
           >
-            <Link href="/admin/leads/new">+ Nuova ricerca</Link>
+            <Link href="/admin/leads/new">
+              <span className="sm:hidden text-lg leading-none">+</span>
+              <span className="hidden sm:inline">+ Nuova ricerca</span>
+            </Link>
           </Button>
         </div>
       </div>
 
       {/* Row 2: operational filter band (search | status | clear) */}
-      <div className="mx-auto mt-6 flex w-full max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="mx-auto mt-6 flex w-full max-w-full sm:max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <input
             type="search"
@@ -352,7 +360,7 @@ export function LeadFilterBar({
             placeholder="Cerca lead…"
             aria-label="Cerca lead"
             className={cn(
-              "w-56 min-w-0 flex-1 sm:flex-1",
+              "w-full min-w-0 flex-1",
               inputBase,
               qActive && "border-accent"
             )}
@@ -409,7 +417,7 @@ export function LeadFilterBar({
       </div>
 
       {/* Quick outreach band: sales funnel stage filter */}
-      <div className="mx-auto flex w-full max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="mx-auto flex w-full max-w-full sm:max-w-[820px] flex-wrap items-center gap-x-3 gap-y-2">
         <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
           Outreach
         </span>
@@ -503,7 +511,7 @@ export function LeadFilterBar({
         >
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] sm:min-w-[150px]">
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
                 Score
               </span>
@@ -527,7 +535,7 @@ export function LeadFilterBar({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] sm:min-w-[150px]">
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
                 Sorgente
               </span>
@@ -551,7 +559,7 @@ export function LeadFilterBar({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] sm:min-w-[150px]">
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
                 Inserzioni Ads
               </span>
@@ -576,7 +584,7 @@ export function LeadFilterBar({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] sm:min-w-[200px]">
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
                 Copyright
               </span>

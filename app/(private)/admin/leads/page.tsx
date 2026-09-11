@@ -220,7 +220,7 @@ export default async function LeadsPage({
         />
 
         {runningJobs.some((job) => job.id !== jobId) && (
-          <div className="flex flex-col gap-2 rounded-xl border border-accent/40 bg-accent/[0.04] px-4 py-3">
+          <div className="flex flex-col gap-2 rounded-xl border border-accent/40 bg-accent/[0.04] px-3 sm:px-4 py-3">
             <div className="flex items-center gap-2">
               <svg
                 className="animate-spin text-accent"
@@ -248,7 +248,7 @@ export default async function LeadsPage({
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-accent">
                 Ricerche in corso
               </span>
-              <span className="ml-auto font-mono text-[11px] text-muted tabular-nums">
+              <span className="ml-auto font-mono text-[11px] text-muted tabular-nums hidden sm:inline">
                 {runningJobs.length === 1
                   ? "1 ricerca attiva"
                   : `${runningJobs.length} ricerche attive`}
@@ -276,9 +276,12 @@ export default async function LeadsPage({
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 font-mono text-[12px] text-muted tabular-nums">
+                  <span className="shrink-0 font-mono text-[12px] text-muted tabular-nums hidden sm:inline">
                     {job.totalFound} trovati · {job.analyzed} analizzati ·{" "}
                     {job.qualified} qualificati
+                  </span>
+                  <span className="sm:hidden font-mono text-[11px] text-muted tabular-nums">
+                    {job.totalFound} / {job.analyzed} / {job.qualified}
                   </span>
                 </Link>
               ))}
@@ -287,7 +290,7 @@ export default async function LeadsPage({
         )}
 
         {activeJob && (
-          <div className="flex items-start justify-between gap-3 rounded-xl border border-accent/40 bg-accent/[0.04] px-4 py-3">
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-accent/40 bg-accent/[0.04] px-3 sm:px-4 py-3">
             <div className="flex min-w-0 items-start gap-3">
               <HugeiconsIcon
                 icon={FolderOpenIcon}
@@ -318,7 +321,7 @@ export default async function LeadsPage({
                   </span>
                 )}
                 {activeJobRunning ? (
-                  <span className="mt-1 inline-flex items-center gap-2 font-mono text-[12px] text-muted">
+                  <span className="mt-1 inline-flex items-center gap-2 font-mono text-[12px] text-muted flex-wrap">
                     <svg
                       className="animate-spin text-accent"
                       width="13"
@@ -348,7 +351,7 @@ export default async function LeadsPage({
                     </span>
                   </span>
                 ) : (
-                  <span className="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-muted">
+                  <span className="mt-1 inline-flex items-center gap-1 font-mono text-[12px] text-muted flex-wrap">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70 shrink-0">
                       <circle cx="11" cy="11" r="8" />
                       <path d="M21 21l-4.35-4.35" />
@@ -372,7 +375,7 @@ export default async function LeadsPage({
             >
               <Link href="/admin/leads">
                 <HugeiconsIcon icon={CrossIcon} size={14} aria-hidden />
-                Togli filtro
+                <span className="hidden sm:inline ml-1">Togli filtro</span>
               </Link>
             </Button>
           </div>
@@ -414,7 +417,7 @@ export default async function LeadsPage({
         </div>
 
         {totalPages > 1 && (
-          <div className="flex shrink-0 items-center justify-between rounded-xl border border-border bg-surface px-4 py-2.5">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 sm:px-4 py-2.5">
             <span className="font-mono text-[11px] text-muted">
               Pagina {currentPage} di {totalPages} · {total} lead totali
             </span>
