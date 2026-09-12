@@ -88,6 +88,11 @@
   --color-accent-coral: var(--coral);
   --color-coral-text: var(--coral-text);
 
+  /* App-specific breakpoint: below 820px the dense DataTables (LeadTable,
+     quotes list) collapse into stacked card grids. Source of truth:
+     presentation/lib/breakpoints.ts -> BREAKPOINTS.cardStack. */
+  --breakpoint-820: 820px;
+
   --font-space: 'Space Grotesk', sans-serif;
   --font-hanken: 'Hanken Grotesk', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
