@@ -217,6 +217,7 @@ export default async function LeadsPage({
           copyrightTo={filters.copyrightTo}
           availableTechStacks={availableTechStacks}
           availableYears={availableYears}
+          totalResults={total}
         />
 
         {runningJobs.some((job) => job.id !== jobId) && (

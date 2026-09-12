@@ -74,6 +74,7 @@ interface LeadFilterBarProps {
   copyrightTo: number | undefined;
   availableTechStacks: string[];
   availableYears: number[];
+  totalResults: number;
 }
 
 const selectBase =
@@ -105,6 +106,7 @@ export function LeadFilterBar({
   copyrightTo,
   availableTechStacks,
   availableYears,
+  totalResults,
 }: LeadFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -272,6 +274,8 @@ export function LeadFilterBar({
     return query ? `/admin/leads/export?${query}` : "/admin/leads/export";
   }, [searchParams]);
 
+  const exportDisabled = totalResults === 0;
+
   return (
     <>
       <div
@@ -337,13 +341,41 @@ export function LeadFilterBar({
             />
             <span className="hidden sm:inline">Preferiti</span>
           </button>
-          <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
-            <Link href={exportHref}>Esporta CSV</Link>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={exportDisabled}
+            className={cn(
+              "hidden sm:inline-flex",
+              exportDisabled && "cursor-not-allowed"
+            )}
+            title={exportDisabled ? "Nessun risultato da esportare" : undefined}
+            asChild={!exportDisabled}
+          >
+            {exportDisabled ? (
+              "Esporta CSV"
+            ) : (
+              <Link href={exportHref}>Esporta CSV</Link>
+            )}
           </Button>
-          <Button variant="outline" size="sm" asChild className="inline-flex sm:hidden w-9 h-9 p-0 justify-center">
-            <Link href={exportHref} aria-label="Esporta CSV">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={exportDisabled}
+            className={cn(
+              "inline-flex sm:hidden w-9 h-9 p-0 justify-center",
+              exportDisabled && "cursor-not-allowed"
+            )}
+            title={exportDisabled ? "Nessun risultato da esportare" : undefined}
+            asChild={!exportDisabled}
+          >
+            {exportDisabled ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-            </Link>
+            ) : (
+              <Link href={exportHref} aria-label="Esporta CSV">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              </Link>
+            )}
           </Button>
           <Button
             size="sm"
