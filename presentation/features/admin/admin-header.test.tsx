@@ -6,6 +6,7 @@ import {
   cleanupMatchMediaMock,
   renderAt,
 } from "@/presentation/__mocks__/set-viewport";
+import { expectSheetWidth } from "@/presentation/__mocks__/expect-sheet-width";
 import { AdminHeader } from "./admin-header";
 
 // Third-party seams only — the Radix Sheet, Button and ThemeToggle stay real so
@@ -36,38 +37,8 @@ jest.mock("./google-quota-badge", () => ({
   GoogleQuotaBadge: () => null,
 }));
 
-/** Nav Sheet design tokens (admin-header): `w-[85%] max-w-[340px]`. */
-const SHEET_WIDTH_PERCENT = 0.85;
-const SHEET_MAX_WIDTH_PX = 340;
-
-/**
- * jsdom has no layout engine: `getBoundingClientRect` returns all-zero rects.
- * Derive the rendered width from the Tailwind tokens actually on the DOM node
- * (w-[85%] / max-w-[340px]) against the simulated viewport, stub the rect on
- * that node and assert the R3 guard (≤ max-w, ≥ capped 85vw) on the result.
- */
-function expectSheetWidth(dialog: HTMLElement, viewportWidth: number): void {
-  expect(dialog).toHaveClass(`w-[${Math.round(SHEET_WIDTH_PERCENT * 100)}%]`);
-  expect(dialog).toHaveClass(`max-w-[${SHEET_MAX_WIDTH_PX}px]`);
-
-  const percentMatch = /w-\[([\d.]+)%\]/.exec(dialog.className);
-  const maxMatch = /max-w-\[(\d+)px\]/.exec(dialog.className);
-  expect(percentMatch).not.toBeNull();
-  expect(maxMatch).not.toBeNull();
-
-  const fromPercent = (Number(percentMatch?.[1]) / 100) * viewportWidth;
-  const width = Math.min(Number(maxMatch?.[1]), fromPercent);
-  const expected = Math.min(SHEET_MAX_WIDTH_PX, SHEET_WIDTH_PERCENT * viewportWidth);
-
-  const previousRect = dialog.getBoundingClientRect.bind(dialog);
-  dialog.getBoundingClientRect = () =>
-    ({ ...previousRect(), width }) as DOMRect;
-
-  const rect = dialog.getBoundingClientRect();
-  expect(rect.width).toBeLessThanOrEqual(SHEET_MAX_WIDTH_PX);
-  expect(rect.width).toBeGreaterThanOrEqual(expected);
-  expect(rect.width).toBeCloseTo(expected, 5);
-}
+/** Nav Sheet design tokens (admin-header, consumed by the shared
+ *  `expectSheetWidth` helper): `w-[85%] max-w-[340px]`. */
 
 // The admin header intentionally renders only a sr-only SheetTitle and no
 // SheetDescription, so Radix prints its well-known accessibility advisory
