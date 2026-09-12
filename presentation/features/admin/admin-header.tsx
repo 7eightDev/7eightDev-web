@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { ArrowUpRight, Menu, X } from "lucide-react";
+import { ExternalLink, Menu, X } from "lucide-react";
 import { cn } from "@/presentation/lib/utils";
+import { Button } from "@/presentation/components/ui/button";
 import { Container } from "@/presentation/components/shared/container";
 import { LogoLockup } from "@/presentation/components/shared/logo";
 import { ThemeToggle } from "@/presentation/components/shared/theme-toggle";
@@ -57,40 +58,51 @@ export function AdminHeader({ showEmailLink = false }: AdminHeaderProps) {
 
   return (
     <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-[14px] border-b border-border">
-      <Container className="max-w-none h-16 flex items-center justify-between gap-4">
+      <Container className="max-w-none h-14 flex items-center justify-between gap-4">
         {/* Left: logo + desktop nav */}
-        <div className="flex items-center gap-4 min-w-0">
-          <Link href="/admin/quotes" className="shrink-0">
+        <div className="flex items-stretch gap-6 min-w-0">
+          <Link href="/admin/quotes" className="shrink-0 self-center">
             <LogoLockup size={15} />
           </Link>
-          <span className="w-px h-[22px] bg-border hidden md:block" />
-          <nav className="hidden md:flex items-center gap-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="font-mono text-[13px] text-soft hover:text-foreground transition-colors duration-150 no-underline"
-              >
-                {item.label}
-              </Link>
-            ))}
+
+          <nav className="hidden md:flex items-stretch gap-6 self-stretch">
+            {navItems.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative inline-flex items-center font-sans text-[13.5px] transition-colors duration-150 no-underline",
+                    active
+                      ? "font-semibold text-accent after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:rounded-full after:bg-accent"
+                      : "text-soft hover:text-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
-        {/* Right: quota badge + desktop home + user, mobile user + hamburger */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right: quota badge + theme + site link · divider · avatar */}
+        <div className="flex items-center gap-2 shrink-0">
           <GoogleQuotaBadge />
           <ThemeToggle />
-          <Link
-            href="/"
-            aria-label="Vai al sito pubblico"
-            title="Vai al sito"
-            className="hidden md:inline-flex items-center gap-1.5 font-mono text-[13px] text-soft border border-border rounded-[8px] px-3 py-1.5 hover:text-accent hover:border-accent transition-colors duration-150 no-underline"
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="hidden md:inline-flex rounded-[8px] text-soft hover:bg-raised hover:text-foreground cursor-pointer"
           >
-            <span>Vai al sito</span>
-            <ArrowUpRight className="size-[15px]" />
-          </Link>
-          <span className="w-px h-[22px] bg-border hidden md:block" />
+            <Link href="/" aria-label="Vai al sito pubblico" title="Vai al sito">
+              <span>Vai al sito</span>
+              <ExternalLink className="size-3.5" />
+            </Link>
+          </Button>
+          <span className="hidden md:block h-4 w-[1px] bg-border mx-1" aria-hidden />
           <div className="hidden md:block">
             <UserButton />
           </div>
@@ -129,9 +141,9 @@ export function AdminHeader({ showEmailLink = false }: AdminHeaderProps) {
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "font-mono text-[19px] py-4 border-b border-border/60 no-underline transition-colors duration-150",
+                    "font-sans text-[19px] py-4 border-b border-border/60 no-underline transition-colors duration-150",
                     isActive(item.href)
-                      ? "text-accent"
+                      ? "font-semibold text-accent"
                       : "text-soft hover:text-foreground"
                   )}
                 >
@@ -141,15 +153,15 @@ export function AdminHeader({ showEmailLink = false }: AdminHeaderProps) {
               <Link
                 href="/"
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-between font-mono text-[19px] py-4 border-b border-border/60 text-soft hover:text-foreground no-underline transition-colors duration-150"
+                className="flex items-center justify-between font-sans text-[19px] py-4 border-b border-border/60 text-soft hover:text-foreground no-underline transition-colors duration-150"
               >
                 <span>Vai al sito</span>
-                <ArrowUpRight className="size-[19px]" />
+                <ExternalLink className="size-[19px]" />
               </Link>
             </nav>
 
             <div className="px-6 py-5 border-t border-border shrink-0">
-              <div className="flex items-center gap-3 font-mono text-[15px] text-soft">
+              <div className="flex items-center gap-3 font-sans text-[15px] text-soft">
                 <UserButton />
                 <span>Profilo</span>
               </div>

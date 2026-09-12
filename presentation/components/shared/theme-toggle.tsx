@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import { Button } from "@/presentation/components/ui/button";
 
 const emptySubscribe = () => () => {};
 // Hijacks React's subscription machinery: returns `false` on the server and
@@ -20,20 +21,22 @@ export function ThemeToggle() {
   const mounted = useMounted();
 
   if (!mounted) {
-    return <div className="size-9 rounded-[9px]" aria-hidden />;
+    return <div className="size-9 rounded-[8px]" aria-hidden />;
   }
 
   const dark = resolvedTheme === "dark";
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       aria-label={dark ? "Attiva il tema chiaro" : "Attiva il tema scuro"}
       title={dark ? "Tema chiaro" : "Tema scuro"}
       onClick={() => setTheme(dark ? "light" : "dark")}
-      className="flex items-center justify-center size-9 rounded-[9px] text-soft hover:text-accent transition-colors duration-150 border border-border hover:border-accent bg-transparent cursor-pointer"
+      className="rounded-[8px] text-soft hover:bg-raised hover:text-accent cursor-pointer"
     >
       {dark ? <Sun className="size-[17px]" /> : <Moon className="size-[17px]" />}
-    </button>
+    </Button>
   );
 }
