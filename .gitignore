@@ -44,5 +44,9 @@ next-env.d.ts
 # Prisma generated client
 infrastructure/db/generated/
 
+# E2E auth bridge (Clerk session in persistent browser profile + storageState).
+# Local-only: contains live session cookies — regenerable via --login.
+.e2e/
+
 # Local working docs (not versioned)
 docs/Lead Generation — Piano Interventi.md
