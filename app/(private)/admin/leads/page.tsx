@@ -418,7 +418,7 @@ export default async function LeadsPage({
         </div>
 
         {totalPages > 1 && (
-          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-raised px-3 sm:px-4 py-2.5">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-full border border-border bg-panel-bg px-3 sm:px-4 py-2.5">
             <span className="font-mono text-[11px] text-muted">
               Pagina {currentPage} di {totalPages} · {total} lead totali
             </span>

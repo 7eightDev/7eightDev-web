@@ -18,6 +18,7 @@ import {
   FilterRemoveIcon,
   StarIcon,
 } from "@hugeicons/core-free-icons";
+import { Download } from "lucide-react";
 import { Button } from "@/presentation/components/ui/button";
 import { LeadJobDrawer } from "@/presentation/features/admin/leads/lead-job-drawer";
 import { cn } from "@/presentation/lib/utils";
@@ -284,13 +285,13 @@ export function LeadFilterBar({
         data-pending={isPending ? "" : undefined}
         className="-mx-4 sm:-mx-8 px-4 sm:px-8 pt-4 sm:pt-8 flex flex-col gap-3 transition-opacity data-[pending]:opacity-60"
       >
-      {/* Row 1: action header (title + job selector | global actions) */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-        <h1 className="font-space text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
-          Lead
-        </h1>
+      {/* Row 1: action header (title + batch/filter controls | global actions) */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="font-space text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-foreground m-0 shrink-0">
+            Lead
+          </h1>
 
-        <div className="flex items-center gap-2 ml-auto">
           {jobs.length > 0 && (
             <Button
               type="button"
@@ -302,17 +303,17 @@ export function LeadFilterBar({
               title={
                 activeJob
                   ? `${activeJob.query}${activeJob.location ? ` (${activeJob.location})` : ""}`
-                  : "Tutte le ricerche"
+                  : "Tutte"
               }
               className={cn(
-                "cursor-pointer max-w-[200px] sm:max-w-[300px] font-mono text-[12.5px]",
+                "cursor-pointer max-w-[200px] sm:max-w-[300px] font-mono text-[12.5px] h-auto py-[11px]",
                 jobDrawerOpen && "border-accent text-accent bg-accent/[0.06]"
               )}
             >
               <span className="flex-1 min-w-0 truncate">
                 {activeJob
                   ? activeJob.query
-                  : "Tutte le ricerche"}
+                  : "Tutte"}
               </span>
               <span className="shrink-0 text-muted">
                 ({activeJob ? activeJob.totalFound : jobs.length})
@@ -327,7 +328,7 @@ export function LeadFilterBar({
               favorite === "favorite" ? "Mostra tutti i lead" : "Solo lead preferiti (stella)"
             }
             className={cn(
-              "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border px-2 sm:px-3 font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
+              "inline-flex items-center justify-center gap-1.5 rounded-full border px-2 sm:px-3 py-[11px] font-mono text-[12.5px] transition-colors duration-150 cursor-pointer",
               favorite === "favorite"
                 ? "border-accent-amber bg-accent-amber/10 text-accent-amber hover:brightness-110"
                 : "border-border bg-surface text-soft hover:text-foreground hover:border-accent/40"
@@ -341,21 +342,33 @@ export function LeadFilterBar({
             />
             <span className="hidden sm:inline">Preferiti</span>
           </button>
+        </div>
+
+        <div className="flex flex-row items-center gap-3">
           <Button
             variant="outline"
             size="sm"
             disabled={exportDisabled}
             className={cn(
-              "hidden sm:inline-flex",
+              "hidden sm:inline-flex gap-2 h-auto py-[11px]",
               exportDisabled && "cursor-not-allowed"
             )}
             title={exportDisabled ? "Nessun risultato da esportare" : undefined}
             asChild={!exportDisabled}
           >
             {exportDisabled ? (
-              "Esporta CSV"
+              <>
+                <Download aria-hidden />
+                Esporta CSV
+              </>
             ) : (
-              <Link href={exportHref}>Esporta CSV</Link>
+              <Link
+                href={exportHref}
+                className="inline-flex items-center gap-2"
+              >
+                <Download aria-hidden />
+                Esporta CSV
+              </Link>
             )}
           </Button>
           <Button
@@ -370,17 +383,17 @@ export function LeadFilterBar({
             asChild={!exportDisabled}
           >
             {exportDisabled ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              <Download aria-hidden />
             ) : (
               <Link href={exportHref} aria-label="Esporta CSV">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                <Download aria-hidden />
               </Link>
             )}
           </Button>
           <Button
             size="sm"
             asChild
-            className="rounded-full bg-accent text-on-accent hover:brightness-105 hover:-translate-y-px hover:bg-accent w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-[9px]"
+            className="rounded-full bg-accent text-on-accent hover:brightness-105 hover:-translate-y-px hover:bg-accent w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-[11px]"
           >
             <Link href="/admin/leads/new">
               <span className="sm:hidden text-lg leading-none">+</span>
