@@ -79,12 +79,13 @@ export function GoogleQuotaBadge() {
           type="button"
           aria-label="Quota API Google di oggi"
           className={cn(
-            "hidden md:inline-flex items-center gap-1.5 font-mono text-[12px] border rounded-[8px] px-2.5 py-1.5 cursor-help bg-transparent",
+            "hidden sm:inline-flex items-center gap-1.5 font-mono text-[12px] border rounded-[8px] px-2.5 py-1.5 cursor-help bg-transparent",
             tone,
           )}
         >
           <Gauge className="size-[13px] opacity-80 shrink-0" />
-          <span>
+          <span className="md:hidden">{available ? `${used}/${limit}` : "N/D"}</span>
+          <span className="hidden md:inline">
             {available ? `Quota: ${used}/${limit}` : "Quota: N/D"}
           </span>
         </button>

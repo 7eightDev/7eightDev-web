@@ -14,6 +14,7 @@
   --bg: oklch(0.979 0.003 264.5);        /* #F7F8FA */
   --surface: oklch(1 0 0);               /* #FFFFFF */
   --raised: oklch(0.968 0.007 247.9);    /* #F1F5F9 */
+  --panel-bg: oklch(0.925 0.008 247.9);    /* #D6DBE2 — slightly darker than raised */
   --border: oklch(0.929 0.013 255.5);    /* #E2E8F0 */
   --dim: oklch(0.869 0.020 252.9);       /* #CBD5E1 */
   --muted: oklch(0.551 0.023 264.4);     /* #6B7280 */
@@ -43,6 +44,7 @@
   --bg: oklch(0.149 0.005 264.5);        /* #0A0B0D */
   --surface: oklch(0.182 0.009 264.3);   /* #101216 */
   --raised: oklch(0.213 0.013 264.3);    /* #16191F */
+  --panel-bg: oklch(0.247 0.013 264.3);    /* #1E222B — slightly lighter than raised */
   --border: oklch(0.269 0.016 269.1);    /* #23262E */
   --dim: oklch(0.412 0.022 264.3);       /* #454B57 */
   --muted: oklch(0.551 0.023 264.4);     /* #6B7280 */
@@ -68,6 +70,7 @@
 
   --color-surface: var(--surface);
   --color-raised: var(--raised);
+  --color-panel-bg: var(--panel-bg);
   --color-border: var(--border);
   --color-dim: var(--dim);
   --color-muted: var(--muted);
@@ -195,5 +198,13 @@ body {
   }
   input::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
+  }
+  /* The lead search uses its own inline clear button: hide the native
+     WebKit cancel glyph so `type="search"` doesn't render a second X. */
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
   }
 }

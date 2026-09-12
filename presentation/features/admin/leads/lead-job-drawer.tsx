@@ -82,7 +82,7 @@ export function LeadJobDrawer({
                 : "border-border text-soft hover:border-[color-mix(in_oklab,var(--accent)_45%,var(--border))] hover:text-foreground"
             )}
           >
-            <span className="truncate">Tutte le ricerche</span>
+            <span className="truncate">Tutte</span>
             <span className="shrink-0 text-muted">({jobs.length})</span>
           </Link>
 
