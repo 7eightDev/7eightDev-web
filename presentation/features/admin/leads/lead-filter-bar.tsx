@@ -364,7 +364,7 @@ export function LeadFilterBar({
             ) : (
               <Link
                 href={exportHref}
-                className="inline-flex items-center gap-2"
+                className="items-center gap-2"
               >
                 <Download aria-hidden />
                 Esporta CSV
