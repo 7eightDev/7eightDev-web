@@ -48,5 +48,10 @@ infrastructure/db/generated/
 # Local-only: contains live session cookies — regenerable via --login.
 .e2e/
 
+# Playwright runtime artifacts
+/test-results/
+/playwright-report/
+/blob-report/
+
 # Local working docs (not versioned)
 docs/Lead Generation — Piano Interventi.md

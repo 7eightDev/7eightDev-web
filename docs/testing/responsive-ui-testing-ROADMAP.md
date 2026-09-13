@@ -39,7 +39,8 @@
 
 ## MACRO-ATTIVITÀ 3 — E2E Responsive con Playwright
 
-- [ ] **MS-3.1** Installare `@playwright/test` + browser; `playwright.config.ts` con projects: Desktop 1280×800 / Tablet 768×1024 (touch) / Mobile Safari 375×667 / Mobile Chrome 375×812.
+- [x] **MS-3.1** Installare `@playwright/test` + browser; `playwright.config.ts` con projects: Desktop 1280×800 / Tablet 768×1024 (touch) / Mobile Safari 375×667 / Mobile Chrome 375×812.
+      → `@playwright/test` ^1.63.0 già devDependency (MS-1.3): eseguito `npx playwright install chromium webkit` (webkit serve anche per il progetto Mobile Safari; versione cache `chromium-1243`/`webkit-2359`). Creato `playwright.config.ts` alla radice: **viewport NON hard-coded** — larghezze importate da `DEVICE_PROFILES` (`presentation/lib/breakpoints.ts`) con template literal nei nomi progetto; altezze convenzione roadmap (800/1024/667) + 812 per Mobile Chrome. I 4 projects: **Desktop 1280×800** (`devices["Desktop Chrome"]`, `deviceScaleFactor:1`, `isMobile:false`, `hasTouch:false`), **Tablet 768×1024** (`Desktop Chrome` + dpr 2/isMobile/hasTouch — 768 < 820 → card grid ed <1024 → hamburger, R2), **Mobile Safari 375×667** (`devices["iPhone 8"]` = webkit dpr 2 touch, viewport 375×667 nativ), **Mobile Chrome 375×812** (`devices["Pixel 5"]` chromium dpr 3 touch con viewport override). `webServer: npm run dev` su `http://localhost:3000` con `reuseExistingServer: !CI` (in CI server fresco; localmente riusa — attenzione al trap Prisma/Turbopack di AGENTS.md: se cambia lo schema, ripartire con `npm run dev:clean`), `testDir: ./e2e`, `trace: on-first-retry`, reporter list/HTML(CI), retries 2 solo in CI, `fullyParallel`. Scaffold: `e2e/smoke.spec.ts` (1 test pubblico su `/` per validare config+server su tutti e 4 i project — niente auth, che è MS-3.2) + `.gitignore` esteso (`/test-results/`, `/playwright-report/`, `/blob-report/`). **Note incrocio MS-3.3**: il fix tablet `QuoteFilterBar` di MS-1.4 (cluster secondario `hidden lg:flex` + popover trigger `lg:hidden` al posto dell'attuale `hidden sm:flex`/`sm:hidden`) NON è ancora applicato: va triagato/regredito in MS-3.3 col nuovo test di regression toolbar. Verificato: `npx playwright test` ✅ **4/4 (1.63.0)**, `npm run typecheck` ✅, `npx eslint playwright.config.ts e2e/smoke.spec.ts` ✅.
 - [ ] **MS-3.2** Assorbire scaffold auth (Clerk) per route protette nel `storageState`.
 - [ ] **MS-3.3** Test visibilità/regression: hamburger visibile su mobile & hidden su desktop, apertura Sheet nav, switch tabella→card <820px, toolbar senza overflow.
 - [ ] **MS-3.4** Assert di layout: nessun elemento tracima il viewport (`boundingBox` vs 0/viewportWidth).
@@ -73,7 +74,7 @@ usano direttamente `max-[820px]:` (arbitrario), equivalente al token
   niente componenti). **Primo test componente**: `admin-header.test.tsx`
   (MS-2.2, 6 test) → il pattern da riusare è mock dei soli seam esterni +
   contratto classi Tailwind (niente layout in jsdom).
-- Playwright **non** installato (→ MS-3.1).
+- Playwright **installato** (MS-3.1): `@playwright/test` ^1.63.0 + browser `chromium`/`webkit` (cache locale). Config `playwright.config.ts` alla radice (4 project, larghezze da `DEVICE_PROFILES`), `testDir ./e2e`, webServer `npm run dev`. Auth Clerk → **MS-3.2**.
 
 ### Pagine admin (tutte montano `AdminHeader` via `app/(private)/layout.tsx`)
 | Pagina | Componenti critici | Note responsive |
@@ -164,8 +165,8 @@ usano direttamente `max-[820px]:` (arbitrario), equivalente al token
 
 ## Stato avanzamento
 
-- **In corso:** MACRO-ATTIVITÀ 3 · MS-3.1 (installare `@playwright/test` + browser; `playwright.config.ts` con projects Desktop/Tablet/Mobile).
-- **Prossimo:** MS-3.2.
-- **Completate:** MA-1 intera (MS-1.1…MS-1.4) + MA-2 intera (MS-2.1…MS-2.6).
+- **In corso:** MACRO-ATTIVITÀ 3 · MS-3.2 (assorbire scaffold auth Clerk nel `storageState` per le route protette).
+- **Prossimo:** MS-3.3 (test visibilità/regression; incrociare il fix tablet `QuoteFilterBar` del triage MS-1.4 — cluster secondario `hidden lg:flex` + popover `lg:hidden`).
+- **Completate:** MA-1 intera (MS-1.1…MS-1.4) + MA-2 intera (MS-2.1…MS-2.6) + MS-3.1.
 
 > Alla fine di ogni macro-attività consegnare un prompt di riepilogo avanzamento + punto di ripresa, riferito a questo file.
