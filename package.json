@@ -13,6 +13,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
+    "test:e2e": "npx playwright test",
+    "test:e2e:update": "node scripts/update-snapshots.mjs",
     "test:presentation": "jest --config jest.config.presentation.js",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",

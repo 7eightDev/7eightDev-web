@@ -59,6 +59,22 @@ const QUOTA_FIXTURE = {
   },
 };
 
+/**
+ * MS-4.2 — determinismo dev-tools: in dev l'overlay Next.js ("Issues badge",
+ * host shadow-DOM `<nextjs-portal>`) compare quando la sessione Turbopack
+ * accumula issue di compilazione e può apparire/disparire tra un run e l'altro
+ * (il conteggio cresce durante la suite). NON è contenuto della pagina — in
+ * produzione non esiste — quindi va nascosto in modo deterministico. Distribuito
+ * via `addInitScript` (ogni documento), il CSS copre anche gli host montati
+ * DOPO l'iniezione.
+ */
+const DEV_TOOLS_HIDE_CSS = `
+  nextjs-portal,
+  [data-nextjs-portal],
+  #__next_devtools,
+  [data-nextjs-dev-tools] { display: none !important; }
+`;
+
 const VIEWS = [
   {
     name: "landing",
@@ -116,6 +132,12 @@ test.describe("canonical screenshots", () => {
 
   for (const view of VIEWS) {
     test(`baseline: ${view.label} (${view.path})`, async ({ page }) => {
+      await page.addInitScript((css) => {
+        const style = document.createElement("style");
+        style.textContent = css;
+        document.documentElement.appendChild(style);
+      }, DEV_TOOLS_HIDE_CSS);
+
       await page.emulateMedia({
         colorScheme: "dark",
         reducedMotion: view.reducedMotion ? "reduce" : "no-preference",
