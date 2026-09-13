@@ -29,6 +29,19 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: "on-first-retry",
   },
+  // MS-4.1 — baseline screenshots live under e2e/screenshots/<project>/ and are
+  // committed (unlike test-results/). No `{platform}` token on purpose: the
+  // same baseline PNG is compared on macOS (local) and Linux (CI), since each
+  // project maps to a single engine and fonts are self-hosted via next/font.
+  snapshotPathTemplate: "{testDir}/screenshots/{projectName}/{arg}{ext}",
+  expect: {
+    toHaveScreenshot: {
+      // Freeze CSS animations/transitions/Web Animations during the capture
+      // (infinite ones are held at their initial keyframe): the terminal
+      // `animate-blink` cursor and any `animate-spin` settle deterministically.
+      animations: "disabled",
+    },
+  },
   webServer: {
     command: "npm run dev",
     url: BASE_URL,
