@@ -60,13 +60,15 @@ const QUOTA_FIXTURE = {
 };
 
 /**
- * MS-4.2 — determinismo dev-tools: in dev l'overlay Next.js ("Issues badge",
- * host shadow-DOM `<nextjs-portal>`) compare quando la sessione Turbopack
- * accumula issue di compilazione e può apparire/disparire tra un run e l'altro
- * (il conteggio cresce durante la suite). NON è contenuto della pagina — in
- * produzione non esiste — quindi va nascosto in modo deterministico. Distribuito
- * via `addInitScript` (ogni documento), il CSS copre anche gli host montati
- * DOPO l'iniezione.
+ * MS-4.2/MS-4.3 — determinismo dev-tools: in dev l'overlay Next.js ("Issues
+ * badge", host `<nextjs-portal>`) compare quando la sessione Turbopack accumula
+ * issue di compilazione e può apparire/disparire tra un run e l'altro. NON è
+ * contenuto della pagina — in produzione non esiste — quindi va nascosto in modo
+ * deterministico. Il CSS è iniettato via `page.addStyleTag` DOPO la navigation
+ * (scoperto in MS-4.3: la `<style>` appesa da `addInitScript` viene POTATA dal
+ * runtime dev di Next e il badge paintava comunque); il `data-probe` + il
+ * duplicato in `addInitScript` restano come difesa per frame/navigazioni
+ * successive.
  */
 const DEV_TOOLS_HIDE_CSS = `
   nextjs-portal,
@@ -164,6 +166,13 @@ test.describe("canonical screenshots", () => {
       await expect(
         page.getByRole("heading", { level: 1 }).first()
       ).toBeVisible({ timeout: 15_000 });
+
+      // MS-4.3 hardening: addStyleTag persiste nel head (a differenza della
+      // <style> da addInitScript, che Next pota) e nasconde il portal anche se
+      // montato come shadow host. Dopo `waitUntil:"commit"` il DOM non è ancora
+      // parsato (`document.head` null) → l'iniezione va fatta qui, con l'h1 già
+      // visibile.
+      await page.addStyleTag({ content: DEV_TOOLS_HIDE_CSS });
 
       if (view.path.startsWith("/admin/")) {
         await expect(page).not.toHaveURL(/\/sign-in/);
