@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectNoHorizontalOverflow } from "./helpers/layout";
 import { DEVICE_PROFILES } from "../presentation/lib/breakpoints";
 
 // Altezze convenzione roadmap (800/1024/667) — le larghezze vengono da
@@ -13,57 +14,16 @@ const MOBILE_HEIGHT = 667;
  * scrollare orizzontalmente. È il segnale esatto del bug reale MS-1.4:
  * a tablet 768×1024 la toolbar QuoteFilterBar era 892px su 689 disponibili
  * e `main` rendeva scrollbar orizzontale (scrollW 924 > clientW 753).
+ *
+ * La logica è estratta nell'helper condiviso `helpers/layout.ts` (MS-3.4):
+ * qui il root della scansione è la toolbar stessa, restando lo stesso
+ * regression del fix MS-1.4.
  */
 async function expectToolbarWithinViewport(page: Page) {
-  await expect(
-    page.getByRole("toolbar", { name: "Filtri preventivi" })
-  ).toBeVisible();
-
-  const report = await page.evaluate(() => {
-    const toolbar = document.querySelector(
-      '[role="toolbar"][aria-label="Filtri preventivi"]'
-    );
-    if (!toolbar) {
-      return {
-        toolbarFound: false as const,
-        mainScrollOk: null,
-        offenders: [] as string[],
-      };
-    }
-    const vw = document.documentElement.clientWidth;
-    const offenders: string[] = [];
-    toolbar
-      .querySelectorAll<HTMLElement>("button, a, select, [role='checkbox']")
-      .forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
-        if (rect.left < -0.5 || rect.right > vw + 0.5) {
-          offenders.push(
-            `<${el.tagName.toLowerCase()}> left=${rect.left.toFixed(
-              1
-            )} right=${rect.right.toFixed(1)} vw=${vw}`
-          );
-        }
-      });
-    const main = document.querySelector("main");
-    return {
-      toolbarFound: true as const,
-      mainScrollOk: main ? main.scrollWidth <= main.clientWidth : false,
-      offenders,
-    };
+  await expectNoHorizontalOverflow(page, {
+    root: page.getByRole("toolbar", { name: "Filtri preventivi" }),
+    label: "toolbar Filtri preventivi",
   });
-
-  expect(
-    report.toolbarFound,
-    "la toolbar 'Filtri preventivi' deve esistere su /admin/quotes"
-  ).toBe(true);
-  expect(
-    report.mainScrollOk,
-    "main non deve scrollare orizzontalmente (bug MS-1.4)"
-  ).toBe(true);
-  expect(report.offenders, "nessun elemento del toolbar tracima il viewport").toEqual(
-    []
-  );
 }
 
 /**
