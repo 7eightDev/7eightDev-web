@@ -197,7 +197,7 @@ export function QuoteFilterBar({
           even spacing instead of crowding the last pipeline icon. */}
       <div className="flex items-end gap-x-4 sm:gap-x-5 max-sm:flex-1 max-sm:justify-between">
         {PIPELINE_STATUSES.map((value) => statusTab(value))}
-        <div className="sm:hidden">
+        <div className="lg:hidden">
           <Popover open={menuOpen} onOpenChange={setMenuOpen}>
             <PopoverTrigger asChild>
               <button
@@ -251,8 +251,10 @@ export function QuoteFilterBar({
         </div>
       </div>
 
-      {/* Secondary — inline with dividers on desktop only. */}
-      <div className="hidden sm:flex items-end gap-x-5">
+      {/* Secondary — inline with dividers on desktop only (lg+). From sm to
+          lg the tablet relies on the overflow popover (see MS-1.4 triage:
+          sm: was too early, the inline cluster overflowed at 768×1024). */}
+      <div className="hidden lg:flex items-end gap-x-5">
         <span aria-hidden className="w-px self-stretch bg-border mb-2.5" />
         <div className="flex items-end gap-x-5">
           {CLOSED_STATUSES.map((value) => statusTab(value))}
