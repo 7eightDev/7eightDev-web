@@ -97,6 +97,61 @@
 - [x] **MS-4.5** Verifica finale: CI verde da zero, snapshot stabili, threshold rate.
       → Verifica locale completa: 4 job CI simulati localmente (lint, typecheck, unit, e2e+visual) → tutti verdi. Snapshot stabili: 10/10 `test:visual` read-only su Docker Postgres con dati fixture = determinismo provato. Threshold rate: `maxDiffPixelRatio: 0.01` (1%) tolleranza sub-pixel cross-engine. Primo run CI reale: in attesa secrets utente (v. MS-4.4).
 
+## MACRO-ATTIVITÀ 5 — Estensione del coverage alla matrice responsività residua
+
+Obiettivo: portare sotto test la superficie censita da MS-1.2 ma rimasta "fuori
+scope" (form quote/catalog/lead, detail page+dialog, report/email preview,
+landing below-the-fold, quote modal), organizzata come **matrice
+pagine × breakpoint** derivata da `DEVICE_PROFILES`/`BREAKPOINTS` (mai
+larghezze hard-coded). Il primo MS è l'**unpack della matrice**: censimento
+concreto (fatto: righe sotto) → priorità P0–P3 → lista dei micro-step → poi
+esecuzione un MS alla volta, verifica al terminale, aggiornamento di questo
+file e tick.
+
+### Censimento coverage residuo (unpack MS-5.1 — delibera/stato, nessuna modifica ad app/)
+Censiti i componenti con firme responsive concrete via esplorazione (file:riga):
+
+1. **QuoteComposer new/edit** — `presentation/features/admin/quote-composer.tsx` (1135 righe)
+   - Flip **lg** `grid-cols-1 lg:grid-cols-[1fr_340px]` (r.517): form+sidebar stacked sotto lg, colonna fissa 340px da lg (r.921 `hidden lg:flex`).
+   - **Sticky footer mobile** `lg:hidden fixed bottom-0 left-0 right-0 z-50` (r.1018) con "Annulla"+totale+"Avanti"; form `pb-24 sm:pb-0` (r.476); bottone "Crea bozza" `lg:hidden` (r.907).
+   - Bottoni step "Prossimo step"/"Voci"/"Roadmap" `hidden sm:block/sm:flex` (r.594/746/787/898); campi form `grid-cols-1 sm:grid-cols-2` (r.525/553); padding `p-4 sm:p-6`.
+   - Catalogo: sidebar mobile collassabile `lg:hidden` (r.607) + card compatte `w-[160px]` con `overflow-x-auto` (r.1100); `PairListEditor` (pair-list-editor.tsx:65/73/97) stacked vs `sm:flex-row`.
+   - **Volatile**: `defaultValidUntil()` = `new Date()` → inavvicinabile per screenshot canonici.
+   - **Rischio ALTO** — già in layout-overflow ma solo `<main>` overflow; mancano i flip dell'interfaccia (sidebar lg, footer sticky, bottoni step sm, catalogo mobile).
+2. **Catalog list** — `app/(private)/admin/catalog/page.tsx`
+   - **Flip ad-hoc `max-[680px]:grid-cols-1` (NON in `BREAKPOINTS`)** sulla grid `[1fr_auto_auto]` (r.80) → introduce un boundary di test 680px estraneo alla matrice standard; bottone "+ Nuova voce" `w-9 h-9 sm:w-auto …` con doppio label `sm:hidden`/`hidden sm:inline` (r.47-50).
+   - **Rischio MEDIO/ALTO** — flip non standard mai testato.
+3. **Catalog form** — `catalog-item-form.tsx` (308 righe)
+   - Container pagina `max-w-[760px]` vs form interno `max-w-[680px] grid-cols-1 sm:grid-cols-2` (r.105/107); range prezzo `grid-cols-2 max-w-[460px]` (r.193). `max-w` è un cap non un min → triage a 375 obbligatorio (potenziale tracimazione segnalata dal censimento).
+   - **Rischio MEDIO** — boundary 375 da triage.
+4. **Email preview + Lead report preview** — `email-preview-panel.tsx` (193) + `lead-report-preview-panel.tsx` (229), pagine `lg:h-full lg:flex lg:flex-col` su `max-w-[1440px]`
+   - Flip **lg** `grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_320px]` (paneli r.84/104): scenario+preview+test-send stacked sotto lg. **Dev-only** (email: 404 in prod, `NODE_ENV !== 'production'`).
+   - **Rischio MEDIO** — flip 3-col condiviso ma mai testato.
+5. **Lead detail page** — `lead-detail.tsx` (275 righe)
+   - KPI `grid-cols-2 sm:grid-cols-3 lg:grid-cols-6` (r.86); card Cliente/Contesto/Vendita `grid lg:grid-cols-3` (r.208). **Volatile** (dati DB: score, vitals, dates) → niente screenshot, domino assert layout+DOM.
+   - **Rischio ALTO** — 0 test.
+6. **Lead detail dialog** — `lead-detail-dialog.tsx` (572 righe)
+   - `sm:max-w-5xl max-h-[90vh]`, body `grid-cols-1 md:grid-cols-2` (r.220/452); **PageSpeedBand `flex-wrap … overflow-x-auto`** (r.131) = rischio overflow interno a 375.
+   - **Rischio ALTO** — mai aperto da un E2E per verificarne il layout a vari viewport.
+   - ⚠️ **`lead-detail-sheet.tsx` (486 righe) confermato DEAD CODE** (0 import nel codice; l'UI usa `lead-detail-dialog.tsx`) — candidato a rimozione (fuori scope test, da proporre al committente).
+7. **Lead search form + intercepted modal** — `lead-search-form.tsx` (169) + `new-lead-dialog.tsx` (`sm:max-w-[680px]`)
+   - Grid `grid-cols-1 sm:grid-cols-2` (r.53/102), qty `sm:max-w-[220px]` (r.91), dropdown autocomplete position:absolute. **Nessun dato DB volatile.**
+   - **Rischio BASSO** — form semplice; copertura minima opzionale.
+8. **Landing below-the-fold** — `hero` (grid `md:grid-cols-[1.1fr_0.9fr]`, r.155; toggle `sm:inline-flex`, r.137; **terminal `md:block hidden`, r.201**), `dual` (`md:grid-cols-2`), `metodo` (`md:grid-cols-3` + guarantees `sm:grid-cols-2 md:grid-cols-3`), `stack`/`processo` (`sm:grid-cols-2 md:grid-cols-4`), `footer` (`sm:grid-cols-2 md:grid-cols-4`), nav links `hidden md:flex` (nav.tsx:42), `quote-modal` (`max-w-[560px]`, grid `md:grid-cols-2`).
+   - La baseline MS-4.1 copre **solo above-the-fold** → i flip delle sezioni sotto la piega e del nav a md non sono verificati.
+   - **Rischio MEDIO** — dati statici, ideale per assert DOM+flip (e opzionalmente nuove baseline full-page deliberate in MA-5).
+9. **Ricognizione breakpoint emersi dal censimento** (oltre a quelli canonici): **`max-[680px]`** (catalog list, ad-hoc), **`max-w-[560px]`/`[680px]`/`[760px]`/`[1440px]`** (container) — il 680 è l'unico boundary di *flip* non canonico: da registrare come boundary di test ("680", incluso in MS-5.1) o da normalizzare al token `sm`/`cardStack` (decisione da proporre).
+
+### Micro-step MA-5 (lista segnaposto; tick dopo verifica al terminale)
+- [ ] **MS-5.1** Unpack della matrice responsività residua: censimento (righe sopra) → priorità P0–P3 → firma del piano; **estendere la matrice di test condivisa** con i nuovi boundary emersi (`680` catalog; `375` form boundary; container `[280px_1fr_320px]`) senza toccare app/.
+- [ ] **MS-5.2** E2E P0 — **QuoteComposer** (new/edit): flip sidebar lg (presente a 1280, assente a 768/375), sticky footer mobile `lg:hidden` presente <lg e assente ≥lg, bottoni step `hidden sm:*` flip 639/641, catalogo collassabile mobile + card `w-[160px]` overflow-x controllato, `<main>` overflow (estendere layout-overflow). Container form NON volatile: `waitUntil:"commit"` + h1/h2 attese.
+- [ ] **MS-5.3** E2E P0 — **Lead detail page + dialog**: KPI `grid-cols-2/3/6` flip a sm/lg (con `setViewportSize`), card `lg:grid-cols-3`, dialog `sm:max-w-5xl` + body `md:grid-cols-2`, PageSpeedBand `overflow-x-auto` a 375; apertura dialog via riga tabella. Niente screenshot (dati volatili): solo assert layout/DOM.
+- [ ] **MS-5.4** E2E P1 — **Catalog list + form**: flip `max-[680px]:grid-cols-1` a 679/681, bottone "+" double-label sm, triage boundary 375 del form `max-w-[680px]`.
+- [ ] **MS-5.5** E2E P1 — **Email + Lead report preview**: flip `lg:grid-cols-[280px_1fr_320px]` a 1023/1025 (dev-only, gate `NODE_ENV`); niente screenshot se l'HTML/iframe email è volatile.
+- [ ] **MS-5.6** E2E P2 — **Landing below-the-fold**: nav links `hidden md:flex` flip 767/769, terminal hero `md:block` flip, grid dual/metodo/stack/processo/footer flip a sm/md; quote-modal `max-w-[560px]` aperto dal bottone "Richiedi un preventivo"; opzionale decisione su eventuali nuove baseline full-page (strategia (b), data-agnostic).
+- [ ] **MS-5.7** Unit P2/P3 (solo se il job socket lo giustifica): `LeadSearchForm` (grid 1/2 col), `PairListEditor` (stacked vs `sm:flex-row`), step navigation QuoteComposer (sticky footer toggle).
+- [ ] **MS-5.8** Verifica di chiusura MA-5: matrice completa coperta, suite `test:e2e` verde su tutti i project, `test:visual` intatta (9 baseline), typecheck+eslint, aggiornamento Stato avanzamento.
+
 ---
 
 ## MAPPATURA MS-1.2 — Pagine e componenti critici (inventario per i test)
@@ -209,8 +264,8 @@ usano direttamente `max-[820px]:` (arbitrario), equivalente al token
 
 ## Stato avanzamento
 
-- **In corso:** MACRO-ATTIVITÀ 4 · **MS-4.4 ✓** (workflow CI `ci.yml` 4 job, fixture deterministica `prisma/fixture.ts` + `prisma/seed.ts`, auth CI via `CLERK_TEST_TOKEN` in `auth.setup.ts`, 4 job localmente verdi) + **MS-4.5 ✓** (verifica locale: e2e 117+4 skip, visual 10/10, unit 456+87, lint/typecheck/actionlint; primo CI reale in attesa dei 3 secrets utente).
-- **Prossimo:** MACRO-ATTIVITÀ 5 (prima iterazione: stendere la lista dei micro-step nella sezione dedicata; il primo MS sarà l'unpack della matrice responsività come definito al terme del prompt di ripresa).
+- **In corso:** MACRO-ATTIVITÀ 5 · **MS-5.1** (unpack matrice responsività residua: censimento completo dei componenti "fuori scope" con firme responsive file:riga, priorità P0–P3, emersi i boundary di test `680` catalog / `375` form / container `[280px_1fr_320px]`, confermato dead code `lead-detail-sheet.tsx`; sezione MA-5 + micro-step MS-5.2…5.8 stesi nel roadmap — nessuna modifica ad app/ ancora).
+- **Prossimo:** MS-5.2 (E2E P0 QuoteComposer: flip sidebar lg, sticky footer mobile, bottoni step sm, catalogo collassabile) — la verifica è approvare il piano MS-5.1 (questa sezione) prima di toccare app/.
 - **Completate:** MA-1 intera (MS-1.1…MS-1.4) + MA-2 intera (MS-2.1…MS-2.6) + MA-3 intera (MS-3.1…**MS-3.5** — setup 4 project storageState, spec responsive/flip/toolbar, fix tablet `QuoteFilterBar` del triage MS-1.4, helper layout condiviso `e2e/helpers/layout.ts` + matrice overflow pagine admin × viewport, verifica di chiusura 108+1) + **MS-4.1** (9 baseline `toHaveScreenshot` committate in `e2e/screenshots/`, determinismo dark/animazioni/quota via `emulateMedia` + `animations:disabled` + `route.fulfill` + `waitForStablePage`) + **MS-4.2** (pipeline di update deliberate: `scripts/update-snapshots.mjs` derivata da `DEVICE_PROFILES` + altezze config, `test:e2e:update` / `test:e2e` in `package.json`, report `git diff --stat` senza auto-commit, documentazione quando/diff/perché-no-CI, convenzione nomi script anticipata con `test:visual` rimasta a MS-4.3) + **MS-4.3** (matrice npm unificata completa: `test:visual` = `node scripts/visual-check.mjs` read-only, nessuna duplicazione dei filtri `--project=`, hardening `DEV_TOOLS_HIDE_CSS` post-h1 verificato, ri-baseline 2 landing PNG + 2 run read-only verdi) + **MS-4.4** (workflow CI `.github/workflows/ci.yml` 4 job: lint/typecheck/unit/e2e-visual con Postgres service + Playwright chromium+webkit + migrate+seed fixture; auth CI `CLERK_TEST_TOKEN` → cookie `__session`, guard secrets fail-fast, upload artifact su failure, concurrency cancel; fixture deterministica `prisma/fixture.ts` 40 lead+29 analisi+job terminale+16 quote sanitizzate, seed idempotente via upsert; baseline re-catturate su Docker Postgres: solo `Mobile-Safari-375x667/quotes.png` driftato, 8 PNG byte-identici) + **MS-4.5** (verifica finale locale: tutti i job CI simulati verdi — lint/typecheck/unit 456+87, e2e 117+4 skip, visual 10/10, actionlint 0 errori; primo run CI reale in attesa dei 3 secrets `CLERK_TEST_TOKEN`/`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`/`CLERK_SECRET_KEY` e test user Clerk con custom claim `email`).
 
 > Alla fine di ogni macro-attività consegnare un prompt di riepilogo avanzamento + punto di ripresa, riferito a questo file.
