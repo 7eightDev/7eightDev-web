@@ -113,3 +113,46 @@ test.describe("layout-overflow — triage MS-1.4: /admin/leads?status=qualified 
     });
   }
 });
+
+/**
+ * MS-5.2 — estensione della matrice overflow `<main>` al composer in MODIFICA
+ * (la rotta `/admin/quotes/new` è già coperta in `PAGES_FULL_SCAN`). L'id della
+ * bozza è volatile (dati live/fixture), quindi si apre la prima bozza dalla
+ * lista filtrata `?status=draft` e si scansiona poi ai 3 viewport canonici.
+ * Stesso contratto del resto della suite: `waitUntil:"commit"` (trap WebKit
+ * MS-3.3), attese su h1 reali e `not.toHaveURL(/sign-in/)`.
+ */
+test.describe("layout-overflow — QuoteComposer in modifica (MS-5.2)", () => {
+  test("apre la prima bozza e scansiona main ai 3 viewport canonici", async ({
+    page,
+  }) => {
+    await page.goto("/admin/quotes?status=draft", { waitUntil: "commit" });
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Preventivi" })
+    ).toBeVisible();
+    await expect(page).not.toHaveURL(/sign-in/);
+
+    // Il link "Modifica la bozza" vive nel cluster `inert`/opacity-0 delle
+    // azioni di riga (rubrica MS-1.3 "interni clipati → soppressi", NON un
+    // overflow): resta però nel DOM, quindi l'href è leggibile senza aprire
+    // il toggle — la rotta edit è ciò che serve alla scansione di `<main>`.
+    const editHref = await page
+      .locator('a[href$="/edit"]')
+      .first()
+      .getAttribute("href");
+    expect(editHref, "la lista bozze deve esporre almeno un link di modifica").toBeTruthy();
+
+    await page.goto(editHref!, { waitUntil: "commit" });
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Modifica preventivo" })
+    ).toBeVisible();
+    await expect(page).not.toHaveURL(/sign-in/);
+
+    for (const vp of VIEWPORTS) {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await expectNoHorizontalOverflow(page, {
+        label: `main di ${editHref} (${vp.name} ${vp.width})`,
+      });
+    }
+  });
+});
