@@ -54,7 +54,7 @@ export default async function LeadDetailPage({
             {lead.companyName}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={lead.status} />
           <LeadSendAuditButton
             leadId={lead.id}
