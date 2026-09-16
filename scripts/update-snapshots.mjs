@@ -2,9 +2,10 @@
 /**
  * Deliberate snapshot update pipeline — MS-4.2 (responsive-ui-testing ROADMAP).
  *
- * Standalone Node ESM script (NOT a Jest/Playwright test). Regenerates the 9
- * canonical baseline PNGs against a STABLE database and reports what changed,
- * WITHOUT auto-committing: the pipeline is deliberate and human-in-the-loop.
+ * Standalone Node ESM script (NOT a Jest/Playwright test). Regenerates the
+ * canonical baseline PNGs (9 canonici + 3 landing full-page) against a STABLE
+ * database and reports what changed, WITHOUT auto-committing: the pipeline is
+ * deliberate and human-in-the-loop.
  *
  * Context (MS-4.1, strategy (b)): `/admin/leads` and `/admin/quotes` render
  * live DB data, so each committed baseline in `e2e/screenshots/` is valid only
@@ -114,6 +115,12 @@ const result = spawnSync(
   [
     "playwright",
     "test",
+    // Scope limitato alle sole baseline, come `visual-check.mjs`: il pipeline
+    // di update NON deve ri-eseguire l'intera matrice E2E (spec admin/nav/
+    // leakage), ma rigenerare soltanto i PNG canonici. Senza il filtro la
+    // re-cattura in CI sul runner pieno è fragile (es. harvest fiber di
+    // lead-detail sotto worker=1) e un fail estraneo blocca l'update.
+    "e2e/screenshot-baselines.spec.ts",
     ...PROJECTS.map((name) => `--project=${name}`),
     "--update-snapshots",
   ],
