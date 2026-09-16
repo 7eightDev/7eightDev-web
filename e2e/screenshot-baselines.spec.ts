@@ -192,3 +192,41 @@ test.describe("canonical screenshots", () => {
     });
   }
 });
+
+test.describe("landing full-page screenshots", () => {
+  test.skip(({ browserName, viewport }) => {
+    const isMobileChrome =
+      browserName === "chromium" &&
+      viewport?.width === DEVICE_PROFILES.mobile;
+    return isMobileChrome;
+  }, "Mobile Chrome non è un form factor canonico della baseline");
+
+  test.describe.configure({ timeout: 90_000 });
+
+  test("baseline: landing full-page", async ({ page }) => {
+    await page.addInitScript((css) => {
+      const style = document.createElement("style");
+      style.textContent = css;
+      document.documentElement.appendChild(style);
+    }, DEV_TOOLS_HIDE_CSS);
+
+    await page.emulateMedia({
+      colorScheme: "dark",
+      reducedMotion: "reduce",
+    });
+
+    await page.goto("/", { waitUntil: "commit" });
+
+    await expect(
+      page.getByRole("heading", { level: 1 }).first()
+    ).toBeVisible({ timeout: 15_000 });
+
+    await page.addStyleTag({ content: DEV_TOOLS_HIDE_CSS });
+    await waitForStablePage(page);
+
+    await expect(page).toHaveScreenshot("landing-full.png", {
+      fullPage: true,
+      maxDiffPixelRatio: 0.01,
+    });
+  });
+});
