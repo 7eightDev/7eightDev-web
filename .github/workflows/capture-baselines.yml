@@ -19,10 +19,7 @@ name: Capture baselines (manual)
 # `--update-snapshots` resta VOLUTAMENTE fuori dal gate `ci.yml`: qui gira solo
 # sotto trigger umano esplicito e non auto-committa nulla.
 
-# REGISTRATION_TEMP: `push` presente SOLO per registrare il workflow con un
-# primo run (GitHub non dispatches workflow mai eseguiti). Rimosso subito dopo.
 on:
-  push:
   workflow_dispatch:
 
 concurrency:
