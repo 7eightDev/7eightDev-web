@@ -73,10 +73,15 @@ async function gotoLeads(page: Page, width: number, height: number) {
  * `{ id: <uuid>, companyName, … }`. Lettura DOM pura — nessuna fetch, nessuna
  * server action, nessun cookie Clerk coinvolto. Il `toPass` copre il
  * pre-hydration (fiber assente finché React non monta).
+ *
+ * La guardia sull'id NON è uuid-only: il DB reale (locale/prod) usa UUID v4,
+ * ma la fixture deterministica di MS-4.4 (`prisma/fixture.ts`) usa id leggibili
+ * `fixture-lead-001`. In CI il DB è la fixture → un filtro uuid escluderebbe
+ * tutte le righe e l'harvest fallirebbe (regressione primo run CI, MS-4.5).
+ * Resta robusto il discriminante `companyName` co-presente nelle stesse props.
  */
 function readLeadIdFromFiber(el: HTMLElement): string | null {
-  const uuidRe =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const plausibleIdRe = /^[A-Za-z0-9-]{1,64}$/;
   const fiberKey = Object.keys(el).find((k) => k.startsWith("__reactFiber$"));
   if (!fiberKey) return null;
   let fiber: unknown = (el as unknown as Record<string, unknown>)[fiberKey];
@@ -89,7 +94,7 @@ function readLeadIdFromFiber(el: HTMLElement): string | null {
       const id = p["id"];
       if (
         typeof id === "string" &&
-        uuidRe.test(id) &&
+        plausibleIdRe.test(id) &&
         typeof p["companyName"] === "string"
       ) {
         return id;
