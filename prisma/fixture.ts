@@ -40,6 +40,18 @@ import { PrismaQuoteRepository } from "@/infrastructure/quote/prisma-quote.repos
 export const FIXTURE_JOB_ID = "fixture-job-0001";
 export const FIXTURE_LEAD_COUNT = 40;
 
+/**
+ * Lead ids deterministici in formato uuid (stesso pattern delle quotes:
+ * `b0000000-…`). Le azioni lato server validano il lead id con
+ * `leadIdSchema = z.string().uuid` — le vecchie fixture `fixture-lead-001`
+ * (non-uuid) facevano fallire `getLeadDetailAction` in CI (`errore "Id lead
+ * non valido"`, primo run reale MS-4.5 → dialog E2E su `role="alert"`).
+ */
+const FIXTURE_LEAD_UUID_PREFIX = "a0000000-0000-4000-8000-";
+export function fixtureLeadId(n: number): string {
+  return `${FIXTURE_LEAD_UUID_PREFIX}${String(n).padStart(12, "0")}`;
+}
+
 const LEAD_EPOCH = new Date("2026-08-01T06:00:00.000Z").getTime();
 const LEAD_STEP_MS = 60_000;
 
@@ -311,7 +323,7 @@ function buildFillerLeads(): Lead[] {
         ? TECH_POOL[i % TECH_POOL.length]
         : undefined;
     return {
-      id: `fixture-lead-${String(idx).padStart(3, "0")}`,
+      id: fixtureLeadId(idx),
       jobId: FIXTURE_JOB_ID,
       companyName: LEAD_COMPANIES[i],
       category: LEAD_CATEGORIES[i],
@@ -344,7 +356,7 @@ function buildShowcaseLeads(): Lead[] {
     void score;
     return {
       ...rest,
-      id: `fixture-lead-${String(idx).padStart(3, "0")}`,
+      id: fixtureLeadId(idx),
       jobId: FIXTURE_JOB_ID,
       techStack: rest.techStack ?? undefined,
       createdAt: new Date(LEAD_EPOCH + idx * LEAD_STEP_MS).toISOString(),
