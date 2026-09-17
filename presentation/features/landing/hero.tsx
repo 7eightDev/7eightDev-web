@@ -112,16 +112,21 @@ export function Hero() {
         {reduceMotion ? (
           <div className="absolute top-[-180px] right-[-120px] h-[620px] w-[620px] bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_9%,_transparent),_transparent_62%)] blur-[8px]" />
         ) : (
-          <div className="absolute inset-x-0 top-0 h-[125%] opacity-60">
-            <Aurora
-              colorStops={['#274A2C', '#1E3A47', '#2B2747']}
-              amplitude={0.95}
-              blend={0.6}
-              speed={0.55}
-            />
-          </div>
+          <>
+            <div className="absolute inset-x-0 top-0 h-[125%] opacity-60 hidden dark:block">
+              <Aurora
+                colorStops={['#274A2C', '#1E3A47', '#2B2747']}
+                amplitude={0.95}
+                blend={0.6}
+                speed={0.55}
+              />
+            </div>
+            <div className="absolute inset-0 dark:hidden">
+              <div className="absolute top-[-60px] left-[50%] translate-x-[-50%] w-190 h-130 bg-[radial-gradient(circle,_color-mix(in_oklab,_var(--accent)_14%,_transparent),_transparent_60%)]" />
+            </div>
+          </>
         )}
-        <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,_transparent_20%,_rgba(8,9,13,0.5)_70%,_rgba(8,9,13,0.85))]" />
+        <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,_transparent_20%,_rgba(8,9,13,0.5)_70%,_rgba(8,9,13,0.85))] hidden dark:block" />
       </div>
 
       <Container className="relative pt-12 px-8 pb-16 md:pt-16 md:pb-23">
