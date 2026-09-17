@@ -7,7 +7,7 @@ const STACK = [
   { g: 'Core', items: ['Next.js', 'TypeScript', 'React'] },
   { g: 'Frontend', items: ['Tailwind', 'Radix', 'Zustand / Query', 'Framer Motion'] },
   { g: 'Backend & dati', items: ['Node', 'PostgreSQL', 'Prisma', 'tRPC / REST'] },
-  { g: 'Qualità & infra', items: ['Vitest', 'Playwright', 'GitHub Actions', 'Vercel'] },
+  { g: 'Qualità & infra', items: ['Jest', 'Playwright', 'GitHub Actions', 'Vercel'] },
 ];
 
 export function Stack() {

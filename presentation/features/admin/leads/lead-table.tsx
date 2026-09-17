@@ -4,6 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  Chat01Icon,
+  CircleCheckIcon,
+  CircleDotIcon,
+  CircleXIcon,
+  Mail01Icon,
+  MailSend01Icon,
+  Medal01Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import type { Lead, LeadOutreachStatus, LeadStatus } from "@/domain/lead/lead.types";
 import {
   Table,
@@ -51,7 +62,7 @@ const STATUS_STYLE: Record<LeadStatus, string> = {
   qualified:
     "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
   discarded:
-    "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+    "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]",
 };
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
@@ -71,7 +82,7 @@ const OUTREACH_STYLE: Record<LeadOutreachStatus, string> = {
   closed_won:
     "text-accent border-[color-mix(in_oklab,var(--accent)_45%,var(--border))]",
   rejected:
-    "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]",
+    "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]",
 };
 
 const OUTREACH_LABEL: Record<LeadOutreachStatus, string> = {
@@ -82,12 +93,78 @@ const OUTREACH_LABEL: Record<LeadOutreachStatus, string> = {
   rejected: "Rifiutato",
 };
 
+// Mobile-only compact indicators: the same state semantics as the desktop
+// badges, but rendered as a single colored icon instead of a text pill.
+const STATUS_ICON: Record<LeadStatus, IconSvgElement> = {
+  new: CircleDotIcon,
+  analyzed: Search01Icon,
+  qualified: CircleCheckIcon,
+  discarded: CircleXIcon,
+};
+
+const STATUS_ICON_CLASS: Record<LeadStatus, string> = {
+  new: "text-muted",
+  analyzed: "text-accent-cyan",
+  qualified: "text-accent",
+  discarded: "text-[var(--coral-text)]",
+};
+
+const OUTREACH_ICON: Record<LeadOutreachStatus, IconSvgElement> = {
+  not_contacted: Mail01Icon,
+  audit_sent: MailSend01Icon,
+  in_talks: Chat01Icon,
+  closed_won: Medal01Icon,
+  rejected: CircleXIcon,
+};
+
+const OUTREACH_ICON_CLASS: Record<LeadOutreachStatus, string> = {
+  not_contacted: "text-muted",
+  audit_sent: "text-accent-iris",
+  in_talks: "text-accent-amber",
+  closed_won: "text-accent",
+  rejected: "text-[var(--coral-text)]",
+};
+
+function StatusIcon({ status }: { status: LeadStatus }) {
+  return (
+    <span
+      title={STATUS_LABEL[status]}
+      aria-label={STATUS_LABEL[status]}
+      className="inline-flex shrink-0 items-center justify-center size-7 rounded-full border border-border/60 bg-raised"
+    >
+      <HugeiconsIcon
+        icon={STATUS_ICON[status]}
+        size={14}
+        aria-hidden
+        className={STATUS_ICON_CLASS[status]}
+      />
+    </span>
+  );
+}
+
+function OutreachStatusIcon({ status }: { status: LeadOutreachStatus }) {
+  return (
+    <span
+      title={OUTREACH_LABEL[status]}
+      aria-label={OUTREACH_LABEL[status]}
+      className="inline-flex shrink-0 items-center justify-center size-7 rounded-full border border-border/60 bg-raised"
+    >
+      <HugeiconsIcon
+        icon={OUTREACH_ICON[status]}
+        size={14}
+        aria-hidden
+        className={OUTREACH_ICON_CLASS[status]}
+      />
+    </span>
+  );
+}
+
 const MAX_VISIBLE_TECH = 3;
 
 // Sticky column header must sit above every row control (favorite star and
 // the "…" toggle are z-20, the slide-in action cluster z-10), so scrolled
 // rows paint underneath it instead of poking through.
-const STICKY_HEAD_CLASS = "sticky top-0 z-30 border-b border-border bg-surface";
+const STICKY_HEAD_CLASS = "sticky top-0 z-30 border-b border-border bg-panel-bg text-soft";
 
 function SortableHeader({
   column,
@@ -230,6 +307,9 @@ function CopyrightCell({ copyright }: { copyright: string | undefined }) {
 /**
  * Dense enterprise data table of leads. One lead per row; the row's action
  * cell navigates to the full-page detail or allows quick actions.
+ *
+ * On mobile (<820px) the table is replaced by a stacked card grid following
+ * the same pattern used on the quotes list page.
  */
 export function LeadTable({ rows, emptyRow }: LeadTableProps) {
   const searchParams = useSearchParams();
@@ -238,7 +318,8 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
 
   return (
     <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-border bg-surface">
-      <Table>
+      {/* Desktop: fixed-width table */}
+      <Table className="max-[820px]:hidden">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <SortableHeader
@@ -339,6 +420,46 @@ export function LeadTable({ rows, emptyRow }: LeadTableProps) {
           )}
         </TableBody>
       </Table>
+
+      {/* Mobile: compact stacked cards. Only the client name + status, score
+          and outreach survive; status/outreach degrade to icon-only chips. */}
+      <div className="hidden max-[820px]:grid gap-0">
+        {rows.map(({ lead, score }) => (
+          <div
+            key={lead.id}
+            onClick={() => setSelected({ lead, score })}
+            className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-2.5 border-b border-border px-4 py-3.5 transition-colors hover:bg-foreground/[0.04] last:border-b-0 cursor-pointer"
+          >
+            {/* Row 1: Company name + Actions */}
+            <div className="min-w-0">
+              <span className="font-space text-[13.5px] font-semibold text-foreground block truncate">
+                {lead.companyName}
+              </span>
+            </div>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 justify-self-end"
+            >
+              <LeadRowActions
+                id={lead.id}
+                companyName={lead.companyName}
+                status={lead.status}
+                favorite={lead.favorite ?? false}
+              />
+            </div>
+
+            {/* Row 2: Status | Score | Outreach (icon-only) */}
+            <div className="col-span-2 flex items-center gap-2 min-w-0">
+              <StatusIcon status={lead.status} />
+              <LeadScoreBadge score={score} />
+              <OutreachStatusIcon status={lead.outreachStatus} />
+            </div>
+          </div>
+        ))}
+        {rows.length === 0 && (
+          <div className="p-10">{emptyRow}</div>
+        )}
+      </div>
 
       {selected && (
         <LeadDetailDialog

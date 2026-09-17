@@ -176,7 +176,7 @@ export function SaveOutreachButton({
       type="button"
       onClick={onSave}
       disabled={!state.dirty || state.pending}
-      className="cursor-pointer bg-accent text-[#0a0b0d] hover:brightness-105 hover:-translate-y-px disabled:cursor-not-allowed"
+      className="cursor-pointer bg-accent text-on-accent hover:brightness-105 hover:-translate-y-px disabled:cursor-not-allowed"
     >
       <HugeiconsIcon
         icon={SaveIcon}

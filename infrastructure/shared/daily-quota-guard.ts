@@ -60,6 +60,8 @@ export interface QuotaUsage {
   readonly used: number;
   readonly limit: number;
   readonly date: string;
+  /** False when the store is unreachable — the reported values are a fallback. */
+  readonly available: boolean;
 }
 
 /**
@@ -220,10 +222,10 @@ export class DailyQuotaGuard {
     const date = this.today();
 
     try {
-      return { used: await this.store.read(bucket, date), limit, date };
+      return { used: await this.store.read(bucket, date), limit, date, available: true };
     } catch (error) {
       log.error('Lettura quota fallita', { bucket, error: String(error) });
-      return { used: limit, limit, date };
+      return { used: 0, limit, date, available: false };
     }
   }
 

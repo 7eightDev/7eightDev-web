@@ -11,6 +11,7 @@ export const QUOTA_POLL_INTERVAL_MS = 15_000;
 interface QuotaBucketState {
   readonly used: number;
   readonly limit: number;
+  readonly available: boolean;
 }
 
 interface QuotaState {
@@ -56,17 +57,20 @@ export function GoogleQuotaBadge() {
   const autocomplete = quota.buckets["places-autocomplete"];
   if (!textSearch || !autocomplete) return null;
 
+  const available = textSearch.available && autocomplete.available;
   const used = textSearch.used;
   const limit = textSearch.limit;
   const remaining = Math.max(limit - used, 0);
   const exhausted = remaining === 0;
   const nearLimit = !exhausted && remaining <= 5;
 
-  const tone = exhausted
-    ? "text-[var(--coral)] border-[color-mix(in_oklab,var(--coral)_45%,var(--border))]"
-    : nearLimit
-      ? "text-accent-amber border-[color-mix(in_oklab,var(--color-accent-amber)_45%,var(--border))]"
-      : "text-soft border-border";
+  const tone = !available
+    ? "text-accent-amber border-[color-mix(in_oklab,var(--color-accent-amber)_45%,var(--border))]"
+    : exhausted
+      ? "text-[var(--coral-text)] border-[color-mix(in_oklab,var(--coral-text)_45%,var(--border))]"
+      : nearLimit
+        ? "text-accent-amber border-[color-mix(in_oklab,var(--color-accent-amber)_45%,var(--border))]"
+        : "text-soft border-border";
 
   return (
     <Tooltip>
@@ -75,27 +79,34 @@ export function GoogleQuotaBadge() {
           type="button"
           aria-label="Quota API Google di oggi"
           className={cn(
-            "hidden md:inline-flex items-center gap-1.5 font-mono text-[12px] border rounded-[8px] px-2.5 py-1.5 cursor-help bg-transparent",
+            "hidden sm:inline-flex items-center gap-1.5 font-mono text-[12px] border rounded-[8px] px-2.5 py-1.5 cursor-help bg-transparent",
             tone,
           )}
         >
           <Gauge className="size-[13px] opacity-80 shrink-0" />
-          <span>
-            Quota: {used}/{limit}
+          <span className="md:hidden">{available ? `${used}/${limit}` : "N/D"}</span>
+          <span className="hidden md:inline">
+            {available ? `Quota: ${used}/${limit}` : "Quota: N/D"}
           </span>
         </button>
       </TooltipTrigger>
       <TooltipContent>
         <div className="flex flex-col gap-1">
           <span>Utilizzo API Google di oggi ({quota.date})</span>
-          <span className="text-dim">
-            Ricerche (Text Search): {used}/{limit}
-          </span>
-          <span className="text-dim">
-            Autocomplete: {autocomplete.used}/{autocomplete.limit}
-          </span>
-          {exhausted && <span className="text-[var(--coral)]">Bloccato: quota esaurita, riprova domani.</span>}
-          {nearLimit && <span className="text-accent-amber">Quasi esaurita: restano {remaining} ricerche.</span>}
+          {available ? (
+            <>
+              <span className="text-dim">
+                Ricerche (Text Search): {used}/{limit}
+              </span>
+              <span className="text-dim">
+                Autocomplete: {autocomplete.used}/{autocomplete.limit}
+              </span>
+              {exhausted && <span className="text-[var(--coral)]">Bloccato: quota esaurita, riprova domani.</span>}
+              {nearLimit && <span className="text-accent-amber">Quasi esaurita: restano {remaining} ricerche.</span>}
+            </>
+          ) : (
+            <span className="text-accent-amber">Dati non disponibili: database temporaneamente irraggiungibile.</span>
+          )}
         </div>
       </TooltipContent>
     </Tooltip>

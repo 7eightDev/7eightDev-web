@@ -8,6 +8,7 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
   },
+  setupFilesAfterEnv: ["<rootDir>/presentation/__mocks__/match-media.ts"],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",

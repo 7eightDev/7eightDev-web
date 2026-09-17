@@ -1,0 +1,158 @@
+name: CI
+
+# MS-4.4 — gate headless orizzontale: lint → typecheck → unit → E2E → visual.
+# Pipeline, dall'alto verso il basso, di tutto ciò che deve essere VERDE prima di
+# una merge: lint, typecheck e unit sono job puramente CPU puri (paralleli); il
+# job E2E+visual gira invece su un Postgres effimero (service container) con i
+# 9 PNG canonici committati (già catturati con `npm run test:e2e:update` locale
+# contro la fixture deterministica di MS-4.4).
+#
+# Secrets richiesti (Settings → Secrets and variables → Actions):
+#   CLERK_TEST_TOKEN                 — test token Clerk per l'auth del browser
+#                                      (Sessions → Your test tokens). Deve
+#                                      appartenere a un utente con email in
+#                                      ADMIN_EMAILS e al custom claim "email".
+#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+#   CLERK_SECRET_KEY
+# ADMIN_EMAILS è hardcoded qui sotto: è la lista degli admin autorizzati.
+#
+# NOTA — `test:e2e:update` (update-snapshots) NON viene mai invocato in CI:
+# scriverebbe le baseline con quello che rende ORA. In CI si usa SOLO
+# `--update-snapshots` VERDE = fail sul drift di pixel non previsto.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  unit:
+    name: Unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:presentation
+
+  e2e-visual:
+    name: E2E + Visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Postgres effimero identico a quello locale della re-cattura baseline
+    # (postgres:16-alpine, stesso schema utente/db di MS-4.4).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: seven
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # C'è una sola URL (no pooler Neon in CI): DIRECT_URL == DATABASE_URL.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/seven
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/seven
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      CLERK_TEST_TOKEN: ${{ secrets.CLERK_TEST_TOKEN }}
+      ADMIN_EMAILS: 7eightdev@gmail.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # chromium (Desktop/Tablet/Mobile Chrome) + webkit (Mobile Safari).
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Migrate schema
+        run: npx prisma migrate deploy
+      - name: Seed deterministic fixture (MS-4.4)
+        run: npm run db:seed
+      # Fail-fast esplicito se manca un secret: niente attese inutili su un
+      # auth.setup.ts che fallirebbe al primo step col messaggio generico.
+      - name: Check required secrets
+        run: |
+          test -n "$CLERK_TEST_TOKEN" || { echo "::error::CLERK_TEST_TOKEN non configurato nei secrets del repository"; exit 1; }
+          test -n "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" || { echo "::error::NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY non configurato nei secrets del repository"; exit 1; }
+          test -n "$CLERK_SECRET_KEY" || { echo "::error::CLERK_SECRET_KEY non configurato nei secrets del repository"; exit 1; }
+      # Entrambi i gate girano anche se il primo fallisce (continue-on-error),
+      # così un singolo run mostra E2E e visual insieme; il passo "gate" poi
+      # propaga il rosso. La suite E2E include le baseline (screenshot canonici)
+      # nelle 3 project canonici: il confronto avviene sui PNG committati,
+      # deterministici per design (fonts self-hosted, nessun {platform}).
+      - name: E2E suite
+        id: e2e
+        continue-on-error: true
+        run: npm run test:e2e
+      - name: Visual check (read-only, baseline canonici)
+        id: visual
+        continue-on-error: true
+        run: npm run test:visual
+      - name: Gate
+        if: always()
+        run: |
+          [ "${{ steps.e2e.outcome }}" = "success" ] || { echo "::error::E2E suite failed"; exit 1; }
+          [ "${{ steps.visual.outcome }}" = "success" ] || { echo "::error::Visual check failed (drift sui baseline canonici)"; exit 1; }
+      # Artefatti diagnostici solo a fronte di un rosso: report HTML Playwright
+      # (html reporter, open:never) + test-results/ (actual/expected/diff PNG +
+      # trace on-first-retry). NIENTE .e2e/storage-state: contiene il cookie di
+      # sessione del test token, non va mai caricato.
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7

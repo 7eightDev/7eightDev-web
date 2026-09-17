@@ -142,7 +142,7 @@ export function Hero() {
                 className={cn(
                   'flex-1 sm:flex-none text-center font-mono text-[13px] font-semibold leading-tight cursor-pointer px-3 sm:px-4 py-[9px] rounded-[8px] border-none transition-all duration-200',
                   mode === k
-                    ? 'bg-accent text-[#0a0b0d]'
+                    ? 'bg-accent text-on-accent'
                     : 'bg-transparent text-soft'
                 )}
               >

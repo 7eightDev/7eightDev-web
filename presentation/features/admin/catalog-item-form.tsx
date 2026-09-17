@@ -293,7 +293,7 @@ export function CatalogItemForm({ item }: CatalogItemFormProps) {
             "font-mono text-[15px] font-semibold px-6 py-[14px] rounded-[9px] transition-all duration-150",
             pending
               ? "bg-raised text-muted cursor-not-allowed"
-              : "bg-accent text-[#0a0b0d] cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
+              : "bg-accent text-on-accent cursor-pointer hover:brightness-105 hover:-translate-y-px active:scale-[0.98]"
           )}
         >
           {pending

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/presentation/lib/utils';
 import { LogoLockup } from '@/presentation/components/shared/logo';
 import { Btn } from '@/presentation/components/shared/btn';
+import { ThemeToggle } from '@/presentation/components/shared/theme-toggle';
 import { useQuoteModal } from './quote-context';
 import { SignInButton, Show, UserButton } from '@clerk/nextjs';
 import { User, LayoutDashboard } from 'lucide-react';
@@ -30,8 +31,8 @@ export function Nav() {
       className={cn(
         'sticky top-0 z-50 backdrop-blur-[14px] transition-all duration-250 ease',
         scrolled
-          ? 'bg-[rgba(10,11,13,0.82)] border-b border-border'
-          : 'bg-[rgba(10,11,13,0.4)] border-b border-transparent'
+          ? 'bg-background/80 border-b border-border'
+          : 'bg-background/40 border-b border-transparent'
       )}
     >
       <div className="w-full px-8 h-17 flex items-center justify-between gap-4">
@@ -50,6 +51,7 @@ export function Nav() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Btn
             variant="primary"
             onClick={(e) => {

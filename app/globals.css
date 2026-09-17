@@ -4,22 +4,64 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Light theme — the on-brand default for light clients. The app ships dark
+   first (`.dark` is set by next-themes as the default), but every token here
+   is deliberately dual so a light view stays accessible. Colors are written
+   in OKLCH: the same tone keeps its hue and chroma while lightness (`L`)
+   flips per theme, so e.g. the brand green is bright lime on dark but a
+   deep #15803D-style green on light. */
 :root {
-  --bg: #0A0B0D;
-  --surface: #101216;
-  --raised: #16191F;
-  --border: #23262E;
-  --dim: #454B57;
-  --muted: #6B7280;
-  --text-soft: #AAB2BF;
-  --text: #EEF1F5;
-  --accent: #C7F94E;
-  --coral: #FF6A4D;
+  --bg: oklch(0.979 0.003 264.5);        /* #F7F8FA */
+  --surface: oklch(1 0 0);               /* #FFFFFF */
+  --raised: oklch(0.968 0.007 247.9);    /* #F1F5F9 */
+  --panel-bg: oklch(0.925 0.008 247.9);    /* #D6DBE2 — slightly darker than raised */
+  --border: oklch(0.929 0.013 255.5);    /* #E2E8F0 */
+  --dim: oklch(0.869 0.020 252.9);       /* #CBD5E1 */
+  --muted: oklch(0.551 0.023 264.4);     /* #6B7280 */
+  --text-soft: oklch(0.446 0.037 257.3); /* #475569 */
+  --text: oklch(0.208 0.040 265.8);      /* #0F172A */
+  --accent: oklch(0.527 0.137 150.1);    /* #15803D — dark green, readable as text on light */
+  --coral: oklch(0.706 0.188 32.9);      /* #FF6A4D */
+  --on-accent: oklch(1 0 0);             /* text/icon on accent fills */
+
+  /* Badge palette — deep variants for light mode (≥ 5:1 on white). */
+  --cyan: oklch(0.51 0.086 186.4);      /* #0F766E */
+  --iris: oklch(0.49 0.24 292.6);       /* #6D28D9 */
+  --amber: oklch(0.5553 0.1455 49.0);   /* #B45309 */
+  --coral-text: oklch(0.5534 0.1739 38.4); /* #C2410C */
+
+  --dot-color: rgba(15, 23, 42, 0.04);
+  --scheme: light;
 
   --background: var(--bg);
   --foreground: var(--text);
-  
+
   --radius: 0.625rem;
+}
+
+/* Dark theme (default for this app). */
+.dark {
+  --bg: oklch(0.149 0.005 264.5);        /* #0A0B0D */
+  --surface: oklch(0.182 0.009 264.3);   /* #101216 */
+  --raised: oklch(0.213 0.013 264.3);    /* #16191F */
+  --panel-bg: oklch(0.247 0.013 264.3);    /* #1E222B — slightly lighter than raised */
+  --border: oklch(0.269 0.016 269.1);    /* #23262E */
+  --dim: oklch(0.412 0.022 264.3);       /* #454B57 */
+  --muted: oklch(0.551 0.023 264.4);     /* #6B7280 */
+  --text-soft: oklch(0.761 0.021 260.2); /* #AAB2BF */
+  --text: oklch(0.957 0.006 255.5);      /* #EEF1F5 */
+  --accent: oklch(0.917 0.199 124.5);    /* #C7F94E — bright lime, readable on dark */
+  --coral: oklch(0.706 0.188 32.9);      /* #FF6A4D */
+  --on-accent: oklch(0.149 0.005 264.5); /* #0a0b0d */
+
+  /* Badge palette — bright variants for dark mode (existing hues). */
+  --cyan: oklch(0.8392 0.1324 184.1);   /* #46E6D4 */
+  --iris: oklch(0.6609 0.189 285.5);    /* #8B7BFF */
+  --amber: oklch(0.8522 0.1496 89.6);   /* #F5C948 */
+  --coral-text: oklch(0.706 0.188 32.9); /* #FF6A4D */
+
+  --dot-color: rgba(255, 255, 255, 0.025);
+  --scheme: dark;
 }
 
 @theme {
@@ -28,17 +70,28 @@
 
   --color-surface: var(--surface);
   --color-raised: var(--raised);
+  --color-panel-bg: var(--panel-bg);
   --color-border: var(--border);
   --color-dim: var(--dim);
   --color-muted: var(--muted);
   --color-soft: var(--text-soft);
 
   --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+
+  /* Brand badge palette — dual: `--cyan/--iris/--amber/--coral-text` flip per
+     theme (deep variants on light for contrast, bright hues on dark). */
   --color-accent-lime: #C7F94E;
-  --color-accent-cyan: #46E6D4;
-  --color-accent-iris: #8B7BFF;
-  --color-accent-amber: #F5C948;
+  --color-accent-cyan: var(--cyan);
+  --color-accent-iris: var(--iris);
+  --color-accent-amber: var(--amber);
   --color-accent-coral: var(--coral);
+  --color-coral-text: var(--coral-text);
+
+  /* App-specific breakpoint: below 820px the dense DataTables (LeadTable,
+     quotes list) collapse into stacked card grids. Source of truth:
+     presentation/lib/breakpoints.ts -> BREAKPOINTS.cardStack. */
+  --breakpoint-820: 820px;
 
   --font-space: 'Space Grotesk', sans-serif;
   --font-hanken: 'Hanken Grotesk', sans-serif;
@@ -77,6 +130,7 @@ html {
   /* Always reserve the scrollbar gutter so the centered layout doesn't shift
      horizontally when filtering shortens the page and the scrollbar vanishes. */
   scrollbar-gutter: stable;
+  color-scheme: var(--scheme);
 }
 
 body {
@@ -84,13 +138,13 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
   background-size: 26px 26px;
 }
 
 ::selection {
   background: var(--accent);
-  color: #0a0b0d;
+  color: var(--on-accent);
 }
 
 @utility no-scrollbar {
@@ -131,16 +185,17 @@ body {
   html {
     @apply font-sans;
   }
-  /* Native date/time inputs: render their controls against the dark theme so
-     the calendar icon is legible instead of near-black on a dark field. */
+  /* Native date/time inputs: render their controls against the active theme
+     so the calendar icon stays legible (dark field + dark glyph would be
+     invisible; white field + white glyph likewise). */
   input[type="date"],
   input[type="datetime-local"],
   input[type="time"],
   input[type="month"],
   input[type="week"] {
-    color-scheme: dark;
+    color-scheme: var(--scheme);
   }
-  /* color-scheme: dark already makes the glyph light; just add affordance. */
+  /* color-scheme already picks the correct glyph luminance; just add affordance. */
   input::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 0.7;
@@ -148,5 +203,13 @@ body {
   }
   input::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
+  }
+  /* The lead search uses its own inline clear button: hide the native
+     WebKit cancel glyph so `type="search"` doesn't render a second X. */
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
   }
 }

@@ -1,0 +1,87 @@
+name: Capture baselines (manual)
+
+# MS-4.4/4.5 follow-up — cross-OS visual triage (primo run CI reale).
+#
+# Le 9 baseline canoniche in `e2e/screenshots/` erano state catturate su macOS
+# (MS-4.1/4.2); il gate CI su ubuntu-latest le ha mostrate NON portabili
+# byte-identiche: la rasterizzazione font Linux vs macOS produce un drift
+# pixel sistematico 0.02–0.08 sopra la soglia 0.01 — verificato su TUTE le
+# baseline, inclusa la landing pubblica statica (quindi nessun data drift
+# fixture vs locale), con ratio identici da retry a retry (deterministico).
+#
+# Correzione: catturare le baseline sullo STESSO runner del gate.
+# Questo workflow è MANUALE (workflow_dispatch) e deliberato (human-in-the-loop):
+#
+#   1. Esegui manualmente → scarica l'artifact `canonical-baselines-linux`.
+#   2. Sostituisci `e2e/screenshots/` con i PNG ricevuti (nessun auto-commit).
+#   3. Ri-lancia il gate `ci.yml`: atteso VERDE (Linux vs Linux).
+#
+# `--update-snapshots` resta VOLUTAMENTE fuori dal gate `ci.yml`: qui gira solo
+# sotto trigger umano esplicito e non auto-committa nulla.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: capture-baselines
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Re-capture canonical baselines (ubuntu, same as CI)
+    runs-on: ubuntu-latest
+    # Postgres effimero identico al gate ci.yml (postgres:16-alpine, stesso
+    # schema utente/db) → stessi dati fixture di MS-4.4 per la re-cattura.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: seven
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/seven
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/seven
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      CLERK_TEST_TOKEN: ${{ secrets.CLERK_TEST_TOKEN }}
+      ADMIN_EMAILS: 7eightdev@gmail.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Migrate schema
+        run: npx prisma migrate deploy
+      - name: Seed deterministic fixture (MS-4.4)
+        run: npm run db:seed
+      - name: Check required secrets
+        run: |
+          test -n "$CLERK_TEST_TOKEN" || { echo "::error::CLERK_TEST_TOKEN non configurato nei secrets del repository"; exit 1; }
+          test -n "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" || { echo "::error::NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY non configurato nei secrets del repository"; exit 1; }
+          test -n "$CLERK_SECRET_KEY" || { echo "::error::CLERK_SECRET_KEY non configurato nei secrets del repository"; exit 1; }
+      # Regenera i PNG canonici (9 + landing-full) contro la fixture. Il
+      # webServer (npm run dev) parte da solo via playwright.config.ts, come
+      # nel gate; il report `git diff --stat` resta nel log del passo.
+      - name: Regenerate canonical baselines (--update-snapshots)
+        run: npm run test:e2e:update
+      - name: Upload Linux-captured baselines
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-baselines-linux
+          path: e2e/screenshots/
+          retention-days: 7
