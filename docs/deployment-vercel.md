@@ -10,7 +10,7 @@ required by the Prisma `pg` driver adapter.
 | Concern        | Setup                                                                 |
 | -------------- | --------------------------------------------------------------------- |
 | Framework      | Next.js 16 (auto-detected). Root directory: `7eightdev-web`.          |
-| Runtime        | Node.js 22.x (pinned via `engines.node`). Functions region `fra1`.    |
+| Runtime        | Node.js 24.x (pinned via `engines.node`). Functions region `fra1`.    |
 | Database       | Neon Postgres (`eu-central-1`). Pooled URL for the app, direct URL for migrations. |
 | Auth           | Clerk (`proxy.ts` + `clerkMiddleware`).                               |
 | Email          | Resend.                                                               |

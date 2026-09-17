@@ -83,7 +83,8 @@ Breakpoints canonici: `sm` 640 · `md` 768 · `cardStack` 820 · `lg` 1024 · `x
 
 ## 2. Prerequisiti locali
 
-1. **Node 22.x** (`engines: {"node": "22.x"}` in `package.json`) e `npm`.
+1. **Node 24.x** (`engines: {"node": "24.x"}` in `package.json`; `.nvmrc`)
+   e `npm`.
 2. **Postgres 16** — la *stessa* versione della CI (`postgres:16-alpine`). In
    locale puoi usare Docker:
    ```bash
