@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
 import { ExternalLink, Menu } from "lucide-react";
 import { cn } from "@/presentation/lib/utils";
 import { Button } from "@/presentation/components/ui/button";
@@ -11,6 +10,7 @@ import { Container } from "@/presentation/components/shared/container";
 import { LogoLockup } from "@/presentation/components/shared/logo";
 import { ThemeToggle } from "@/presentation/components/shared/theme-toggle";
 import { GoogleQuotaBadge } from "@/presentation/features/admin/google-quota-badge";
+import { UserMenu } from "@/presentation/features/shared/user-menu";
 import {
   Sheet,
   SheetContent,
@@ -148,7 +148,9 @@ export function AdminHeader({ showEmailLink = false }: AdminHeaderProps) {
             </SheetContent>
           </Sheet>
           <div className="flex items-center">
-            <UserButton />
+            <UserMenu
+              links={[{ href: "/", label: "Vai al sito", icon: <ExternalLink className="size-4" /> }]}
+            />
           </div>
         </div>
       </Container>

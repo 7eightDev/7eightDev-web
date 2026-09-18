@@ -25,8 +25,8 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: MockNextLink };
 });
 
-jest.mock("@clerk/nextjs", () => ({
-  UserButton: () => <div aria-label="Account utente" />,
+jest.mock("@/presentation/features/shared/user-menu", () => ({
+  UserMenu: () => <div aria-label="Account utente" />,
 }));
 
 jest.mock("next-themes", () => ({

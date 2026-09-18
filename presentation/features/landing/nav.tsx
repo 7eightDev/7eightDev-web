@@ -6,8 +6,9 @@ import { LogoLockup } from '@/presentation/components/shared/logo';
 import { Btn } from '@/presentation/components/shared/btn';
 import { ThemeToggle } from '@/presentation/components/shared/theme-toggle';
 import { useQuoteModal } from './quote-context';
-import { SignInButton, Show, UserButton } from '@clerk/nextjs';
+import { SignInButton, Show } from '@clerk/nextjs';
 import { User, LayoutDashboard } from 'lucide-react';
+import { UserMenu } from '@/presentation/features/shared/user-menu';
 
 const NAV_LINKS = [
   ['#doppio', 'Doppio livello'],
@@ -77,21 +78,15 @@ export function Nav() {
               </SignInButton>
             </Show>
             <Show when="signed-in">
-              <UserButton
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: 'w-8 h-8'
+              <UserMenu
+                links={[
+                  {
+                    href: '/admin/quotes',
+                    label: 'Area Admin',
+                    icon: <LayoutDashboard size={16} />
                   }
-                }}
-              >
-                <UserButton.MenuItems>
-                  <UserButton.Link
-                    label="Area Admin"
-                    labelIcon={<LayoutDashboard size={16} />}
-                    href="/admin/quotes"
-                  />
-                </UserButton.MenuItems>
-              </UserButton>
+                ]}
+              />
             </Show>
           </div>
         </div>
