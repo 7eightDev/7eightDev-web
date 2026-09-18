@@ -61,19 +61,41 @@ export function LeadReportPreviewPanel({
     const doc = iframe.contentDocument;
     if (!doc) return;
 
-    const hideScrollbar = () => {
+    const applyThemeAndHideScrollbar = () => {
       const d = iframe.contentDocument;
-      if (!d || d.getElementById("email-preview-scrollbar")) return;
-      const style = d.createElement("style");
-      style.id = "email-preview-scrollbar";
-      style.textContent =
-        "html::-webkit-scrollbar{display:none}html{scrollbar-width:none}";
-      (d.head ?? d.documentElement).appendChild(style);
+      if (!d) return;
+
+      const parentTheme = document.documentElement.getAttribute("data-theme");
+      if (parentTheme) {
+        d.documentElement.setAttribute("data-theme", parentTheme);
+      }
+
+      if (!d.getElementById("email-preview-scrollbar")) {
+        const style = d.createElement("style");
+        style.id = "email-preview-scrollbar";
+        style.textContent =
+          "html::-webkit-scrollbar{display:none}html{scrollbar-width:none}";
+        (d.head ?? d.documentElement).appendChild(style);
+      }
     };
 
-    iframe.addEventListener("load", hideScrollbar);
-    if (doc.readyState === "complete") hideScrollbar();
-    return () => iframe.removeEventListener("load", hideScrollbar);
+    iframe.addEventListener("load", applyThemeAndHideScrollbar);
+    if (doc.readyState === "complete") applyThemeAndHideScrollbar();
+
+    const observer = new MutationObserver(() => {
+      const d = iframe.contentDocument;
+      if (!d) return;
+      const parentTheme = document.documentElement.getAttribute("data-theme");
+      if (parentTheme) {
+        d.documentElement.setAttribute("data-theme", parentTheme);
+      }
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+    return () => {
+      iframe.removeEventListener("load", applyThemeAndHideScrollbar);
+      observer.disconnect();
+    };
   }, [view, selectedId]);
 
   const onSend = () => {
