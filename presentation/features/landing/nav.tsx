@@ -6,9 +6,10 @@ import { LogoLockup } from '@/presentation/components/shared/logo';
 import { Btn } from '@/presentation/components/shared/btn';
 import { ThemeToggle } from '@/presentation/components/shared/theme-toggle';
 import { useQuoteModal } from './quote-context';
-import { SignInButton, Show } from '@clerk/nextjs';
-import { User, LayoutDashboard } from 'lucide-react';
+import { Show } from '@clerk/nextjs';
+import { LayoutDashboard } from 'lucide-react';
 import { UserMenu } from '@/presentation/features/shared/user-menu';
+import { SignInDialog } from '@/presentation/features/shared/sign-in-dialog';
 
 const NAV_LINKS = [
   ['#doppio', 'Doppio livello'],
@@ -67,15 +68,7 @@ export function Nav() {
 
           <div className="flex items-center">
             <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  aria-label="Accedi"
-                  className="flex items-center justify-center p-2 text-soft hover:text-foreground transition-colors border-none bg-transparent cursor-pointer"
-                >
-                  <User size={20} />
-                </button>
-              </SignInButton>
+              <SignInDialog />
             </Show>
             <Show when="signed-in">
               <UserMenu
