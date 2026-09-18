@@ -33,9 +33,9 @@ export function isAdsWasteRelevant(
 export type LeadReportRenderMode = "pdf" | "preview";
 
 const PREVIEW_STYLES = `
-  html, body { overflow: hidden; }
-  .page { width: 210mm; min-height: 296mm; padding: 14mm 14mm 16mm; }
+  .page { width: 210mm; height: auto; min-height: 296mm; padding: 14mm 14mm 16mm; border: 1px solid var(--border); border-radius: 8px; }
   .footer { position: static; margin-top: auto; }
+  body { padding: 0 0 24px; }
 `;
 
 const PREVIEW_FIT_SCRIPT = `
@@ -44,9 +44,8 @@ const PREVIEW_FIT_SCRIPT = `
   var page = document.querySelector(".page");
   if (!page) return;
   function fit() {
-    var availW = Math.max(1, document.documentElement.clientWidth);
-    var availH = Math.max(1, document.documentElement.clientHeight);
-    var k = Math.min(1, availW / page.offsetWidth, availH / page.offsetHeight);
+    var availW = Math.max(1, document.documentElement.clientWidth - 16);
+    var k = Math.min(1, availW / page.offsetWidth);
     page.style.transformOrigin = "top left";
     page.style.transform = "scale(" + k + ")";
     var w = Math.floor(page.offsetWidth * k);

@@ -72,6 +72,8 @@ export function LeadReportPreviewPanel({
   ) ?? null;
 
   useEffect(() => {
+    if (view !== "email") return;
+
     const iframe = iframeRef.current;
     if (!iframe) return;
 
