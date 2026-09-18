@@ -147,6 +147,17 @@ body {
   color: var(--on-accent);
 }
 
+/* Clerk v7 paints the solid primary button's fill on the wrapper that surrounds
+   `.cl-formButtonPrimary`, not on the button itself, and re-asserts styles on
+   the button element each paint. Force the brand accent pill from here. */
+:where(.cl-form > div:has(> .cl-formButtonPrimary)) {
+  background-color: var(--color-accent) !important;
+}
+
+:where(.cl-form > div:has(> .cl-formButtonPrimary:hover)) {
+  filter: brightness(1.05);
+}
+
 @utility no-scrollbar {
   scrollbar-width: none;
 

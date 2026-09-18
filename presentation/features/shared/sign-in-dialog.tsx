@@ -64,7 +64,10 @@ export function SignInDialog() {
           <User size={20} />
         </button>
       </DialogTrigger>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-[420px]">
+      <DialogContent
+        closeButtonClassName="top-5 right-5"
+        className="gap-0 overflow-hidden p-0 sm:max-w-[420px]"
+      >
         <DialogTitle className="sr-only">Accedi</DialogTitle>
         <DialogDescription className="sr-only">
           Accedi con email e codice di verifica.

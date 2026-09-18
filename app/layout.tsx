@@ -8,6 +8,7 @@ import {
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { ClerkProvider } from '@clerk/nextjs';
+import { clerkAuthLocalization } from '@/presentation/features/shared/clerk-auth-localization';
 import { ThemeProvider } from '@/presentation/components/shared/theme-provider';
 
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
@@ -43,7 +44,7 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <ClerkProvider>
+        <ClerkProvider localization={clerkAuthLocalization}>
           <ThemeProvider>{children}</ThemeProvider>
         </ClerkProvider>
       </body>
