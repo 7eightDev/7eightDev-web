@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { sendLeadTestEmailAction } from "@/application/lead/lead-email.actions";
 import { cn } from "@/presentation/lib/utils";
 
@@ -50,11 +50,28 @@ export function LeadReportPreviewPanel({
   const [send, setSend] = useState<SendState>({ status: "idle" });
   const [pending, startTransition] = useTransition();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const rootEl = document.documentElement;
-  const currentTheme =
-    rootEl.getAttribute("data-theme") ??
-    (rootEl.classList.contains("dark") ? "dark" : "light");
+  const currentTheme = useSyncExternalStore(
+    (onStoreChange) => {
+      const root = document.documentElement;
+      const observer = new MutationObserver(onStoreChange);
+      observer.observe(root, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme"],
+      });
+      return () => observer.disconnect();
+    },
+    () =>
+      document.documentElement.getAttribute("data-theme") ??
+      (document.documentElement.classList.contains("dark") ? "dark" : "light"),
+    () => "light"
+  );
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const selected =
     scenarios.find((s) => s.id === selectedId) ?? scenarios[0];
@@ -171,7 +188,16 @@ export function LeadReportPreviewPanel({
       </aside>
 
       {/* center: preview */}
-      {themedHtml ? (
+      {!mounted ? (
+        <div
+          className="w-full h-full min-h-0 rounded-xl bg-raised"
+          aria-hidden="true"
+        />
+      ) : !themedHtml ? (
+        <pre className="w-full h-full min-h-0 overflow-auto no-scrollbar rounded-xl bg-raised p-4 font-mono text-[12.5px] text-soft whitespace-pre-wrap">
+          {selected.text}
+        </pre>
+      ) : (
         <iframe
           key={`${selected.id}:${view}:${currentTheme}`}
           ref={iframeRef}
@@ -179,10 +205,6 @@ export function LeadReportPreviewPanel({
           srcDoc={themedHtml}
           className="w-full h-full min-h-0 block"
         />
-      ) : (
-        <pre className="w-full h-full min-h-0 overflow-auto no-scrollbar rounded-xl bg-raised p-4 font-mono text-[12.5px] text-soft whitespace-pre-wrap">
-          {selected.text}
-        </pre>
       )}
 
       {/* right: test send + pdf download */}
