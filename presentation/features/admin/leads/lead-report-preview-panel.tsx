@@ -51,8 +51,22 @@ export function LeadReportPreviewPanel({
   const [pending, startTransition] = useTransition();
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  const currentTheme = document.documentElement.getAttribute("data-theme") ?? "light";
+
   const selected =
     scenarios.find((s) => s.id === selectedId) ?? scenarios[0];
+
+  const shownHtml =
+    view === "email"
+      ? selected.emailHtml
+      : view === "report"
+      ? selected.reportHtml
+      : null;
+
+  const themedHtml = shownHtml?.replace(
+    /<html(\s+[^>]*)?>/,
+    "<html$1 data-theme=\"" + currentTheme + "\">"
+  ) ?? null;
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -61,42 +75,20 @@ export function LeadReportPreviewPanel({
     const doc = iframe.contentDocument;
     if (!doc) return;
 
-    const applyThemeAndHideScrollbar = () => {
+    const hideScrollbar = () => {
       const d = iframe.contentDocument;
-      if (!d) return;
-
-      const parentTheme = document.documentElement.getAttribute("data-theme");
-      if (parentTheme) {
-        d.documentElement.setAttribute("data-theme", parentTheme);
-      }
-
-      if (!d.getElementById("email-preview-scrollbar")) {
-        const style = d.createElement("style");
-        style.id = "email-preview-scrollbar";
-        style.textContent =
-          "html::-webkit-scrollbar{display:none}html{scrollbar-width:none}";
-        (d.head ?? d.documentElement).appendChild(style);
-      }
+      if (!d || d.getElementById("email-preview-scrollbar")) return;
+      const style = d.createElement("style");
+      style.id = "email-preview-scrollbar";
+      style.textContent =
+        "html::-webkit-scrollbar{display:none}html{scrollbar-width:none}";
+      (d.head ?? d.documentElement).appendChild(style);
     };
 
-    iframe.addEventListener("load", applyThemeAndHideScrollbar);
-    if (doc.readyState === "complete") applyThemeAndHideScrollbar();
-
-    const observer = new MutationObserver(() => {
-      const d = iframe.contentDocument;
-      if (!d) return;
-      const parentTheme = document.documentElement.getAttribute("data-theme");
-      if (parentTheme) {
-        d.documentElement.setAttribute("data-theme", parentTheme);
-      }
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-
-    return () => {
-      iframe.removeEventListener("load", applyThemeAndHideScrollbar);
-      observer.disconnect();
-    };
-  }, [view, selectedId]);
+    iframe.addEventListener("load", hideScrollbar);
+    if (doc.readyState === "complete") hideScrollbar();
+    return () => iframe.removeEventListener("load", hideScrollbar);
+  }, [view, selectedId, currentTheme]);
 
   const onSend = () => {
     if (!selected) return;
@@ -114,13 +106,6 @@ export function LeadReportPreviewPanel({
   if (!selected) {
     return <p className="font-mono text-sm text-muted">Nessuno scenario.</p>;
   }
-
-  const shownHtml =
-    view === "email"
-      ? selected.emailHtml
-      : view === "report"
-      ? selected.reportHtml
-      : null;
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_minmax(0,1fr)_320px] lg:grid-rows-[minmax(0,1fr)] lg:flex-1 lg:min-h-0">
@@ -181,12 +166,12 @@ export function LeadReportPreviewPanel({
       </aside>
 
       {/* center: preview */}
-      {shownHtml ? (
+      {themedHtml ? (
         <iframe
-          key={`${selected.id}:${view}`}
+          key={`${selected.id}:${view}:${currentTheme}`}
           ref={iframeRef}
           title={view === "email" ? "Anteprima email" : "Anteprima report PDF"}
-          srcDoc={shownHtml}
+          srcDoc={themedHtml}
           className="w-full h-full min-h-0 block"
         />
       ) : (
