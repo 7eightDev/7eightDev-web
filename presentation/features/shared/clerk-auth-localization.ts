@@ -17,6 +17,11 @@ export const clerkAuthLocalization = {
     start: {
       title: "Accedi",
       subtitle: "Bentornato! Inserisci le tue credenziali per continuare.",
+      actionLink__use_passkey: "Usa la passkey",
+    },
+    passkey: {
+      title: "Usa la passkey",
+      subtitle: "Conferma con il tuo dispositivo per accedere.",
     },
     password: {
       title: "Inserisci la password",
@@ -30,6 +35,7 @@ export const clerkAuthLocalization = {
       actionLink: "Richiedi assistenza",
       blockButton__emailCode: "Codice di verifica a {{identifier}}",
       blockButton__password: "Password",
+      blockButton__passkey: "Passkey",
       getHelp: {
         title: "Richiedi assistenza",
         content: "Contattaci e ti aiutiamo a recuperare l'accesso.",
@@ -58,4 +64,11 @@ export const clerkAuthLocalization = {
     newDeviceVerificationNotice:
       "Per motivi di sicurezza ti chiediamo di verificare il nuovo dispositivo.",
   },
+  formFieldLabel__passkeyName: "Nome della passkey",
+  passkey_not_supported: "La passkey non è supportata da questo dispositivo.",
+  passkey_pa_not_supported:
+    "Questo dispositivo non supporta i passkey. Usa un altro metodo per accedere.",
+  passkey_retrieval_cancelled: "Accesso con passkey annullato.",
+  passkey_registration_cancelled: "Registrazione della passkey annullata.",
+  passkey_already_exists: "Questa passkey è già stata registrata.",
 };
