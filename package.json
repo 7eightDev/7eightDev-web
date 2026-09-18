@@ -11,6 +11,11 @@
     "sharp@0.34.5": true,
     "unrs-resolver@1.12.2": true
   },
+  "pnpm": {
+    "patchedDependencies": {
+      "next-themes@0.4.6": "patches/next-themes@0.4.6.patch"
+    }
+  },
   "engines": {
     "node": "24.x"
   },
