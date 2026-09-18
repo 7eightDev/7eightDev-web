@@ -51,7 +51,10 @@ export function LeadReportPreviewPanel({
   const [pending, startTransition] = useTransition();
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const currentTheme = document.documentElement.getAttribute("data-theme") ?? "light";
+  const rootEl = document.documentElement;
+  const currentTheme =
+    rootEl.getAttribute("data-theme") ??
+    (rootEl.classList.contains("dark") ? "dark" : "light");
 
   const selected =
     scenarios.find((s) => s.id === selectedId) ?? scenarios[0];
