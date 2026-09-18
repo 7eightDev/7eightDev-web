@@ -117,7 +117,7 @@ Google Places discovery → PageSpeed analysis → qualification → PDF audit �
 - **HTML heuristics** on each prospect's website — tech-stack detection (WordPress, Wix, Shopify, React…), footer copyright year as a staleness signal, and ad-tracker detection (Google Ads / Meta Pixel / GTM) powering a **waste-budget estimate**.
 - **Economic-impact model** — a cited ~20% conversion loss per second of LCP over 2.5s (capped at 80%), computed into scenario tables for €500 / €1 000 / €2 000 monthly ad budgets.
 - **Fire-and-forget jobs** — the pipeline persists a `running` job, runs without awaiting, and recovers stale jobs after 20 min; re-runs re-qualify existing leads without duplicating.
-- **Value-first outreach** — an in-house branded PDF audit report (Puppeteer, A4, dark theme) is generated and emailed before any sales pitch. Show the numbers first.
+- **Value-first outreach** — an in-house branded PDF audit report (Puppeteer, A4, light theme) is generated and emailed before any sales pitch. Show the numbers first.
 - **Quote integration** — from any qualified lead, one click opens the quote composer pre-populated with the right catalog services.
 
 | Lead intelligence | Deep-dive analysis |

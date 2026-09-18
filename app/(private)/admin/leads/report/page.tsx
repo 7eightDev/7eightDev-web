@@ -84,11 +84,14 @@ export default async function LeadReportPreviewPage({
       subject: email.subject,
       emailHtml: email.html,
       text: email.text,
-      reportHtml: renderLeadReportHtml({
-        lead: s.lead,
-        analysis: s.analysis,
-        generatedAt,
-      }),
+      reportHtml: renderLeadReportHtml(
+        {
+          lead: s.lead,
+          analysis: s.analysis,
+          generatedAt,
+        },
+        "preview"
+      ),
       reportDate: formatDateIt(generatedAt),
       downloadHref: s.id.startsWith("lead:")
         ? `/admin/leads/report/pdf?lead=${encodeURIComponent(s.id.slice("lead:".length))}`
