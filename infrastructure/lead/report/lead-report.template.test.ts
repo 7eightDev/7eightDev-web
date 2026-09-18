@@ -66,12 +66,14 @@ describe("lead report html", () => {
     expect(pdf).not.toContain("position: fixed; left: 0; right: 0; bottom: 0;");
   });
 
-  it("reverts to a bordered, growable sheet only in preview mode", () => {
+  it("frames the sheet with a fixed border only in preview mode", () => {
     const preview = render("preview");
 
     expect(preview).toContain(
-      ".page { width: 210mm; height: auto; min-height: 296mm; padding: 14mm 14mm 16mm; border: 1px solid var(--border); border-radius: 8px; }"
+      ".page { width: 210mm; height: auto; min-height: 296mm; padding: 14mm 14mm 16mm; }"
     );
+    expect(preview).toContain("body::before {");
+    expect(preview).toContain("position: fixed;");
     expect(preview).toContain(".footer { position: static; margin-top: auto; }");
   });
 });
