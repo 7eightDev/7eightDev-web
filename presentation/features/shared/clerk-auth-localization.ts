@@ -11,6 +11,8 @@ export const clerkAuthLocalization = {
   formButtonPrimary__continue: "Continua",
   formButtonPrimary__verify: "Verifica",
   backButton: "Indietro",
+  formFieldAction__forgotPassword: "Password dimenticata?",
+  footerActionLink__useAnotherMethod: "Usa un altro metodo",
   signIn: {
     start: {
       title: "Accedi",
@@ -19,6 +21,20 @@ export const clerkAuthLocalization = {
     password: {
       title: "Inserisci la password",
       subtitle: "Ora inserisci la password associata a questo account.",
+      actionLink: "Usa un altro metodo",
+    },
+    alternativeMethods: {
+      title: "Usa un altro metodo",
+      subtitle: "Hai problemi? Puoi accedere con uno di questi metodi.",
+      actionText: "Non ne hai nessuno?",
+      actionLink: "Richiedi assistenza",
+      blockButton__emailCode: "Codice di verifica a {{identifier}}",
+      blockButton__password: "Password",
+      getHelp: {
+        title: "Richiedi assistenza",
+        content: "Contattaci e ti aiutiamo a recuperare l'accesso.",
+        blockButton__emailSupport: "Contatta il supporto via email",
+      },
     },
     emailCode: {
       title: "Controlla la tua email",

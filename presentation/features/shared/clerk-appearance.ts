@@ -8,14 +8,12 @@
  *
  * Branding decisions (per committente):
  * - no Clerk logo/badge: `footerItem` (the "Secured by" pill) is hidden;
- * - no sign-up entries: `footerActionLink`/`footerActionText` are hidden
- *   (registration is not allowed — access is admin-only);
+ * - registration stays off at the instance level (admin-only access), so the
+ *   footer action link keeps working as the "use another method" entry point
+ *   to the email-code (OTP) flow;
  * - field labels are visually hidden (sr-only), the placeholder carries the
  *   hint (this Clerk build renders both, duplicating the text);
- * - the primary button is forced to the brand accent: this Clerk build does not
- *   plumb `colorPrimary`/`colorTextOnPrimary` nor a background onto the button,
- *   so the pill is painted on the button's wrapper via `app/globals.css`
- *   (`:has(> .cl-formButtonPrimary)`) and the label color is pinned here.
+ * - the primary button is forced to the brand accent via `colorPrimary`.
  */
 export const clerkAppearance = {
   variables: {
@@ -41,8 +39,6 @@ export const clerkAppearance = {
       border: "0",
     },
     footerItem: { display: "none" },
-    footerActionLink: { display: "none" },
-    footerActionText: { display: "none" },
     formFieldLabel: {
       position: "absolute",
       width: "1px",
