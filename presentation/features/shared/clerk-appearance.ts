@@ -39,6 +39,13 @@ export const clerkAppearance = {
       border: "0",
     },
     footerItem: { display: "none" },
+    otpCodeFieldInput: {
+      backgroundColor: "var(--raised)",
+      borderColor: "var(--border)",
+      borderStyle: "solid",
+      borderWidth: "1px",
+      boxShadow: "none",
+    },
     formFieldLabel: {
       position: "absolute",
       width: "1px",
