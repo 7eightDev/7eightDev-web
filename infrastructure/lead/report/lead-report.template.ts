@@ -36,15 +36,6 @@ const PREVIEW_STYLES = `
   .page { width: 210mm; height: auto; min-height: 296mm; padding: 14mm 14mm 16mm; }
   .footer { position: static; margin-top: auto; }
   body { padding: 0 0 24px; }
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 8px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    pointer-events: none;
-    z-index: 10;
-  }
 `;
 
 const PREVIEW_FIT_SCRIPT = `
