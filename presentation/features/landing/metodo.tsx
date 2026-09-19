@@ -49,7 +49,7 @@ export function Metodo() {
             </div>
             <ul className="list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3.5">
               {GUARANTEES.map((g) => (
-                <li key={g} className="flex gap-[11px] items-start font-sans text-[14.5px] leading-[1.45] text-[#cdd3dc]">
+                <li key={g} className="flex gap-[11px] items-start font-sans text-[14.5px] leading-[1.45] text-[var(--text-secondary)]">
                   <Check />
                   {g}
                 </li>

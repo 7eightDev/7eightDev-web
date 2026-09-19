@@ -27,7 +27,7 @@ export function Stack() {
                 </div>
                 <div className="flex flex-col gap-[10px]">
                   {col.items.map((it) => (
-                    <div key={it} className="font-mono text-[14.5px] text-[#cdd3dc] flex items-center gap-[10px]">
+                    <div key={it} className="font-mono text-[14.5px] text-[var(--text-secondary)] flex items-center gap-[10px]">
                       <span className="w-[5px] h-[5px] rounded-[3px] bg-dim flex-none" />{it}
                     </div>
                   ))}

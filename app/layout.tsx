@@ -6,7 +6,7 @@ import {
   Figtree
 } from 'next/font/google';
 import './globals.css';
-import { cn } from '@/lib/utils';
+import { cn } from '@/presentation/lib/utils';
 import { ClerkProvider } from '@clerk/nextjs';
 import { clerkAuthLocalization } from '@/presentation/features/shared/clerk-auth-localization';
 import { ThemeProvider } from '@/presentation/components/shared/theme-provider';

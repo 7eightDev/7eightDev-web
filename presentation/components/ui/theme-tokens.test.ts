@@ -160,7 +160,7 @@ describe("theme tokens (app/globals.css @theme)", () => {
     const unresolved: string[] = [];
     for (const [name, value] of themeColorTokens) {
       const ref = value.match(/^var\(--([a-z0-9-]+)\)$/);
-      if (!ref) continue; // literal value (e.g. accent-lime) — no var to resolve
+      if (!ref) continue; // literal value (no var to resolve)
       if (!root.has(ref[1]) || !dark.has(ref[1])) {
         unresolved.push(`color-${name} -> var(--${ref[1]})`);
       }

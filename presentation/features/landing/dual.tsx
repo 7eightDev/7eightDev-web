@@ -39,7 +39,7 @@ function TrackCard({ tr }: { tr: typeof TRACKS[0] }) {
       <p className="font-sans text-[15.5px] leading-[1.55] text-soft mb-[22px]">{tr.d}</p>
       <ul className="list-none p-0 m-[0_0_24px] flex flex-col gap-[11px]">
         {tr.list.map((li) => (
-          <li key={li} className="flex gap-[11px] font-sans text-[14.5px] leading-[1.45] text-[#cdd3dc]">
+          <li key={li} className="flex gap-[11px] font-sans text-[14.5px] leading-[1.45] text-[var(--text-secondary)]">
             <Check />
             {li}
           </li>

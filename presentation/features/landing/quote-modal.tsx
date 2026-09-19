@@ -104,7 +104,7 @@ export function QuoteModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-100 bg-[rgba(6,7,9,0.72)] backdrop-blur-[6px] flex items-start justify-center p-[6vh_20px] overflow-y-auto"
+      className="fixed inset-0 z-100 bg-[var(--overlay)] backdrop-blur-[6px] flex items-start justify-center p-[6vh_20px] overflow-y-auto"
     >
       <div
         onClick={(e) => e.stopPropagation()}

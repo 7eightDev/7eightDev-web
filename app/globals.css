@@ -35,6 +35,20 @@
   --amber: oklch(0.5553 0.1455 49.0);   /* #B45309 */
   --coral-text: oklch(0.5534 0.1739 38.4); /* #C2410C */
 
+  /* FASE 5 — semantic aliases replacing hardcoded hex/rgba in components.
+     Value-identical by design: naming, not recoloring, so a future restyle
+     can retarget a single variable. Component-facing:
+     `--overlay` — modal/quote scrim (near-black in both themes);
+     `--pill-overlay` — row-action hover pill (== dark `--border` at 82%);
+     `--text-secondary` — landing list items, brighter than `--text-soft`
+        (theme-invariant today: kept value-identical, light-surface contrast
+        flagged instead of silently changed);
+     `--on-coral` — text on coral fills (== dark `--on-accent`). */
+  --overlay: rgba(6, 7, 9, 0.72);
+  --pill-overlay: rgba(35, 38, 46, 0.82);
+  --text-secondary: #cdd3dc;
+  --on-coral: oklch(0.149 0.005 264.5);
+
   --dot-color: rgba(15, 23, 42, 0.04);
   --scheme: light;
 
@@ -104,8 +118,10 @@
   --color-input: var(--border);
 
   /* Brand badge palette — dual: `--cyan/--iris/--amber/--coral-text` flip per
-     theme (deep variants on light for contrast, bright hues on dark). */
-  --color-accent-lime: #C7F94E;
+     theme (deep variants on light for contrast, bright hues on dark).
+     `accent-lime` is an alias of the brand accent: the lime hue flips with
+     `--accent` (bright lime on dark, deep green on light). */
+  --color-accent-lime: var(--accent);
   --color-accent-cyan: var(--cyan);
   --color-accent-iris: var(--iris);
   --color-accent-amber: var(--amber);

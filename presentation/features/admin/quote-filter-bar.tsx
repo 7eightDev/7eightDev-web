@@ -20,7 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/presentation/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn } from '@/presentation/lib/utils';
 import {
   DEFAULT_DUE_FILTER,
   DEFAULT_STATUS_FILTER,
