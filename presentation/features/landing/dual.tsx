@@ -1,8 +1,6 @@
 import { Container } from "@/presentation/components/ui/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
-import { Chip } from "@/presentation/components/shared/chip";
-import { SectionHead } from "@/presentation/components/shared/section-head";
-import { TagLabel } from "@/presentation/components/shared/tag-label";
+import { Chip, SectionHead, TagLabel } from "./landing-ui";
 import { cn } from "@/presentation/lib/utils";
 
 const TRACKS = [

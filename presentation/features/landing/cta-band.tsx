@@ -5,7 +5,7 @@ import { Reveal } from '@/presentation/components/shared/reveal';
 import { cn } from '@/presentation/lib/utils';
 import { Button } from '@/presentation/components/ui/button';
 import { LANDING_BTN_CLASSES } from './landing-btn';
-import { TagLabel } from '@/presentation/components/shared/tag-label';
+import { TagLabel } from './landing-ui';
 import { useQuoteModal } from './quote-context';
 
 export function CtaBand() {

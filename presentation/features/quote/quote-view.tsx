@@ -6,7 +6,6 @@ import { calculateQuote } from "@/application/quote/quote.service";
 import type { Quote } from "@/domain/quote/quote.types";
 import { formatMoney } from "@/domain/shared/money";
 import { Container } from "@/presentation/components/ui/container";
-import { Eyebrow } from "@/presentation/components/shared/eyebrow";
 import { LogoLockup } from "@/presentation/components/shared/logo";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { AcceptancePanel } from "@/presentation/features/quote/acceptance-panel";
@@ -142,9 +141,10 @@ export function QuoteView({ quote }: QuoteViewProps) {
       <Container className="max-w-[980px] px-5 sm:px-8 pt-14 pb-[100px]">
         {/* header */}
         <Reveal>
-          <Eyebrow>
+          <div className="font-mono text-[13px] tracking-[0.12em] uppercase text-accent font-semibold flex items-center gap-[9px]">
+            <span className="opacity-60">{"//"}</span>
             preventivo · {quote.number}
-          </Eyebrow>
+          </div>
           <h1 className="font-space font-semibold text-[clamp(32px,4.4vw,48px)] tracking-[-0.03em] leading-[1.05] mt-[18px] mb-0 text-foreground">
             {quote.project}
           </h1>

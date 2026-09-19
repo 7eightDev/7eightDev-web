@@ -1,7 +1,6 @@
 import { Container } from "@/presentation/components/ui/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
-import { SectionHead } from "@/presentation/components/shared/section-head";
-import { TagLabel } from "@/presentation/components/shared/tag-label";
+import { SectionHead, TagLabel } from "./landing-ui";
 
 const STACK = [
   { g: 'Core', items: ['Next.js', 'TypeScript', 'React'] },

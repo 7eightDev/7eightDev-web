@@ -1,4 +1,25 @@
 import { cn } from "@/presentation/lib/utils";
+import { Reveal } from "@/presentation/components/shared/reveal";
+
+interface ChipProps {
+  children: React.ReactNode;
+  accent?: boolean;
+  className?: string;
+}
+
+export function Chip({ children, accent = false, className }: ChipProps) {
+  return (
+    <span
+      className={cn(
+        "font-mono text-[12px] tracking-[0.04em] px-[10px] py-[5px] rounded-[6px] border border-border bg-surface inline-flex items-center gap-[7px] whitespace-nowrap",
+        accent ? "text-accent" : "text-soft",
+        className
+      )}
+    >
+      {children}
+    </span>
+  );
+}
 
 interface TagLabelProps {
   /** Component name, PascalCase. Rendered in accent. */
@@ -44,10 +65,35 @@ export function TagLabel({ name, propKey, propValue, center, className }: TagLab
         </>
       )}
       <span className="whitespace-nowrap">
-        {" "}
+        {"\u00A0"}
         <span className="text-accent" aria-hidden="true">/</span>
         <span className="text-muted" aria-hidden="true">&gt;</span>
       </span>
+    </div>
+  );
+}
+
+interface SectionHeadProps {
+  eyebrow: React.ReactNode;
+  title: string;
+  sub?: string;
+  center?: boolean;
+}
+
+export function SectionHead({ eyebrow, title, sub, center }: SectionHeadProps) {
+  return (
+    <div className={cn("max-w-[720px]", center ? "mx-auto text-center" : "text-left")}>
+      <Reveal>{eyebrow}</Reveal>
+      <Reveal delay={60}>
+        <h2 className="font-space font-semibold text-[clamp(28px,3.4vw,42px)] tracking-[-0.03em] leading-[1.06] mt-[18px] text-foreground text-balance">
+          {title}
+        </h2>
+      </Reveal>
+      {sub && (
+        <Reveal delay={120}>
+          <p className="font-sans text-[17px] leading-[1.58] text-soft mt-[18px]">{sub}</p>
+        </Reveal>
+      )}
     </div>
   );
 }
