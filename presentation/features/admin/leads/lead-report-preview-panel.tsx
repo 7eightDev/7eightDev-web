@@ -175,13 +175,13 @@ export function LeadReportPreviewPanel({
 
       {/* center: preview */}
       {themedHtml ? (
-        <iframe
-          key={`${selected.id}:${view}:${currentTheme}`}
-          ref={iframeRef}
-          title={view === "email" ? "Anteprima email" : "Anteprima report PDF"}
-          srcDoc={themedHtml}
-          className="w-full h-full min-h-0 block"
-        />
+          <iframe
+            key={`${selected.id}:${view}:${currentTheme}`}
+            ref={iframeRef}
+            title={view === "email" ? "Anteprima email" : "Anteprima report PDF"}
+            srcDoc={themedHtml}
+            className="w-full h-full min-h-0 block rounded-lg border border-border"
+            />
       ) : (
         <pre className="w-full h-full min-h-0 overflow-auto no-scrollbar rounded-xl bg-raised p-4 font-mono text-[12.5px] text-soft whitespace-pre-wrap">
           {selected.text}
