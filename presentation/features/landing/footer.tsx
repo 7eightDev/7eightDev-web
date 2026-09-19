@@ -1,7 +1,7 @@
 "use client";
 
 import { LogoLockup } from '@/presentation/components/shared/logo';
-import { Container } from '@/presentation/components/shared/container';
+import { Container } from '@/presentation/components/ui/container';
 import { useQuoteModal } from './quote-context';
 
 interface FooterLink {

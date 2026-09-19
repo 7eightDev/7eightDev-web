@@ -6,7 +6,7 @@ import {
   renderAcceptedEmail,
   renderEmail,
 } from "@/infrastructure/quote/resend-quote-notification.adapter";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import {
   EmailPreviewPanel,
   type RenderedScenario,

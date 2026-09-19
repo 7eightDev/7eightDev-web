@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { catalogRepository } from "@/infrastructure/container";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { CatalogItemForm } from "@/presentation/features/admin/catalog-item-form";
 
 export const dynamic = "force-dynamic";

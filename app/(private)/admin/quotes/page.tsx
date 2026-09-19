@@ -3,7 +3,7 @@ import { calculateQuote } from "@/application/quote/quote.service";
 import type { Quote } from "@/domain/quote/quote.types";
 import { formatMoney } from "@/domain/shared/money";
 import { quoteRepository } from "@/infrastructure/container";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { QuoteFilterBar } from "@/presentation/features/admin/quote-filter-bar";
 import {
   dueBucket,

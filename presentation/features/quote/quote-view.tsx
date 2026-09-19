@@ -5,7 +5,7 @@ import { acceptQuoteAction } from "@/application/quote/accept-quote.action";
 import { calculateQuote } from "@/application/quote/quote.service";
 import type { Quote } from "@/domain/quote/quote.types";
 import { formatMoney } from "@/domain/shared/money";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { Eyebrow } from "@/presentation/components/shared/eyebrow";
 import { LogoLockup } from "@/presentation/components/shared/logo";
 import { Reveal } from "@/presentation/components/shared/reveal";

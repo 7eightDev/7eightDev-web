@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/presentation/lib/utils';
-import { Container } from '@/presentation/components/shared/container';
+import { Container } from '@/presentation/components/ui/container';
 import { TagLabel } from '@/presentation/components/shared/tag-label';
 import { Reveal } from '@/presentation/components/shared/reveal';
 import { Button } from '@/presentation/components/ui/button';

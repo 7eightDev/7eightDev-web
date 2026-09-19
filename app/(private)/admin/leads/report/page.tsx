@@ -5,7 +5,7 @@ import { reportFilename } from "@/infrastructure/lead/report/puppeteer-report.ad
 import { renderLeadPresentationEmail } from "@/infrastructure/lead/notification/lead-presentation-email.template";
 import { formatDateIt } from "@/presentation/lib/format-date";
 import type { Lead, LeadAnalysis } from "@/domain/lead/lead.types";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import {
   LeadReportPreviewPanel,
   type RenderedReportScenario,

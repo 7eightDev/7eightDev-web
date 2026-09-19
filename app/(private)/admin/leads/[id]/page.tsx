@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { leadRepository } from "@/infrastructure/container";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { LeadDetail } from "@/presentation/features/admin/leads/lead-detail";
 import { LeadCreateQuoteButton } from "@/presentation/features/admin/leads/lead-create-quote-button";
 import { LeadSendAuditButton } from "@/presentation/features/admin/leads/lead-send-audit-button";

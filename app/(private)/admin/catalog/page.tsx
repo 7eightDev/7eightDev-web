@@ -5,7 +5,7 @@ import type {
 } from "@/domain/catalog/catalog.types";
 import { formatMoney } from "@/domain/shared/money";
 import { catalogRepository } from "@/infrastructure/container";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { CatalogRowActions } from "@/presentation/features/admin/catalog-row-actions";
 
 export const dynamic = "force-dynamic";

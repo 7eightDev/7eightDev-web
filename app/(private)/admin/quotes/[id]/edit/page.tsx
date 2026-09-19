@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { catalogRepository, quoteRepository } from "@/infrastructure/container";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { QuoteComposer } from "@/presentation/features/admin/quote-composer";
 
 export const dynamic = "force-dynamic";

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { FolderOpenIcon, CrossIcon } from "@hugeicons/core-free-icons";
 import { leadRepository } from "@/infrastructure/container";
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { Button } from "@/presentation/components/ui/button";
 import { resolveJobStatus } from "@/domain/lead/lead.job";
 import { hasCriteria, leadMatchesCriteria } from "@/domain/lead/lead.criteria";

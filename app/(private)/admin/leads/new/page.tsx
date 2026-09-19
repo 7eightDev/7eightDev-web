@@ -1,4 +1,4 @@
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { LeadSearchForm } from "@/presentation/features/admin/leads/lead-search-form";
 
 export default function NewLeadSearchPage() {

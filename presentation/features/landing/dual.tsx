@@ -1,4 +1,4 @@
-import { Container } from "@/presentation/components/shared/container";
+import { Container } from "@/presentation/components/ui/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { Chip } from "@/presentation/components/shared/chip";
 import { SectionHead } from "@/presentation/components/shared/section-head";
