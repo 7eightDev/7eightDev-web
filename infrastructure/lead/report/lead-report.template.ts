@@ -32,10 +32,50 @@ export function isAdsWasteRelevant(
 
 export type LeadReportRenderMode = "pdf" | "preview";
 
+/** Larghezza del foglio A4 condivisa dalle tre anteprime centrali. */
+const PREVIEW_SHEET_WIDTH = "210mm";
+
+/**
+ * Full bleed — regola condivisa dalle tre schede: il documento tocca i bordi
+ * del riquadro, nessuna fascia di piano ai lati. Pochi pixel di margine non si
+ * leggono come "foglio appoggiato", si leggono come un disallineamento: o è
+ * deciso, o non c'è. Qui non c'è, e il bordo del riquadro fa da filo del
+ * foglio. Applicata in due punti che vanno tenuti allineati: il fit script
+ * (`availW` == `clientWidth`) e il guscio dell'email (`.email-viewport`).
+ */
+
+/**
+ * Colore del "banco di lavoro" su cui poggia il foglio, per le anteprime che
+ * non hanno i token CSS (l'email). Sono i valori di `--raised` nelle due
+ * palette del report: tenerli allineati se i token cambiano.
+ */
+const PREVIEW_DESK_BG: Record<"light" | "dark", string> = {
+  light: "#f1f5f9",
+  dark: "#101216",
+};
+
+/** La scrollbar nativa dentro il riquadro arrotondato è rumore: lo scroll resta. */
+const PREVIEW_HIDDEN_SCROLLBAR = `
+  html::-webkit-scrollbar { display: none; }
+  html { scrollbar-width: none; }
+`;
+
+/**
+ * Anteprima: il foglio (`--surface`) riempie il riquadro e poggia su un piano
+ * (`--raised`) che resta visibile solo dove il documento finisce — così il
+ * riquadro non incornicia mai lo sfondo dell'app. Il foglio non porta bordo
+ * proprio: quello del riquadro (iframe) è già il suo filo, e raddoppiarlo a
+ * filo dei lati darebbe una doppia riga.
+ */
 const PREVIEW_STYLES = `
-  .page { width: 210mm; height: auto; min-height: 296mm; padding: 14mm 14mm 16mm; }
+  html { background: var(--raised); }
+  body { background: transparent; padding: 0 0 24px; }
+  .page {
+    width: ${PREVIEW_SHEET_WIDTH}; height: auto; min-height: 296mm; padding: 14mm 14mm 16mm;
+    background: var(--surface);
+  }
   .footer { position: static; margin-top: auto; }
-  body { padding: 0 0 24px; }
+  ${PREVIEW_HIDDEN_SCROLLBAR}
 `;
 
 const PREVIEW_FIT_SCRIPT = `
@@ -44,7 +84,7 @@ const PREVIEW_FIT_SCRIPT = `
   var page = document.querySelector(".page");
   if (!page) return;
   function fit() {
-    var availW = Math.max(1, document.documentElement.clientWidth - 16);
+    var availW = Math.max(1, document.documentElement.clientWidth);
     var k = Math.min(1, availW / page.offsetWidth);
     page.style.transformOrigin = "top left";
     page.style.transform = "scale(" + k + ")";
@@ -496,4 +536,92 @@ function escapeHtml(value: string): string {
 
 function escapeAttr(value: string): string {
   return escapeHtml(value);
+}
+
+/**
+ * Anteprima-only: porta l'email di presentazione sulla stessa scena delle viste
+ * Report PDF e Testo — stessa larghezza (210mm), stesso piano di lavoro sotto
+ * al contenuto, nessuna scrollbar nativa. L'email che arriva al cliente resta
+ * quella originale (guscio a 560px, sfondo lasciato al client di posta): queste
+ * regole vivono solo nell'HTML iniettato nell'iframe e non toccano tipografia,
+ * colori né i padding interni della card.
+ *
+ * Il tema è quello dell'app, non quello del sistema operativo di chi guarda: la
+ * media query `prefers-color-scheme` dell'email viene neutralizzata in `not all`
+ * o forzata con `all`, così le tre schede rispondono allo stesso comando e
+ * l'anteprima è deterministica. Nessuna dichiarazione dell'email viene riscritta.
+ */
+export function renderLeadEmailPreviewHtml(
+  html: string,
+  theme: "light" | "dark" = "light"
+): string {
+  const themeLocked = html.replaceAll(
+    "@media (prefers-color-scheme: dark)",
+    `@media ${theme === "dark" ? "all" : "not all"}`
+  );
+  const overrides = `<style>
+  html { background: ${PREVIEW_DESK_BG[theme]}; }
+  .email-viewport { padding-left: 0 !important; padding-right: 0 !important; }
+  .email-shell { max-width: ${PREVIEW_SHEET_WIDTH} !important; }
+  ${PREVIEW_HIDDEN_SCROLLBAR}
+</style>`;
+  return themeLocked.includes("</head>")
+    ? themeLocked.replace("</head>", `${overrides}</head>`)
+    : themeLocked;
+}
+
+/**
+ * Renders the plain-text version of the lead report inside the SAME `.page`
+ * sheet used by the email and PDF previews, so the three central templates all
+ * share the exact same width (== the iframe width, via PREVIEW_STYLES + the fit
+ * script). Reuses the module-level preview constants; the string is escaped so
+ * the content is safe and rendered verbatim.
+ */
+export function renderLeadReportTextHtml(text: string): string {
+  return `<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<title>Testo — Audit Performance Web</title>
+<style>
+  :root {
+    --bg: #ffffff; --surface: #ffffff; --raised: #f1f5f9;
+    --border: #e2e8f0; --text: #0f172a; --muted: #64748b;
+    --dim: #6b7280; --soft: #475569; --accent: #15803d;
+    --on-accent: #ffffff; --bad: #c2410c; --warn: #b45309;
+  }
+  [data-theme="dark"] {
+    --bg: #0a0b0d; --surface: #14161a; --raised: #101216;
+    --border: #23262e; --text: #eef1f5; --muted: #8b93a1;
+    --dim: #6b7280; --soft: #aab2bf; --accent: #c7f94e;
+    --on-accent: #0a0b0d; --bad: #ff6b6b; --warn: #f5b84a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page {
+    width: ${PREVIEW_SHEET_WIDTH}; margin: 0 auto; background: var(--surface);
+    padding: 0; border: 0;
+  }
+  /* L'incasso del foglio lo dà .page (PREVIEW_STYLES): qui niente padding,
+     altrimenti si somma e il testo parte più in basso del report. */
+  pre.lead-text {
+    width: 100%; white-space: pre-wrap;
+    word-break: break-word; overflow-wrap: anywhere;
+    font: inherit; line-height: 1.55; color: var(--text);
+    padding: 0;
+  }
+  ${PREVIEW_STYLES}
+</style>
+</head>
+<body>
+  <div class="page">
+    <pre class="lead-text">${escapeHtml(text)}</pre>
+  </div>
+  ${PREVIEW_FIT_SCRIPT}
+</body>
+</html>`;
 }

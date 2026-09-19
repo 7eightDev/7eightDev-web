@@ -111,6 +111,9 @@ function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string
   // Fully light email: the brand header row and a white content card sit above
   // the client's own background; the brand green is swapped for a darker tone
   // that stays readable on white.
+  // `email-viewport` / `email-shell` sono soltanto agganci CSS per l'anteprima
+  // dello studio (vedi `renderLeadEmailPreviewHtml`): i client di posta li
+  // ignorano, la larghezza reale resta quella inline (max-width 560px).
   return `<!doctype html>
 <html lang="it">
   <head>
@@ -137,9 +140,9 @@ function emailShell(opts: { appBaseUrl: string; preheader: string; inner: string
   </head>
   <body class="email-body" style="margin:0;padding:0;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(opts.preheader)}</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+    <table role="presentation" class="email-viewport" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
       <tr><td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+        <table role="presentation" class="email-shell" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
           <tr><td style="padding:0 4px 20px;">
             <table role="presentation" cellpadding="0" cellspacing="0"><tr>
               <td style="vertical-align:middle;padding-right:10px;">

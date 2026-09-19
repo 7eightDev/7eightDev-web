@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTheme } from "next-themes";
 import { sendLeadTestEmailAction } from "@/application/lead/lead-email.actions";
+import {
+  renderLeadEmailPreviewHtml,
+  renderLeadReportTextHtml,
+} from "@/infrastructure/lead/report/lead-report.template";
+import { useMounted } from "@/presentation/lib/use-mounted";
 import { cn } from "@/presentation/lib/utils";
 
 export interface RenderedReportScenario {
@@ -36,6 +41,13 @@ const VIEW_LABEL: Record<View, string> = {
   text: "Testo",
 };
 
+/** Nome accessibile dell'iframe: una scheda, un titolo. */
+const VIEW_FRAME_TITLE: Record<View, string> = {
+  email: "Anteprima email",
+  report: "Anteprima report PDF",
+  text: "Anteprima testo",
+};
+
 export function LeadReportPreviewPanel({
   scenarios,
   defaultRecipient,
@@ -50,51 +62,31 @@ export function LeadReportPreviewPanel({
   const [recipient, setRecipient] = useState(defaultRecipient);
   const [send, setSend] = useState<SendState>({ status: "idle" });
   const [pending, startTransition] = useTransition();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Resolved theme from next-themes is SSR-safe (undefined during server
-  // render) and changes re-render this panel, re-theming the preview iframe.
+  // next-themes legge `localStorage` già al primo render del client, mentre sul
+  // server il tema non esiste: leggerlo subito darebbe due `srcDoc` diversi e
+  // l'idratazione fallirebbe. Il primo passaggio rende quindi il tema chiaro —
+  // lo stesso sul server e sul client, ed è anche la versione che il cliente
+  // riceve davvero — e passa al tema dell'app appena montato.
   const { resolvedTheme } = useTheme();
-  const currentTheme = resolvedTheme ?? "dark";
+  const mounted = useMounted();
+  const currentTheme: "light" | "dark" =
+    mounted && resolvedTheme === "dark" ? "dark" : "light";
 
   const selected =
     scenarios.find((s) => s.id === selectedId) ?? scenarios[0];
 
   const shownHtml =
     view === "email"
-      ? selected.emailHtml
+      ? renderLeadEmailPreviewHtml(selected.emailHtml, currentTheme)
       : view === "report"
       ? selected.reportHtml
-      : null;
+      : renderLeadReportTextHtml(selected.text);
 
   const themedHtml = shownHtml?.replace(
     /<html(\s+[^>]*)?>/,
     "<html$1 data-theme=\"" + currentTheme + "\">"
   ) ?? null;
-
-  useEffect(() => {
-    if (view !== "email") return;
-
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    const doc = iframe.contentDocument;
-    if (!doc) return;
-
-    const hideScrollbar = () => {
-      const d = iframe.contentDocument;
-      if (!d || d.getElementById("email-preview-scrollbar")) return;
-      const style = d.createElement("style");
-      style.id = "email-preview-scrollbar";
-      style.textContent =
-        "html::-webkit-scrollbar{display:none}html{scrollbar-width:none}";
-      (d.head ?? d.documentElement).appendChild(style);
-    };
-
-    iframe.addEventListener("load", hideScrollbar);
-    if (doc.readyState === "complete") hideScrollbar();
-    return () => iframe.removeEventListener("load", hideScrollbar);
-  }, [view, selectedId, currentTheme]);
 
   const onSend = () => {
     if (!selected) return;
@@ -173,13 +165,12 @@ export function LeadReportPreviewPanel({
 
       {/* center: preview */}
       {themedHtml ? (
-          <iframe
-            key={`${selected.id}:${view}:${currentTheme}`}
-            ref={iframeRef}
-            title={view === "email" ? "Anteprima email" : "Anteprima report PDF"}
-            srcDoc={themedHtml}
-            className="w-full h-full min-h-0 block rounded-lg border border-border"
-            />
+        <iframe
+          key={`${selected.id}:${view}:${currentTheme}`}
+          title={VIEW_FRAME_TITLE[view]}
+          srcDoc={themedHtml}
+          className="w-full h-full min-h-0 block rounded-lg border border-border"
+        />
       ) : (
         <pre className="w-full h-full min-h-0 overflow-auto no-scrollbar rounded-xl bg-raised p-4 font-mono text-[12.5px] text-soft whitespace-pre-wrap">
           {selected.text}

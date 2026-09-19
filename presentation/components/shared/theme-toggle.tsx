@@ -1,15 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/presentation/components/ui/button";
-
-const emptySubscribe = () => () => {};
-// Hijacks React's subscription machinery: returns `false` on the server and
-// `true` once mounted on the client — the lint-safe equivalent of a
-// `mounted` useState/useEffect pair, with no setState-in-effect.
-const useMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false);
+import { useMounted } from "@/presentation/lib/use-mounted";
 
 /**
  * Dark/light toggle. Rendered inside next-themes' provider; dark is the
