@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/presentation/lib/utils';
 import { LogoLockup } from '@/presentation/components/shared/logo';
-import { Btn } from '@/presentation/components/shared/btn';
+import { Button } from '@/presentation/components/ui/button';
+import { LANDING_BTN_CLASSES } from './landing-btn';
 import { ThemeToggle } from '@/presentation/components/shared/theme-toggle';
 import { useQuoteModal } from './quote-context';
 import { Show } from '@clerk/nextjs';
@@ -54,17 +55,24 @@ export function Nav() {
         </nav>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Btn
-            variant="primary"
+          <Button
+            asChild
+            variant="default"
+            className={cn(
+              LANDING_BTN_CLASSES.base,
+              LANDING_BTN_CLASSES.primary,
+              'px-4 py-2.5'
+            )}
             onClick={(e) => {
               e.preventDefault();
               open();
             }}
-            className="px-4 py-2.5"
           >
-            <span className="md:hidden">Preventivo</span>
-            <span className="hidden md:inline">Richiedi un preventivo</span>
-          </Btn>
+            <a>
+              <span className="md:hidden">Preventivo</span>
+              <span className="hidden md:inline">Richiedi un preventivo</span>
+            </a>
+          </Button>
 
           <div className="flex items-center">
             <Show when="signed-out">

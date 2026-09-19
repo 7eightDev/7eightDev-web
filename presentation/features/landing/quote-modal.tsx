@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/presentation/lib/utils';
-import { Btn } from '@/presentation/components/shared/btn';
+import { Button } from '@/presentation/components/ui/button';
+import { LANDING_BTN_CLASSES } from './landing-btn';
 
 const TYPES = ['Sito PMI', 'Web app / SaaS', 'Non sono sicuro'];
 const BUDGETS = [
@@ -194,13 +195,18 @@ export function QuoteModal({
                 placeholder="Cosa vuoi costruire, per chi, con quali tempi…"
               />
             </Field>
-            <Btn
-              variant="primary"
+            <Button
+              asChild
+              variant="default"
+              className={cn(
+                LANDING_BTN_CLASSES.base,
+                LANDING_BTN_CLASSES.primary,
+                'justify-center p-[14px]'
+              )}
               onClick={submit}
-              className="justify-center p-[14px]"
             >
-              Invia richiesta →
-            </Btn>
+              <a>Invia richiesta →</a>
+            </Button>
           </form>
         ) : (
           <div className="p-[34px]">
@@ -228,16 +234,21 @@ export function QuoteModal({
               <span className="inline-block w-[7px] h-[14px] bg-accent animate-blink" />
             </div>
             <div className="mt-[24px]">
-              <Btn
+              <Button
+                asChild
                 variant="ghost"
+                className={cn(
+                  LANDING_BTN_CLASSES.base,
+                  LANDING_BTN_CLASSES.ghost,
+                  'justify-center w-full'
+                )}
                 onClick={(e) => {
                   e.preventDefault();
                   onClose();
                 }}
-                className="justify-center w-full"
               >
-                Chiudi
-              </Btn>
+                <a>Chiudi</a>
+              </Button>
             </div>
           </div>
         )}

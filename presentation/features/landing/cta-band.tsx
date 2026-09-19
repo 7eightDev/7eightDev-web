@@ -2,7 +2,9 @@
 
 import { Container } from '@/presentation/components/shared/container';
 import { Reveal } from '@/presentation/components/shared/reveal';
-import { Btn } from '@/presentation/components/shared/btn';
+import { cn } from '@/presentation/lib/utils';
+import { Button } from '@/presentation/components/ui/button';
+import { LANDING_BTN_CLASSES } from './landing-btn';
 import { TagLabel } from '@/presentation/components/shared/tag-label';
 import { useQuoteModal } from './quote-context';
 
@@ -29,18 +31,32 @@ export function CtaBand() {
         </Reveal>
         <Reveal delay={180}>
           <div className="flex gap-3 justify-center mt-8 flex-wrap">
-            <Btn
-              variant="primary"
+            <Button
+              asChild
+              variant="default"
+              className={cn(
+                LANDING_BTN_CLASSES.base,
+                LANDING_BTN_CLASSES.primary
+              )}
               onClick={(e) => {
                 e.preventDefault();
                 open();
               }}
             >
-              Richiedi un preventivo <span className="opacity-70">→</span>
-            </Btn>
-            <Btn variant="ghost" href="mailto:info@7eightdev.com">
-              info@7eightdev.com
-            </Btn>
+              <a>
+                Richiedi un preventivo <span className="opacity-70">→</span>
+              </a>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              className={cn(
+                LANDING_BTN_CLASSES.base,
+                LANDING_BTN_CLASSES.ghost
+              )}
+            >
+              <a href="mailto:info@7eightdev.com">info@7eightdev.com</a>
+            </Button>
           </div>
         </Reveal>
       </Container>

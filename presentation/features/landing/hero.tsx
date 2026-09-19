@@ -6,7 +6,8 @@ import { cn } from '@/presentation/lib/utils';
 import { Container } from '@/presentation/components/shared/container';
 import { TagLabel } from '@/presentation/components/shared/tag-label';
 import { Reveal } from '@/presentation/components/shared/reveal';
-import { Btn } from '@/presentation/components/shared/btn';
+import { Button } from '@/presentation/components/ui/button';
+import { LANDING_BTN_CLASSES } from './landing-btn';
 import { Chip } from '@/presentation/components/shared/chip';
 import Aurora from '@/presentation/components/shared/aurora';
 import { useQuoteModal } from './quote-context';
@@ -176,18 +177,32 @@ export function Hero() {
             </p>
 
             <div className="flex gap-[12px] mt-[32px] flex-wrap">
-              <Btn
-                variant="primary"
+              <Button
+                asChild
+                variant="default"
+                className={cn(
+                  LANDING_BTN_CLASSES.base,
+                  LANDING_BTN_CLASSES.primary
+                )}
                 onClick={(e) => {
                   e.preventDefault();
                   open();
                 }}
               >
-                Richiedi un preventivo <span className="opacity-70">→</span>
-              </Btn>
-              <Btn variant="ghost" href="#metodo">
-                Vedi come lavoro
-              </Btn>
+                <a>
+                  Richiedi un preventivo <span className="opacity-70">→</span>
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className={cn(
+                  LANDING_BTN_CLASSES.base,
+                  LANDING_BTN_CLASSES.ghost
+                )}
+              >
+                <a href="#metodo">Vedi come lavoro</a>
+              </Button>
             </div>
 
             <div
