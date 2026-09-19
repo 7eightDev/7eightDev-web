@@ -52,12 +52,10 @@ export function LeadReportPreviewPanel({
   const [pending, startTransition] = useTransition();
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Consuming the theme context guarantees this panel re-renders on toggle,
-  // so the iframe's srcDoc is re-themed instead of staying stale.
+  // Resolved theme from next-themes is SSR-safe (undefined during server
+  // render) and changes re-render this panel, re-theming the preview iframe.
   const { resolvedTheme } = useTheme();
-  const currentTheme =
-    resolvedTheme ??
-    (document.documentElement.classList.contains("dark") ? "dark" : "light");
+  const currentTheme = resolvedTheme ?? "dark";
 
   const selected =
     scenarios.find((s) => s.id === selectedId) ?? scenarios[0];
