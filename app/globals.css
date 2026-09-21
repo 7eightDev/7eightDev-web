@@ -36,17 +36,17 @@
   --coral-text: oklch(0.5534 0.1739 38.4); /* #C2410C */
 
   /* FASE 5 — semantic aliases replacing hardcoded hex/rgba in components.
-     Value-identical by design: naming, not recoloring, so a future restyle
-     can retarget a single variable. Component-facing:
+     Component-facing:
      `--overlay` — modal/quote scrim (near-black in both themes);
      `--pill-overlay` — row-action hover pill (== dark `--border` at 82%);
-     `--text-secondary` — landing list items, brighter than `--text-soft`
-        (theme-invariant today: kept value-identical, light-surface contrast
-        flagged instead of silently changed);
+     `--text-secondary` — emphasis lists (checklists, stack items, garanzie).
+        Dual like every tone: one step brighter than `--text-soft` in dark,
+        one step deeper in light, so the emphasis structure mirrors across
+        themes (a theme-invariant gray would be ~1.5:1 on light surfaces);
      `--on-coral` — text on coral fills (== dark `--on-accent`). */
   --overlay: rgba(6, 7, 9, 0.72);
   --pill-overlay: rgba(35, 38, 46, 0.82);
-  --text-secondary: #cdd3dc;
+  --text-secondary: var(--text);
   --on-coral: oklch(0.149 0.005 264.5);
 
   --dot-color: rgba(15, 23, 42, 0.04);
@@ -72,6 +72,7 @@
   --accent: oklch(0.917 0.199 124.5);    /* #C7F94E — bright lime, readable on dark */
   --coral: oklch(0.706 0.188 32.9);      /* #FF6A4D */
   --on-accent: oklch(0.149 0.005 264.5); /* #0a0b0d */
+  --text-secondary: #cdd3dc;             /* emphasis-list tone: brightest after headings */
 
   --muted-bg: oklch(0.551 0.023 264.4);  /* #6B7280 */
   --destructive: oklch(0.706 0.188 32.9); /* #FF6A4D — matches --coral */

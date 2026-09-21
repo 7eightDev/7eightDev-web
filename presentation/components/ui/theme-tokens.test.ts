@@ -168,6 +168,20 @@ describe("theme tokens (app/globals.css @theme)", () => {
     expect(unresolved).toEqual([]);
   });
 
+  it("is dual: app-facing raw var tokens resolve in BOTH :root and .dark", () => {
+    const rootBlock = extractBlock(globalsCss, ":root {");
+    const darkBlock = extractBlock(globalsCss, ".dark {");
+    const root = declarations(rootBlock!);
+    const dark = declarations(darkBlock!);
+    const nonDual: string[] = [];
+    for (const name of ["text-secondary"]) {
+      if (!root.has(name) || !dark.has(name) || !root.get(name) || !dark.get(name)) {
+        nonDual.push(name);
+      }
+    }
+    expect(nonDual).toEqual([]);
+  });
+
   it("registers the FASE-1 semantic tokens introduced for the shadcn primitives", () => {
     for (const token of [
       "primary",
