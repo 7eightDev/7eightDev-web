@@ -38,11 +38,11 @@ export function Nav() {
           : 'bg-background/40 border-b border-transparent'
       )}
     >
-      <div className="w-full px-8 h-17 flex items-center justify-between gap-4">
+      <div className="w-full px-4 sm:px-8 h-17 flex items-center justify-between gap-3 sm:gap-4">
         <a href="#top" className="no-underline flex-none">
           <LogoLockup size={17} />
         </a>
-        <nav className="hidden md:flex items-center gap-7">
+        <nav className="hidden md:flex items-center gap-5 lg:gap-7">
           {NAV_LINKS.map(([href, label]) => (
             <a
               key={href}
@@ -53,7 +53,7 @@ export function Nav() {
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <Button
             asChild
@@ -61,7 +61,7 @@ export function Nav() {
             className={cn(
               LANDING_BTN_CLASSES.base,
               LANDING_BTN_CLASSES.primary,
-              'px-4 py-2.5'
+              'px-3 py-2.5 sm:px-4'
             )}
             onClick={(e) => {
               e.preventDefault();

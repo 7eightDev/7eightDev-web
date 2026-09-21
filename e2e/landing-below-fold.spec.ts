@@ -136,4 +136,55 @@ test.describe("landing below-the-fold", () => {
       });
     }
   });
+
+  // Regression pag. nav pubblica: il cluster destro (ThemeToggle + CTA
+  // "Preventivo" + avatar UserMenu) tracimava su ~≤390px e a tablet 768,
+  // producendo scrollbar orizzontale a livello documento e avatar tagliato
+  // (bug segnalato su Xiaomi 14T). Il check scansiona il <header> (fratello
+  // di <main>, quindi fuori dal coverage di expectNoHorizontalOverflow) per
+  // OGNI elemento interattivo e verifica che il documento non scrolli.
+  // 360 = minima viewport mobile supportata (browser Android ad alto DPR /
+  //  Mi Browser); gli altri vengono dai DEVICE_PROFILES canonici.
+  test("header senza overflow: scrollbar orizzontale e avatar dentro viewport", async ({
+    page,
+  }) => {
+    for (const width of [360, DEVICE_PROFILES.mobile, DEVICE_PROFILES.tablet, DEVICE_PROFILES.desktop]) {
+      await gotoLanding(page, width, HEIGHT);
+      const header = page.locator("header").first();
+      await expect(header).toBeVisible();
+
+      const EPS = 0.5;
+      const report = await header.evaluate((el, eps) => {
+        const vw = document.documentElement.clientWidth;
+        const offenders: string[] = [];
+        const scan = (root: Element, toleranza: number) => {
+          const rect = root.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0 && (rect.left < -toleranza || rect.right > vw + toleranza)) {
+            offenders.push(`<${root.tagName.toLowerCase()}> left=${rect.left.toFixed(1)} right=${rect.right.toFixed(1)} vw=${vw}`);
+          }
+          root
+            .querySelectorAll(
+              "button, a, select, input, [role='button'], [role='checkbox'], [role='radio'], [role='switch'], [role='tab'], img"
+            )
+            .forEach((child) => {
+              const b = child.getBoundingClientRect();
+              if (b.width === 0 || b.height === 0) return;
+              if (b.left < -toleranza || b.right > vw + toleranza) {
+                offenders.push(`<${child.tagName.toLowerCase()}> left=${b.left.toFixed(1)} right=${b.right.toFixed(1)} vw=${vw}`);
+              }
+            });
+        };
+        scan(el, eps);
+        return {
+          docScrollW: document.documentElement.scrollWidth,
+          docClientW: document.documentElement.clientWidth,
+          offenderCount: offenders.length,
+          offenders: offenders.slice(0, 6),
+        };
+      }, EPS);
+
+      expect(report.docScrollW, `documento senza scrollbar orizzontale a ${width} (scrollW=${report.docScrollW} vs ${report.docClientW})`).toBeLessThanOrEqual(report.docClientW);
+      expect(report.offenderCount, `nessun elemento del header tracima a ${width}`).toBe(0);
+    }
+  });
 });
