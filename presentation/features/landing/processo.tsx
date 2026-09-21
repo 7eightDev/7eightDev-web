@@ -1,7 +1,6 @@
 import { Container } from "@/presentation/components/ui/container";
 import { Reveal } from "@/presentation/components/shared/reveal";
 import { TagLabel } from "./landing-ui";
-import { cn } from "@/presentation/lib/utils";
 
 const STEPS = [
   { n: '01', t: 'Discovery & obiettivi', d: 'Capisco business, utenti, vincoli e budget. Niente preventivi al buio.' },
@@ -29,7 +28,7 @@ export function Processo() {
             <Reveal key={s.n} delay={i * 80}>
               <div className="relative pt-[26px]">
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-border" />
-                <div className={cn("absolute top-[-5px] left-0 w-[10px] h-[10px] rounded-[6px]", i === 1 ? "bg-accent" : "bg-dim")} />
+                <div className="absolute top-[-5px] left-0 w-[10px] h-[10px] rounded-[6px] bg-dim" />
                 <div className="font-mono text-[12.5px] text-muted tracking-[0.1em] mb-[12px]">{s.n}</div>
                 <h3 className="font-space font-semibold text-[18.5px] tracking-[-0.01em] mb-[10px] text-foreground">{s.t}</h3>
                 <p className="font-sans text-[14.5px] leading-[1.55] text-soft">{s.d}</p>
