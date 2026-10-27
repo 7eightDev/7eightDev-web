@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/presentation/lib/utils';
 import { Button } from '@/presentation/components/ui/button';
 import { LANDING_BTN_CLASSES } from './landing-btn';
+import { submitHomeContactAction } from '@/application/quote/home-contact.actions';
 
 const TYPES = ['Sito PMI', 'Web app / SaaS', 'Non sono sicuro'];
 const BUDGETS = [
@@ -69,6 +70,8 @@ export function QuoteModal({
   });
   const [err, setErr] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const set = (k: string, v: string) => setF((s) => ({ ...s, [k]: v }));
 
   useEffect(() => {
@@ -96,9 +99,30 @@ export function QuoteModal({
     setErr(e);
     return Object.keys(e).length === 0;
   };
-  const submit = (ev: React.FormEvent) => {
+  const submit = async (ev: React.FormEvent) => {
     ev.preventDefault();
-    if (validate()) setDone(true);
+    setSubmitError(null);
+    if (!validate()) return;
+    setSending(true);
+    try {
+      const res = await submitHomeContactAction({
+        nome: f.nome,
+        email: f.email,
+        telefono: f.telefono,
+        tipo: f.tipo,
+        budget: f.budget,
+        msg: f.msg,
+      });
+      if (res.ok) {
+        setDone(true);
+      } else {
+        setSubmitError(res.error || 'Invio non riuscito');
+      }
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Invio non riuscito');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -203,10 +227,16 @@ export function QuoteModal({
                 LANDING_BTN_CLASSES.primary,
                 'justify-center p-[14px]'
               )}
+              disabled={sending}
               onClick={submit}
             >
-              <a>Invia richiesta →</a>
+              <a>{sending ? 'Invio in corso...' : 'Invia richiesta →'}</a>
             </Button>
+            {submitError && (
+              <span className="block font-mono text-[11.5px] text-coral text-center">
+                {submitError}
+              </span>
+            )}
           </form>
         ) : (
           <div className="p-[34px]">
