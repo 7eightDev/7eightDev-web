@@ -84,10 +84,10 @@ export async function submitHomeContactAction(input: {
 </html>
 `;
 
-    // Invia a info@7eightdev.com reindirizzato a 7eightdev@gmail.com via Resend
+    // Invia a info@7eightdev.com (reindirizzato su 7eightdev@gmail.com in Resend)
     const { data, error } = await resend.emails.send({
       from: config.from,
-      to: ["info@7eightdev.com", "7eightdev@gmail.com"],
+      to: ["info@7eightdev.com"],
       replyTo: email,
       subject,
       html,
